@@ -8,6 +8,9 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from .api.v1.api import api_router
 from .core.config import settings
 
+from dotenv import load_dotenv
+load_dotenv()
+
 app = FastAPI(
     title=settings.APP_NAME,
     description="AI Analyst for Startup Evaluation Platform",

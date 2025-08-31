@@ -2,6 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom SweetAlert2 styles */
+.swal2-popup {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  border-radius: 12px;
+}
+
+.swal2-title {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.swal2-html-container {
+  color: #6b7280;
+}
+
+.swal2-confirm {
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  padding: 12px 24px !important;
+}
+
+.swal2-cancel {
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  padding: 12px 24px !important;
+}
+
+/* Custom toast styles */
+.toast-notification {
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
 @layer base {
   html {
     font-family: 'Inter', system-ui, sans-serif;

@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { Plus, Upload, X, FileText } from 'lucide-react';
+import { Plus, Upload, X, FileText, Loader2 } from 'lucide-react';
+import { reportService, CreateReportData } from '../services/reportService';
+import { useNavigate } from 'react-router-dom';
+import { showErrorToast, showSuccessToast } from '../utils/notifications';
 
 interface Document {
   id: string;
@@ -8,10 +11,12 @@ interface Document {
 }
 
 const CreateReport: React.FC = () => {
+  const navigate = useNavigate();
   const [startupName, setStartupName] = useState('');
   const [launchDate, setLaunchDate] = useState('');
   const [founderName, setFounderName] = useState('');
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const documentTypes = [
     'pitch deck',
@@ -44,14 +49,40 @@ const CreateReport: React.FC = () => {
     ));
   };
 
-  const handleGenerateReport = () => {
-    // Handle report generation logic here
-    console.log('Generating report with:', {
-      startupName,
-      launchDate,
-      founderName,
-      documents
-    });
+  const handleGenerateReport = async () => {
+    if (!startupName || !launchDate || !founderName || documents.length === 0) {
+      showErrorToast('Please fill in all required fields and upload at least one document');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const reportData: CreateReportData = {
+        startupName,
+        launchDate,
+        founderName,
+        documents: documents.map(doc => ({
+          file: doc.file,
+          type: doc.type
+        }))
+      };
+
+      const report = await reportService.createReport(reportData);
+      
+      console.log('Report created successfully:', report);
+      
+      showSuccessToast('Report created successfully!');
+      
+      // Navigate to the reports list
+      navigate('/reports');
+      
+    } catch (err: any) {
+      console.error('Error creating report:', err);
+      showErrorToast(err.response?.data?.detail || 'Failed to create report. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -194,16 +225,25 @@ const CreateReport: React.FC = () => {
             )}
           </div>
 
+
+
           {/* Generate Report Button */}
           <div className="text-center">
             <button
               onClick={handleGenerateReport}
-              disabled={!startupName || !launchDate || !founderName || documents.length === 0}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold py-4 px-8 rounded-xl text-lg transition-all duration-200 transform hover:scale-105 shadow-lg disabled:transform-none disabled:cursor-not-allowed"
+              disabled={!startupName || !launchDate || !founderName || documents.length === 0 || isSubmitting}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold py-4 px-8 rounded-xl text-lg transition-all duration-200 transform hover:scale-105 shadow-lg disabled:transform-none disabled:cursor-not-allowed flex items-center justify-center mx-auto"
             >
-              Generate Report
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Creating Report...
+                </>
+              ) : (
+                'Generate Report'
+              )}
             </button>
-            {(!startupName || !launchDate || !founderName || documents.length === 0) && (
+            {(!startupName || !launchDate || !founderName || documents.length === 0) && !isSubmitting && (
               <p className="text-sm text-gray-500 mt-2">
                 Please fill in all required fields and upload at least one document
               </p>

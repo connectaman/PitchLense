@@ -28,7 +28,8 @@ class Settings(BaseSettings):
     ALLOWED_HOSTS: List[str] = ["*"]
     
     # Database
-    DATABASE_URL: str = "sqlite:///./ai_analyst.db"
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./pitchlense.db")
+    NODE_ENV: str = os.getenv("NODE_ENV", "development")
     
     # Google AI
     GEMINI_API_KEY: Optional[str] = None
@@ -43,8 +44,18 @@ class Settings(BaseSettings):
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "text/plain",
-        "text/csv"
+        "text/csv",
+        "audio/mpeg",
+        "audio/mp3",
+        "video/mp4",
+        "image/jpeg",
+        "image/png"
     ]
+    
+    # GCP Configuration
+    BUCKET: str = os.getenv("BUCKET", "pitchlense-uploads")
+    GOOGLE_CLOUD_PROJECT: Optional[str] = os.getenv("GOOGLE_CLOUD_PROJECT")
+    GOOGLE_APPLICATION_CREDENTIALS: Optional[str] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
     
     # Redis
     REDIS_URL: str = "redis://localhost:6379"

@@ -63,6 +63,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 >
                   Aman Ulla
                 </a>
+                <a 
+                  href="#" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                >
+                  , Srinivas Alva
+                </a>
               </p>
               <p className="text-xs text-gray-500">
                 <a 
@@ -123,6 +131,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
                 >
                   Aman Ulla
+                </a>
+                <a 
+                  href="#" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                >
+                  , Srinivas Alva
                 </a>
               </p>
               <p className="text-xs text-gray-500">

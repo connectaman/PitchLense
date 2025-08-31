@@ -1,16 +1,19 @@
 #!/bin/bash
 
-# Start nginx in the background
-echo "Starting nginx..."
-nginx -g "daemon off;" &
-
-# Wait a moment for nginx to start
-sleep 2
-
-# Start the FastAPI backend
+# Start the FastAPI backend in the background
 echo "Starting FastAPI backend..."
-cd /app/backend
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
+cd backend
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1 &
+
+# Wait 3 seconds for the backend to fully start
+echo "Waiting 3 seconds for backend to start..."
+sleep 3
+
+# Start the React frontend
+echo "Starting React frontend..."
+cd ..
+cd frontend
+npm start &
 
 # Keep the container running
 wait
