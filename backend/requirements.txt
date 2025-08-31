@@ -1,0 +1,54 @@
+# FastAPI and ASGI server
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# Database
+sqlalchemy==2.0.23
+alembic==1.12.1
+psycopg2-binary==2.9.9
+asyncpg==0.29.0
+
+# Data validation and serialization
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Authentication and security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+
+# HTTP client
+httpx==0.25.2
+aiohttp==3.9.1
+
+# Google AI SDK
+google-generativeai==0.3.2
+google-cloud-aiplatform==1.38.1
+google-cloud-vision==3.4.6
+google-cloud-bigquery==3.13.0
+
+# File processing
+python-magic==0.4.27
+PyPDF2==3.0.1
+python-docx==1.1.0
+openpyxl==3.1.2
+
+# Data analysis
+pandas==2.1.4
+numpy==1.25.2
+
+# Utilities
+python-dotenv==1.0.0
+redis==5.0.1
+celery==5.3.4
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.2
+
+# Development
+black==23.11.0
+isort==5.12.0
+flake8==6.1.0

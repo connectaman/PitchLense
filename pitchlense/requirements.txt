@@ -1,0 +1,77 @@
+# Core dependencies
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# AI and ML dependencies
+google-generativeai>=0.3.0
+openai>=1.0.0
+anthropic>=0.7.0
+transformers>=4.30.0
+torch>=2.0.0
+sentence-transformers>=2.2.0
+
+# Document processing
+PyPDF2>=3.0.0
+python-docx>=0.8.11
+openpyxl>=3.1.0
+python-magic>=0.4.27
+Pillow>=10.0.0
+
+# Audio processing
+pydub>=0.25.1
+speechrecognition>=3.10.0
+whisper>=1.0.0
+
+# Text processing
+nltk>=3.8.1
+spacy>=3.6.0
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Web scraping and data collection
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+selenium>=4.10.0
+scrapy>=2.8.0
+
+# Financial data
+yfinance>=0.2.18
+alpha-vantage>=2.3.1
+quandl>=3.7.0
+
+# Database and storage
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0
+redis>=4.6.0
+minio>=7.1.0
+
+# API and web framework
+fastapi>=0.100.0
+uvicorn>=0.23.0
+httpx>=0.24.0
+aiohttp>=3.8.0
+
+# Task queue and background processing
+celery>=5.3.0
+
+# Configuration and environment
+python-dotenv>=1.0.0
+
+# Logging
+loguru>=0.7.0
+
+# Utilities
+click>=8.1.0
+rich>=13.0.0
+tqdm>=4.65.0
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+
+# Development tools
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.0.0
+mypy>=1.5.0
