@@ -14,6 +14,7 @@ class ReportBase(BaseModel):
     report_name: str = Field(..., min_length=1, max_length=255, description="Name of the report")
     startup_name: str = Field(..., min_length=1, max_length=255, description="Name of the startup")
     founder_name: str = Field(..., min_length=1, max_length=255, description="Name of the founder")
+    launch_date: Optional[str] = Field(None, max_length=50, description="Launch date of the startup")
     report_path: Optional[str] = Field(None, max_length=500, description="Path to the report file")
 
 

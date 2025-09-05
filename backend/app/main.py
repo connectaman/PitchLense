@@ -5,8 +5,12 @@ Main FastAPI application for AI Analyst for Startup Evaluation
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import JSONResponse
+from sqlalchemy import inspect, text
+from .core.database import settings as _settings_maybe  # not used, preserve imports
 from .api.v1.api import api_router
 from .core.config import settings
+from .core.database import engine
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -32,6 +36,21 @@ app.add_middleware(
     allowed_hosts=["*"]  # Configure appropriately for production
 )
 
+# Simple startup migration to add missing columns
+@app.on_event("startup")
+def run_startup_migrations():
+    try:
+        with engine.connect() as conn:
+            inspector = inspect(conn)
+            columns = [col["name"] for col in inspector.get_columns("reports")]
+            if "launch_date" not in columns:
+                conn.execute(text("ALTER TABLE reports ADD COLUMN launch_date VARCHAR(50)"))
+                conn.commit()
+                print("Added missing column 'launch_date' to 'reports' table")
+    except Exception as e:
+        # Do not block startup; just log
+        print(f"Startup migration skipped or failed: {e}")
+
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
 
@@ -48,9 +67,15 @@ def health_check():
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):
     """Global HTTP exception handler."""
-    return {"error": exc.detail, "status_code": exc.status_code}
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": exc.detail, "status_code": exc.status_code}
+    )
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request, exc):
     """Global exception handler."""
-    return {"error": "Internal server error", "status_code": 500}
+    return JSONResponse(
+        status_code=500,
+        content={"error": "Internal server error", "status_code": 500}
+    )

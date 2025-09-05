@@ -53,9 +53,9 @@ class Settings(BaseSettings):
     ]
     
     # GCP Configuration
-    BUCKET: str = os.getenv("BUCKET", "pitchlense-uploads")
-    GOOGLE_CLOUD_PROJECT: Optional[str] = os.getenv("GOOGLE_CLOUD_PROJECT")
-    GOOGLE_APPLICATION_CREDENTIALS: Optional[str] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+    BUCKET: str = os.getenv("BUCKET", "pitchlense-object-storage")
+    GOOGLE_CLOUD_PROJECT: Optional[str] = os.getenv("GOOGLE_CLOUD_PROJECT","pitchlense")
+    GOOGLE_APPLICATION_CREDENTIALS: Optional[str] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS",r"C:\Users\conne\Downloads\pitchlense-3e29d77319e7.json")
     
     # Redis
     REDIS_URL: str = "redis://localhost:6379"
@@ -63,6 +63,9 @@ class Settings(BaseSettings):
     # External APIs
     CRUNCHBASE_API_KEY: Optional[str] = None
     LINKEDIN_API_KEY: Optional[str] = None
+
+    # Cloud Run inference endpoint
+    CLOUD_RUN_URL: Optional[str] = os.getenv("CLOUD_RUN_URL","https://pitchlense-job-647004069258.us-central1.run.app")
     
     class Config:
         env_file = ".env"

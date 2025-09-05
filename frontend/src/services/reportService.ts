@@ -17,6 +17,7 @@ export interface Report {
   report_name: string;
   startup_name: string;
   founder_name: string;
+  launch_date?: string;  // Add launch date field
   status: 'pending' | 'success' | 'failed';
   created_at: string;
   is_pinned: boolean;
@@ -126,6 +127,16 @@ class ReportService {
     }
   }
 
+  async getReportOutput(reportId: string): Promise<any> {
+    try {
+      const response = await this.jsonApi.get(`/reports/${reportId}`);
+      return response.data; // raw JSON when backend returns analysis JSON
+    } catch (error) {
+      console.error('Error fetching report output:', error);
+      throw error;
+    }
+  }
+
   async deleteReport(reportId: string): Promise<void> {
     try {
       await this.jsonApi.delete(`/reports/${reportId}`);
@@ -163,14 +174,14 @@ class ReportService {
   }
 
   // Map backend status to frontend status
-  private mapStatus(backendStatus: string): 'pending' | 'processing' | 'completed' {
+  private mapStatus(backendStatus: string): 'pending' | 'success' | 'failed' {
     switch (backendStatus) {
       case 'pending':
         return 'pending';
       case 'success':
-        return 'completed';
+        return 'success';
       case 'failed':
-        return 'pending'; // Map failed to pending for frontend
+        return 'failed';
       default:
         return 'pending';
     }

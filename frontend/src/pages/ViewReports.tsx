@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Calendar, User, TrendingUp, Eye, Trash2, Search, ChevronLeft, ChevronRight, Loader2, Filter, Pin } from 'lucide-react';
+import { FileText, Calendar, User, TrendingUp, Eye, Trash2, Search, ChevronLeft, ChevronRight, Loader2, Filter, Pin, RefreshCw } from 'lucide-react';
 import { reportService, Report } from '../services/reportService';
 import { showConfirmDialog, showErrorToast, showSuccessToast } from '../utils/notifications';
 
@@ -85,6 +85,20 @@ const ViewReports: React.FC = () => {
     } catch (err: any) {
       console.error('Error toggling pin status:', err);
       showErrorToast(err.response?.data?.detail || 'Failed to toggle pin status. Please try again.');
+    }
+  };
+
+  const handleViewReport = async (e: React.MouseEvent, report: Report) => {
+    e.stopPropagation();
+    if (report.status !== 'success') return;
+    try {
+      // Fetch output JSON (backend returns JSON when status success)
+      await reportService.getReportOutput(report.report_id);
+      // Navigate to dashboard (could pass reportId; dashboard fetches as needed)
+      navigate(`/dashboard/${report.report_id}`);
+    } catch (err) {
+      console.error('Error fetching report output:', err);
+      showErrorToast('Failed to open report output. Please try again.');
     }
   };
 
@@ -191,72 +205,82 @@ const ViewReports: React.FC = () => {
                 <Filter className="w-4 h-4 mr-2" />
                 Filters
               </button>
+
+              {/* Refresh Button */}
+              <button
+                onClick={fetchReports}
+                disabled={loading}
+                title="Refresh"
+                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-blue-600' : 'text-gray-600'}`} />
+              </button>
             </div>
           </div>
         </div>
 
-                 {/* Filter Panel */}
-         {showFilters && (
-           <div className="mb-6 p-6 bg-white rounded-lg border border-gray-200 shadow-sm">
-             <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-               <div className="flex flex-col sm:flex-row sm:items-end gap-6">
-                 {/* Status Filter */}
-                 <div className="flex-1 min-w-0">
-                   <label htmlFor="statusFilter" className="block text-sm font-medium text-gray-700 mb-2">
-                     Status
-                   </label>
-                   <select
-                     id="statusFilter"
-                     value={statusFilter}
-                     onChange={(e) => setStatusFilter(e.target.value)}
-                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                   >
-                     <option value="">All Statuses</option>
-                     <option value="pending">Pending</option>
-                     <option value="success">Completed</option>
-                     <option value="failed">Failed</option>
-                   </select>
-                 </div>
+        {/* Filter Panel */}
+        {showFilters && (
+          <div className="mb-6 p-6 bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+              <div className="flex flex-col sm:flex-row sm:items-end gap-6">
+                {/* Status Filter */}
+                <div className="flex-1 min-w-0">
+                  <label htmlFor="statusFilter" className="block text-sm font-medium text-gray-700 mb-2">
+                    Status
+                  </label>
+                  <select
+                    id="statusFilter"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="success">Completed</option>
+                    <option value="failed">Failed</option>
+                  </select>
+                </div>
 
-                 {/* Pinned Only Toggle */}
-                 <div className="flex items-center">
-                   <label className="flex items-center cursor-pointer">
-                     <input
-                       type="checkbox"
-                       checked={pinnedOnly}
-                       onChange={(e) => setPinnedOnly(e.target.checked)}
-                       className="sr-only"
-                     />
-                     <div className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${
-                       pinnedOnly ? 'bg-blue-600' : 'bg-gray-200'
-                     }`}>
-                       <span className={`inline-block w-4 h-4 bg-white rounded-full transition-transform ${
-                         pinnedOnly ? 'translate-x-6' : 'translate-x-1'
-                       }`} />
-                     </div>
-                     <span className="ml-3 text-sm font-medium text-gray-700 flex items-center">
-                       <Pin className="w-4 h-4 mr-1" />
-                       Pinned Only
-                     </span>
-                   </label>
-                 </div>
-               </div>
+                {/* Pinned Only Toggle */}
+                <div className="flex items-center">
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={pinnedOnly}
+                      onChange={(e) => setPinnedOnly(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${
+                      pinnedOnly ? 'bg-blue-600' : 'bg-gray-200'
+                    }`}>
+                      <span className={`inline-block w-4 h-4 bg-white rounded-full transition-transform ${
+                        pinnedOnly ? 'translate-x-6' : 'translate-x-1'
+                      }`} />
+                    </div>
+                    <span className="ml-3 text-sm font-medium text-gray-700 flex items-center">
+                      <Pin className="w-4 h-4 mr-1" />
+                      Pinned Only
+                    </span>
+                  </label>
+                </div>
+              </div>
 
-               {/* Clear Filters */}
-               {(statusFilter || pinnedOnly) && (
-                 <button
-                   onClick={() => {
-                     setStatusFilter('');
-                     setPinnedOnly(false);
-                   }}
-                   className="text-sm text-gray-500 hover:text-gray-700 transition-colors px-3 py-2 rounded-lg hover:bg-gray-50"
-                 >
-                   Clear Filters
-                 </button>
-               )}
-             </div>
-           </div>
-         )}
+              {/* Clear Filters */}
+              {(statusFilter || pinnedOnly) && (
+                <button
+                  onClick={() => {
+                    setStatusFilter('');
+                    setPinnedOnly(false);
+                  }}
+                  className="text-sm text-gray-500 hover:text-gray-700 transition-colors px-3 py-2 rounded-lg hover:bg-gray-50"
+                >
+                  Clear Filters
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Error Message */}
         {error && (
@@ -293,8 +317,7 @@ const ViewReports: React.FC = () => {
           {reports.map((report) => (
             <div
               key={report.report_id}
-              onClick={() => handleReportClick(report.report_id)}
-              className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-200 cursor-pointer transform hover:scale-105 border border-gray-200 relative group"
+              className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-200 border border-gray-200 relative group"
             >
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
@@ -315,11 +338,12 @@ const ViewReports: React.FC = () => {
                   {/* Pin/Unpin Button */}
                   <button
                     onClick={(e) => handleTogglePin(e, report.report_id)}
+                    disabled={report.status !== 'success'}
                     className={`p-2 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100 ${
                       report.is_pinned 
                         ? 'text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50' 
                         : 'text-gray-400 hover:text-yellow-600 hover:bg-yellow-50'
-                    }`}
+                    } ${report.status !== 'success' ? 'cursor-not-allowed opacity-50' : ''}`}
                     title={report.is_pinned ? 'Unpin report' : 'Pin report'}
                   >
                     <Pin className={`w-4 h-4 ${report.is_pinned ? 'fill-current' : ''}`} />
@@ -327,7 +351,8 @@ const ViewReports: React.FC = () => {
                   {/* Delete Button */}
                   <button
                     onClick={(e) => handleDeleteReport(e, report.report_id)}
-                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100"
+                    disabled={report.status === 'pending'}
+                    className={`p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100 ${report.status === 'pending' ? 'cursor-not-allowed opacity-50' : ''}`}
                     title="Delete report"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -348,8 +373,30 @@ const ViewReports: React.FC = () => {
 
                 <div className="flex items-center text-sm text-gray-600">
                   <Calendar className="w-4 h-4 mr-2" />
-                  <span>{new Date(report.created_at).toLocaleDateString()}</span>
+                  <span title={new Date(report.created_at).toLocaleString()}>
+                    Created: {new Date(report.created_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </span>
                 </div>
+
+                {/* Launch Date - if available */}
+                {report.launch_date && (
+                  <div className="flex items-center text-sm text-gray-500">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    <span>
+                      Launch: {new Date(report.launch_date).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                   <div className="flex items-center text-sm text-gray-600">
@@ -368,7 +415,11 @@ const ViewReports: React.FC = () => {
 
               {/* Action Button */}
               <div className="mt-4 pt-4 border-t border-gray-100">
-                <button className="w-full flex items-center justify-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-lg transition-colors">
+                <button
+                  onClick={(e) => handleViewReport(e, report)}
+                  disabled={report.status !== 'success'}
+                  className={`w-full flex items-center justify-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-lg transition-colors ${report.status !== 'success' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
                   <Eye className="w-4 h-4 mr-2" />
                   View Report
                 </button>

@@ -20,6 +20,7 @@ class ReportCRUD:
             startup_name=obj_in.startup_name,
             founder_name=obj_in.founder_name,
             report_path=obj_in.report_path,
+            report_status=ReportStatus.PENDING,
         )
         db.add(db_obj)
         db.commit()
@@ -41,7 +42,13 @@ class ReportCRUD:
         query = db.query(Report)
         if not include_deleted:
             query = query.filter(Report.is_delete == False)
-        return query.offset(skip).limit(limit).all()
+        return (
+            query
+            .order_by(Report.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
     def get_by_status(
         self, db: Session, *, status: ReportStatus, skip: int = 0, limit: int = 100
@@ -50,6 +57,7 @@ class ReportCRUD:
         return (
             db.query(Report)
             .filter(and_(Report.status == status, Report.is_delete == False))
+            .order_by(Report.created_at.desc())
             .offset(skip)
             .limit(limit)
             .all()
@@ -60,6 +68,7 @@ class ReportCRUD:
         return (
             db.query(Report)
             .filter(and_(Report.is_pinned == True, Report.is_delete == False))
+            .order_by(Report.created_at.desc())
             .offset(skip)
             .limit(limit)
             .all()
@@ -107,9 +116,11 @@ class ReportCRUD:
             db.refresh(db_obj)
         return db_obj
 
-    def hard_delete(self, db: Session, *, report_id: str) -> Report:
+    def hard_delete(self, db: Session, *, report_id: str) -> Optional[Report]:
         """Hard delete report"""
         obj = db.query(Report).get(report_id)
+        if obj is None:
+            return None
         db.delete(obj)
         db.commit()
         return obj
@@ -130,6 +141,7 @@ class ReportCRUD:
                     ),
                 )
             )
+            .order_by(Report.created_at.desc())
             .offset(skip)
             .limit(limit)
             .all()
@@ -147,6 +159,7 @@ class ReportCRUD:
                     Report.is_delete == False
                 )
             )
+            .order_by(Report.created_at.desc())
             .offset(skip)
             .limit(limit)
             .all()

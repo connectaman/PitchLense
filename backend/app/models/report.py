@@ -30,6 +30,7 @@ class Report(Base):
     report_name = Column(String(255), nullable=False, index=True)
     startup_name = Column(String(255), nullable=False)
     founder_name = Column(String(255), nullable=False)
+    launch_date = Column(String(50), nullable=True)  # Add launch date field
     
     # Status and flags
     status = Column(Enum(ReportStatus), default=ReportStatus.PENDING, nullable=False)
