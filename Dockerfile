@@ -13,6 +13,9 @@ RUN npm ci
 # Copy frontend source code
 COPY frontend/ .
 
+# Debug: verify public/index.html is present
+RUN ls -la /app/frontend && ls -la /app/frontend/public || true
+
 # Build frontend
 RUN npm run build
 

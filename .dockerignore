@@ -79,6 +79,8 @@ dist
 .cache/
 # Allow frontend/public to be included in Docker build context
 /public
+!frontend/public
+!frontend/public/**
 
 # Storybook build outputs
 .out
