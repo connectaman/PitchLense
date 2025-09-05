@@ -10,8 +10,13 @@ COPY frontend/package*.json ./
 # Install frontend dependencies (include devDependencies for build tools like Tailwind/PostCSS)
 RUN npm ci
 
-# Copy frontend source code
-COPY frontend/ .
+# Copy frontend source code explicitly (ensure public exists)
+COPY frontend/package*.json ./
+COPY frontend/public ./public
+COPY frontend/src ./src
+COPY frontend/tailwind.config.js ./
+COPY frontend/postcss.config.js ./
+COPY frontend/tsconfig.json ./
 
 # Debug: verify public/index.html is present
 RUN ls -la /app/frontend && ls -la /app/frontend/public || true
