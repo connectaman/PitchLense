@@ -9,11 +9,6 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1 &
 echo "Waiting 3 seconds for backend to start..."
 sleep 3
 
-# Start the React frontend
-echo "Starting React frontend..."
-cd ..
-cd frontend
-npm start &
-
-# Keep the container running
-wait
+# Start NGINX to serve the built frontend and reverse proxy API
+echo "Starting NGINX..."
+nginx -g 'daemon off;'

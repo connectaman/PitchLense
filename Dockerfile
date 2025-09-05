@@ -73,9 +73,9 @@ RUN chmod +x ./start.sh
 # Expose ports
 EXPOSE 80 8000
 
-# Health check
+# Health check (nginx proxies /health to backend)
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost/health || exit 1
 
 # Start the application
 CMD ["./start.sh"]

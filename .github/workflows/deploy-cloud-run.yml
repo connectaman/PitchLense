@@ -61,8 +61,8 @@ jobs:
             --region "$REGION" \
             --platform managed \
             --allow-unauthenticated \
-            --port 8000 \
-            --set-env-vars PORT=8000,NODE_ENV=production \
+            --port 80 \
+            --set-env-vars NODE_ENV=production \
             --quiet
 
 
