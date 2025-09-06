@@ -19,8 +19,9 @@ class ReportCRUD:
             report_name=obj_in.report_name,
             startup_name=obj_in.startup_name,
             founder_name=obj_in.founder_name,
+            launch_date=obj_in.launch_date,
             report_path=obj_in.report_path,
-            report_status=ReportStatus.PENDING,
+            status=ReportStatus.PENDING,
         )
         db.add(db_obj)
         db.commit()

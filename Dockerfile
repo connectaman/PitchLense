@@ -48,10 +48,18 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
+# Ensure Python logs are unbuffered and set a default log level
+ENV PYTHONUNBUFFERED=1 LOG_LEVEL=INFO
+
 # Install system dependencies for production
 RUN apt-get update && apt-get install -y \
     nginx \
+    curl \
     && rm -rf /var/lib/apt/lists/*
+
+# Send Nginx logs to stdout/stderr for Cloud Run visibility
+RUN ln -sf /dev/stdout /var/log/nginx/access.log && \
+    ln -sf /dev/stderr /var/log/nginx/error.log
 
 # Copy Python dependencies from backend stage
 COPY --from=backend-builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
