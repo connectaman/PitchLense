@@ -56,13 +56,32 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
+          ENV_FILE=".env"
+          SET_ENV_FLAG="--set-env-vars NODE_ENV=production"
+          if [ -f "$ENV_FILE" ]; then
+            # Build a comma-separated KEY=VALUE list from .env
+            # - drop comments/blank lines
+            # - strip leading 'export '
+            # - remove CR from CRLF
+            # - escape commas in values for gcloud
+            ENV_VARS=$(grep -v '^[# ]' "$ENV_FILE" | sed '/^$/d' | tr -d '\r' | sed 's/^export \+//' | sed 's/,/\\,/g' | paste -sd, -)
+            if [ -n "$ENV_VARS" ]; then
+              # Ensure NODE_ENV=production is present
+              case ",$ENV_VARS," in
+                *,NODE_ENV=*) : ;; 
+                *) ENV_VARS="$ENV_VARS,NODE_ENV=production" ;;
+              esac
+              SET_ENV_FLAG="--set-env-vars $ENV_VARS"
+            fi
+          fi
+
           gcloud run deploy "$SERVICE_NAME" \
             --image "$IMAGE_URI" \
             --region "$REGION" \
             --platform managed \
             --allow-unauthenticated \
             --port 80 \
-            --set-env-vars NODE_ENV=production \
+            $SET_ENV_FLAG \
             --quiet
 
 
