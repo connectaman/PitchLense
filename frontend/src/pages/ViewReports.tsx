@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Calendar, User, TrendingUp, Eye, Trash2, Search, ChevronLeft, ChevronRight, Loader2, Filter, Pin, RefreshCw } from 'lucide-react';
+import { FileText, Calendar, User, Eye, Trash2, Search, ChevronLeft, ChevronRight, Loader2, Filter, Pin, RefreshCw } from 'lucide-react';
 import { reportService, Report } from '../services/reportService';
 import { showConfirmDialog, showErrorToast, showSuccessToast } from '../utils/notifications';
 
@@ -384,19 +384,7 @@ const ViewReports: React.FC = () => {
                   </span>
                 </div>
 
-                {/* Launch Date - if available */}
-                {report.launch_date && (
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    <span>
-                      Launch: {new Date(report.launch_date).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
-                    </span>
-                  </div>
-                )}
+                {/* Launch date removed */}
 
                 <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                   <div className="flex items-center text-sm text-gray-600">
@@ -404,12 +392,7 @@ const ViewReports: React.FC = () => {
                     <span>{report.documentsCount || 0} documents</span>
                   </div>
                   
-                  {report.status === 'success' && (
-                    <div className="flex items-center text-sm font-medium text-green-600">
-                      <TrendingUp className="w-4 h-4 mr-1" />
-                      <span>{report.score || 0}/100</span>
-                    </div>
-                  )}
+                  {/* Score display removed */}
                 </div>
               </div>
 

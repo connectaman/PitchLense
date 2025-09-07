@@ -45,21 +45,6 @@ app.add_middleware(
 # Request logging middleware
 app.add_middleware(LoggingMiddleware)
 
-# Simple startup migration to add missing columns
-@app.on_event("startup")
-def run_startup_migrations():
-    try:
-        with engine.connect() as conn:
-            inspector = inspect(conn)
-            columns = [col["name"] for col in inspector.get_columns("reports")]
-            if "launch_date" not in columns:
-                conn.execute(text("ALTER TABLE reports ADD COLUMN launch_date VARCHAR(50)"))
-                conn.commit()
-                logging.info("Added missing column 'launch_date' to 'reports' table")
-    except Exception as e:
-        # Do not block startup; just log
-        logging.exception("Startup migration skipped or failed: %s", e)
-
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
 
