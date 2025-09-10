@@ -2,50 +2,38 @@ version: '3.8'
 
 services:
   pitchlense:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     ports:
-      - "3000:80"  # Frontend
-      - "8000:8000"  # Backend API
+      - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://postgres:password@db:5432/pitchlense
-      - GOOGLE_AI_API_KEY=${GOOGLE_AI_API_KEY}
-      - SECRET_KEY=${SECRET_KEY:-your-secret-key-here}
-      - ENVIRONMENT=production
+      - NODE_ENV=production
+      - PORT=3000
+      # Add your environment variables here
+      # - GOOGLE_CLOUD_STORAGE_BUCKET=your-bucket-name
+      # - JWT_SECRET=your-jwt-secret
+      # - DATABASE_URL=your-database-url
+    volumes:
+      - ./backend/data:/app/backend/data
+      - ./frontend:/app/frontend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Add a reverse proxy (nginx)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
     depends_on:
-      - db
-    volumes:
-      - ./uploads:/app/uploads
+      - pitchlense
     restart: unless-stopped
-    networks:
-      - pitchlense-network
-
-  db:
-    image: postgres:15-alpine
-    environment:
-      - POSTGRES_DB=pitchlense
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    networks:
-      - pitchlense-network
-    restart: unless-stopped
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    networks:
-      - pitchlense-network
-    restart: unless-stopped
-
-volumes:
-  postgres_data:
-
-networks:
-  pitchlense-network:
-    driver: bridge
+    profiles:
+      - production

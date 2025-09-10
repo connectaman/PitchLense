@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PitchLense — Sign in</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = { theme: { extend: { colors: { background: '#1E1E21', surface: '#2E3137', accent: '#f1d85b', text: '#ffffff', secondary: '#cfd4dd' } } } };
+    </script>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body class="bg-background text-text font-sans antialiased">
+    <div class="min-h-screen grid place-items-center p-6 relative overflow-hidden">
+      <div class="absolute inset-0" style="background:#1E1E21;"></div>
+      <div class="pointer-events-none fixed inset-0" style="background-image:url('/static/login_bg.png'); background-position:center; background-repeat:no-repeat; background-size:cover; background-attachment:fixed;"></div>
+      <div class="absolute inset-0 bg-black/55"></div>
+
+      <div class="relative w-full max-w-[420px] drop-shadow-2xl">
+        <div class="rounded-[20px] bg-[#2E3137] border border-white/10 shadow-[0_24px_64px_rgba(0,0,0,0.7)] overflow-hidden">
+          <div class="p-6">
+            <div class="flex items-center justify-center mb-4">
+              <div class="w-12 h-12 rounded-full bg-accent grid place-items-center shadow">
+                <img src="/static/logo.svg" alt="PitchLense" class="w-15 h-15" />
+              </div>
+            </div>
+            <h1 class="text-center text-[20px] font-bold text-white" id="title">Welcome back!</h1>
+            <p class="text-center text-white text-[12px]">Sign in to continue</p>
+            <form id="auth-form" class="mt-5 space-y-3">
+              <input class="w-full h-11 rounded-full bg-transparent border border-white/15 px-4 outline-none focus:ring-2 focus:ring-accent placeholder:text-white" type="email" placeholder="Your email address" required />
+              <input class="w-full h-11 rounded-full bg-transparent border border-white/15 px-4 outline-none focus:ring-2 focus:ring-accent placeholder:text-white" type="password" placeholder="Password" required />
+
+              <div class="flex items-center justify-between text-[12px] text-white px-1">
+                <label class="inline-flex items-center gap-2">
+                  <input type="checkbox" class="accent-accent" />
+                  <span>Remember</span>
+                </label>
+                <a href="#" class="text-white hover:underline">Forgot password?</a>
+              </div>
+
+              <button class="w-full h-11 rounded-full bg-[#FFF27A] text-[#1E1E21] font-semibold hover:opacity-90 border border-white/15 glare btn-shine" id="primary-btn">Sign in</button>
+            </form>
+            <div class="my-4 flex items-center gap-3 text-white/40">
+              <div class="h-px flex-1 bg-white/10"></div>
+              <!-- <span class="text-[12px]">OR</span> -->
+              <div class="h-px flex-1 bg-white/10"></div>
+            </div>
+            <!-- <div class="grid grid-cols-2 gap-3">
+              <button class="rounded-full bg-[#2E3137] border border-white/10 h-11 text-white/90 hover:bg-white/10 flex items-center justify-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.365 1.43c0 1.14-.423 2.24-1.194 3.08-.764.84-2.007 1.49-3.08 1.36-.134-1.1.447-2.26 1.18-3.06.8-.86 2.23-1.51 3.094-1.38zM20.8 17.23c-.66 1.52-1.47 2.98-2.66 4.52-1.02 1.3-2.26 2.93-3.9 2.95-1.42.03-1.8-.92-3.75-.92-1.95 0-2.37.9-3.78.95-1.58.06-2.79-1.41-3.81-2.71C1.02 20.29-.74 15.61 1.31 12.2c1.03-1.79 2.87-2.92 4.89-2.95 1.52-.03 2.95 1.02 3.76 1.02.77 0 2.46-1.26 4.15-1.07.71.03 2.7.28 3.98 2.1-3.58 1.95-3 7.07-.29 8.93z"/></svg>
+                <span class="text-[13px]">Sign in with Apple</span>
+              </button>
+              <button class="rounded-full bg-[#2E3137] border border-white/10 h-11 text-white/90 hover:bg-white/10 flex items-center justify-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="#EA4335" d="M12 10.2v3.6h5.1c-.23 1.47-1.84 4.3-5.1 4.3-3.07 0-5.57-2.54-5.57-5.7S8.93 6.7 12 6.7c1.75 0 2.93.75 3.6 1.4l2.46-2.37C16.86 4.15 14.65 3.2 12 3.2 6.94 3.2 2.8 7.34 2.8 12.4s4.14 9.2 9.2 9.2c5.31 0 8.8-3.73 8.8-8.98 0-.6-.06-1.02-.14-1.46H12z"/><path fill="#34A853" d="M12 21.6c3.26 0 5.97-2.16 6.94-5.2l-3.3-2.56c-.9 1.8-2.54 2.86-3.64 2.86-2.09 0-3.88-1.41-4.52-3.34l-3.4 2.61C5.03 19.52 8.25 21.6 12 21.6z"/><path fill="#FBBC05" d="M7.48 13.36a5.68 5.68 0 010-2.73l-3.4-2.62a9.22 9.22 0 000 7.97l3.4-2.62z"/><path fill="#4285F4" d="M12 6.7c1.75 0 2.93.75 3.6 1.4l2.46-2.37C16.86 4.15 14.65 3.2 12 3.2c-5.06 0-9.2 4.14-9.2 9.2 0 .94.15 1.84.48 2.68l3.4-2.62c-.08-.25-.12-.54-.12-.86 0-3.16 2.5-5.7 5.44-5.7z"/></svg>
+                <span class="text-[13px]">Sign in with Google</span>
+              </button>
+            </div> -->
+
+            <p class="mt-4 text-center text-[12px] text-white">
+              Not a member yet? <a id="switch-mode" class="text-white hover:underline cursor-pointer">Create an account</a>
+            </p>
+            
+            <div class="mt-4">
+              <button onclick="window.location.href='/index.html'" class="w-full h-11 rounded-full bg-transparent border border-white/15 text-white font-semibold hover:bg-white/10 transition-all duration-200">
+                Home Page
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const form = document.getElementById('auth-form');
+      const switchBtn = document.getElementById('switch-mode');
+      const titleEl = document.getElementById('title');
+      const primaryBtn = document.getElementById('primary-btn');
+      let mode = 'login';
+
+      const submit = async (e) => {
+        e.preventDefault();
+        try {
+          const [emailEl, passEl] = form.querySelectorAll('input');
+          const body = { email: emailEl.value, password: passEl.value };
+          const url = mode === 'login' ? '/api/auth/login' : '/api/auth/signup';
+          const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), credentials: 'include' });
+          const ct = res.headers.get('content-type') || '';
+          let data = null;
+          if (ct.includes('application/json')) {
+            data = await res.json();
+          } else {
+            const text = await res.text();
+            if (!res.ok) throw new Error(text || 'Request failed');
+          }
+          if (!res.ok) throw new Error((data && (data.error || data.message)) || 'Request failed');
+          window.location.href = '/view-report.html';
+        } catch (err) {
+          alert(err?.message || 'Something went wrong');
+        }
+      };
+      form.addEventListener('submit', submit);
+      switchBtn.addEventListener('click', () => {
+        mode = mode === 'login' ? 'signup' : 'login';
+        titleEl.textContent = mode === 'login' ? 'Welcome back!' : 'Create your account';
+        primaryBtn.textContent = mode === 'login' ? 'Sign in' : 'Sign up';
+        switchBtn.textContent = mode === 'login' ? 'Create an account' : 'Have an account? Sign in';
+      });
+    </script>
+    
+    <!-- Circular Footer with Heart Icon -->
+    <footer class="fixed bottom-4 right-4 z-50">
+      <!-- Expanded Footer Content (Hidden by default) -->
+      <div class="footer-expanded bg-[#2E3137] border border-white/10 rounded-[22px] px-4 py-3 mb-2 opacity-0 transform translate-y-2 pointer-events-none transition-all duration-300 ease-out">
+        <div class="flex items-center justify-center gap-2 text-sm text-white/80 whitespace-nowrap overflow-x-auto">
+          <span>Created with</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="#ef4444"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <span>by</span>
+          <a href="https://amanulla.in/" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Aman Ulla</a>
+          <span>,</span>
+          <a href="#" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Srinivas Alva</a>
+          <span class="text-white/40">|</span>
+          <a href="https://vision.hack2skill.com/event/genaiexchangehackathon/?utm_source=hack2skill&utm_medium=homepage#overview" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors">Hack2Skill‑Google Hackathon</a>
+          <span class="text-white/40">|</span>
+          <div class="flex items-center gap-2">
+            <a href="https://github.com/connectaman/PitchLense" target="_blank" rel="noopener noreferrer" title="GitHub" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.52 2.87 8.35 6.84 9.71.5.09.68-.22.68-.49 0-.24-.01-.87-.01-1.7-2.78.62-3.37-1.37-3.37-1.37-.46-1.2-1.13-1.52-1.13-1.52-.92-.65.07-.64.07-.64 1.02.07 1.56 1.06 1.56 1.06.9 1.58 2.36 1.12 2.94.86.09-.67.35-1.12.63-1.38-2.22-.26-4.56-1.14-4.56-5.08 0-1.12.39-2.04 1.04-2.76-.1-.26-.45-1.32.1-2.75 0 0 .84-.27 2.76 1.05.8-.23 1.66-.35 2.52-.35s1.72.12 2.52.35c1.92-1.32 2.76-1.05 2.76-1.05.55 1.43.2 2.49.1 2.75.65.72 1.04 1.64 1.04 2.76 0 3.95-2.34 4.82-4.57 5.07.36.31.68.93.68 1.88 0 1.35-.01 2.45-.01 2.78 0 .27.18.58.69.48A10.03 10.03 0 0 0 22 12.26C22 6.58 17.52 2 12 2Z"/></svg>
+            </a>
+            <a href="https://pypi.org/project/pitchlense-mcp/" target="_blank" rel="noopener noreferrer" title="PyPI" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3a4 4 0 0 1 4 4v3a2 2 0 0 1-2 2H8a4 4 0 0 1-4-4V5a2 2 0 0 1 2-2h6Zm-2 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm2 14a4 4 0 0 1-4-4v-3a2 2 0 0 1 2-2h6a4 4 0 0 1 4 4v3a2 2 0 0 1-2 2h-6Zm2-4a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>
+            </a>
+            <a href="https://pitchlense-mcp.readthedocs.io/en/latest/" target="_blank" rel="noopener noreferrer" title="Read the Docs" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5 3h12a2 2 0 0 1 2 2v14l-3-2-3 2-3-2-3 2-3-2V5a2 2 0 0 1 2-2Zm2 4v2h8V7H7Zm0 4v2h8v-2H7Z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Circular Heart Icon Button -->
+      <div class="footer-circle w-12 h-12 bg-[#2E3137] border border-white/10 rounded-full flex items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-all duration-300 ease-out shadow-lg hover:shadow-xl">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#ef4444" class="transition-transform duration-300 ease-out">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
+        </svg>
+      </div>
+    </footer>
+  </body>
+  </html>
+
+

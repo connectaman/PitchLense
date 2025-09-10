@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PitchLense — Create Report</title>
+    <script>
+      tailwind.config = { theme: { extend: { colors: { background:'#1E1E21', surface:'#2E3137', text:'#ffffff', secondary:'#cfd4dd', accent:'#f1d85b' }}}}
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="bg-background text-text font-sans antialiased overflow-x-hidden bg-solid">
+    <div id="app" class="h-screen flex flex-col p-3 gap-3">
+      <header class="h-16 bg-[#2E3137] border border-white/10 rounded-[22px] flex items-center justify-between px-6">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full grid place-items-center"><img src="/static/logo.svg" class="w-5 h-5"/></div>
+          <div class="text-base font-semibold">PitchLense</div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full border border-white/15 bg-[#FFF27A] grid place-items-center text-[#1E1E21]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.31 0-6 2.69-6 6h12c0-3.31-2.69-6-6-6Z"/>
+            </svg>
+          </div>
+        </div>
+      </header>
+
+      <div class="grid flex-1 min-h-0" style="grid-template-columns: 84px 1fr; gap:12px;">
+        <aside class="bg-[#2C2F34] border border-white/10 rounded-[18px] flex flex-col items-center py-4 gap-3">
+          <nav class="flex flex-col gap-2 text-white/80 w-full items-center">
+            <a class="w-10 h-10 grid place-items-center rounded-lg bg-white/10 hover:bg-white/10" href="/create-report.html" title="Create">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10" href="/view-report.html" title="Report">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <line x1="9" y1="17" x2="9" y2="11"/>
+                <line x1="13" y1="17" x2="13" y2="7"/>
+                <line x1="17" y1="17" x2="17" y2="13"/>
+              </svg>
+            </a>
+          </nav>
+          <div class="flex-1"></div>
+          <button id="signoutBtn" class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 text-white/80" title="Sign out">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </button>
+        </aside>
+
+        <main class="flex-1 flex items-start justify-center overflow-y-auto p-4">
+          <form id="reportForm" class="w-full max-w-2xl card p-6" style="background-color:#2E3137; border:1px solid rgba(255,255,255,0.08); border-radius:14px;">
+            <h2 class="text-xl font-semibold mb-4 text-center">Create Startup Report</h2>
+            <div class="grid gap-4">
+              <label class="text-sm">Startup Name
+                <input id="startupName" name="startup_name" type="text" class="mt-1 w-full rounded-lg bg-[#1E1E21] border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-accent" placeholder="e.g., PitchLense"/>
+              </label>
+              <label class="text-sm">Founder names
+                <input id="founderNames" name="founder_name" type="text" class="mt-1 w-full rounded-lg bg-[#1E1E21] border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-accent" placeholder="Comma-separated"/>
+              </label>
+              <label class="text-sm">Startup Founded
+                <input id="launchDate" name="launch_date" type="date" class="mt-1 w-full rounded-lg bg-[#1E1E21] border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-accent"/>
+              </label>
+
+              <div>
+                <div class="text-sm mb-2">Document Upload</div>
+                <input id="fileInput" type="file" multiple accept=".pdf,.doc,.docx,.mp3,.mp4,image/*" class="hidden" />
+                <div id="dropzone" class="rounded-xl border-2 border-dashed border-white/20 bg-[#1E1E21] hover:border-white/40 transition-colors cursor-pointer grid place-items-center text-center py-16">
+                  <div>
+                    <div class="mx-auto w-10 h-10 rounded-full bg-white/10 grid place-items-center text-white/70 mb-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                      </svg>
+                    </div>
+                    <div class="font-semibold">Click to upload documents</div>
+                    <div class="text-xs text-secondary mt-1">PDF, DOC, DOCX, MP3, MP4, or image files accepted</div>
+                  </div>
+                </div>
+                <div id="fileList" class="mt-3 space-y-2"></div>
+              </div>
+
+              <div class="flex justify-center pt-4">
+                <button id="generateBtn" type="button" class="px-10 py-3 rounded-full bg-[#FFF27A] text-black font-semibold border border-white/15 glare btn-shine">Generate Report</button>
+              </div>
+            </div>
+          </form>
+        </main>
+      </div>
+      <!-- <footer class="fixed left-[104px] right-4 bottom-4 bg-[#2E3137] border border-white/10 rounded-[22px] px-4 py-3">
+        <div class="flex items-center justify-center gap-2 text-sm text-white/80 whitespace-nowrap overflow-x-auto">
+          <span>Created with</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="#ef4444"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <span>by</span>
+          <a href="https://amanulla.in/" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Aman Ulla</a>
+          <span>,</span>
+          <a href="#" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Srinivas Alva</a>
+          <span class="text-white/40">|</span>
+          <a href="https://vision.hack2skill.com/event/genaiexchangehackathon/?utm_source=hack2skill&utm_medium=homepage#overview" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors">Hack2Skill‑Google Hackathon</a>
+          <span class="text-white/40">|</span>
+          <div class="flex items-center gap-2">
+            <a href="https://github.com/connectaman/PitchLense" target="_blank" rel="noopener noreferrer" title="GitHub" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.52 2.87 8.35 6.84 9.71.5.09.68-.22.68-.49 0-.24-.01-.87-.01-1.7-2.78.62-3.37-1.37-3.37-1.37-.46-1.2-1.13-1.52-1.13-1.52-.92-.65.07-.64.07-.64 1.02.07 1.56 1.06 1.56 1.06.9 1.58 2.36 1.12 2.94.86.09-.67.35-1.12.63-1.38-2.22-.26-4.56-1.14-4.56-5.08 0-1.12.39-2.04 1.04-2.76-.1-.26-.45-1.32.1-2.75 0 0 .84-.27 2.76 1.05.8-.23 1.66-.35 2.52-.35s1.72.12 2.52.35c1.92-1.32 2.76-1.05 2.76-1.05.55 1.43.2 2.49.1 2.75.65.72 1.04 1.64 1.04 2.76 0 3.95-2.34 4.82-4.57 5.07.36.31.68.93.68 1.88 0 1.35-.01 2.45-.01 2.78 0 .27.18.58.69.48A10.03 10.03 0 0 0 22 12.26C22 6.58 17.52 2 12 2Z"/>
+              </svg>
+            </a>
+            <a href="https://pypi.org/project/pitchlense-mcp/" target="_blank" rel="noopener noreferrer" title="PyPI" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M12 3a4 4 0 0 1 4 4v3a2 2 0 0 1-2 2H8a4 4 0 0 1-4-4V5a2 2 0 0 1 2-2h6Zm-2 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm2 14a4 4 0 0 1-4-4v-3a2 2 0 0 1 2-2h6a4 4 0 0 1 4 4v3a2 2 0 0 1-2 2h-6Zm2-4a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/>
+              </svg>
+            </a>
+            <a href="https://pitchlense-mcp.readthedocs.io/en/latest/" target="_blank" rel="noopener noreferrer" title="Read the Docs" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M5 3h12a2 2 0 0 1 2 2v14l-3-2-3 2-3-2-3 2-3-2V5a2 2 0 0 1 2-2Zm2 4v2h8V7H7Zm0 4v2h8v-2H7Z"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </footer> -->
+    </div>
+
+    <script>
+      // search removed on create-report
+
+      // sign out
+      const signout = document.getElementById('signoutBtn');
+      if (signout) {
+        signout.addEventListener('click', async ()=>{ try { await fetch('/api/auth/logout',{method:'POST'}); } catch(e) {} window.location.href='/auth.html'; });
+      }
+
+      // File list with type selector + dropzone
+      const fileInput = document.getElementById('fileInput');
+      const dropzone = document.getElementById('dropzone');
+      const list = document.getElementById('fileList');
+      const kinds = ['pitch deck','call recording','meeting recording','founder profile','news report','company document'];
+      let currentFiles = [];
+      function renderFiles(files){
+        currentFiles = Array.from(files || []);
+        list.innerHTML = '';
+        currentFiles.forEach((f) => {
+          const row = document.createElement('div');
+          row.className = 'flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-[#1E1E21] px-3 py-2';
+          const name = document.createElement('div'); name.className = 'text-sm truncate'; name.textContent = f.name;
+          const select = document.createElement('select'); select.className = 'bg-[#2E3137] border border-white/10 rounded-md px-2 py-1 text-sm';
+          kinds.forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=k; select.appendChild(o); });
+          row.appendChild(name); row.appendChild(select); list.appendChild(row);
+        });
+      }
+      if (fileInput && list && dropzone) {
+        fileInput.addEventListener('change', () => renderFiles(fileInput.files));
+        dropzone.addEventListener('click', () => fileInput.click());
+        ;['dragover','dragenter'].forEach(ev=> dropzone.addEventListener(ev, e=>{ e.preventDefault(); dropzone.classList.add('border-white/60'); }));
+        ;['dragleave','drop'].forEach(ev=> dropzone.addEventListener(ev, e=>{ e.preventDefault(); dropzone.classList.remove('border-white/60'); }));
+        dropzone.addEventListener('drop', (e)=>{ const files = e.dataTransfer?.files; if (files?.length) renderFiles(files); });
+      }
+
+      // Submit create report
+      const generateBtn = document.getElementById('generateBtn');
+      const startupNameEl = document.getElementById('startupName');
+      const founderNamesEl = document.getElementById('founderNames');
+      const launchDateEl = document.getElementById('launchDate');
+      generateBtn?.addEventListener('click', async () => {
+        try {
+          const startup_name = startupNameEl?.value?.trim();
+          const founder_name = founderNamesEl?.value?.trim();
+          const launch_date = launchDateEl?.value?.trim();
+          if (!startup_name || !founder_name || !launch_date) { alert('Please fill all fields'); return; }
+          if (!currentFiles.length) { alert('Please add at least one file'); return; }
+          const selects = Array.from(list.querySelectorAll('select'));
+          if (selects.length !== currentFiles.length) { alert('Please select document types for each file'); return; }
+          const fd = new FormData();
+          fd.append('startup_name', startup_name);
+          fd.append('founder_name', founder_name);
+          fd.append('launch_date', launch_date);
+          currentFiles.forEach((file, idx) => {
+            fd.append('files', file, file.name);
+            fd.append('file_types', selects[idx].value);
+          });
+          const resp = await fetch('/api/reports', { method: 'POST', body: fd, credentials: 'include' });
+          if (!resp.ok) {
+            const t = await resp.text();
+            throw new Error(t || 'Failed to create report');
+          }
+          const data = await resp.json();
+          window.location.href = '/view-report.html';
+        } catch (err) {
+          alert(err?.message || 'Something went wrong');
+        }
+      });
+    </script>
+    
+    <!-- Circular Footer with Heart Icon -->
+    <footer class="fixed bottom-4 right-4 z-50">
+      <!-- Expanded Footer Content (Hidden by default) -->
+      <div class="footer-expanded bg-[#2E3137] border border-white/10 rounded-[22px] px-4 py-3 mb-2 opacity-0 transform translate-y-2 pointer-events-none transition-all duration-300 ease-out">
+        <div class="flex items-center justify-center gap-2 text-sm text-white/80 whitespace-nowrap overflow-x-auto">
+          <span>Created with</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="#ef4444"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <span>by</span>
+          <a href="https://amanulla.in/" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Aman Ulla</a>
+          <span>,</span>
+          <a href="#" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Srinivas Alva</a>
+          <span class="text-white/40">|</span>
+          <a href="https://vision.hack2skill.com/event/genaiexchangehackathon/?utm_source=hack2skill&utm_medium=homepage#overview" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors">Hack2Skill‑Google Hackathon</a>
+          <span class="text-white/40">|</span>
+          <div class="flex items-center gap-2">
+            <a href="https://github.com/connectaman/PitchLense" target="_blank" rel="noopener noreferrer" title="GitHub" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.52 2.87 8.35 6.84 9.71.5.09.68-.22.68-.49 0-.24-.01-.87-.01-1.7-2.78.62-3.37-1.37-3.37-1.37-.46-1.2-1.13-1.52-1.13-1.52-.92-.65.07-.64.07-.64 1.02.07 1.56 1.06 1.56 1.06.9 1.58 2.36 1.12 2.94.86.09-.67.35-1.12.63-1.38-2.22-.26-4.56-1.14-4.56-5.08 0-1.12.39-2.04 1.04-2.76-.1-.26-.45-1.32.1-2.75 0 0 .84-.27 2.76 1.05.8-.23 1.66-.35 2.52-.35s1.72.12 2.52.35c1.92-1.32 2.76-1.05 2.76-1.05.55 1.43.2 2.49.1 2.75.65.72 1.04 1.64 1.04 2.76 0 3.95-2.34 4.82-4.57 5.07.36.31.68.93.68 1.88 0 1.35-.01 2.45-.01 2.78 0 .27.18.58.69.48A10.03 10.03 0 0 0 22 12.26C22 6.58 17.52 2 12 2Z"/></svg>
+            </a>
+            <a href="https://pypi.org/project/pitchlense-mcp/" target="_blank" rel="noopener noreferrer" title="PyPI" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3a4 4 0 0 1 4 4v3a2 2 0 0 1-2 2H8a4 4 0 0 1-4-4V5a2 2 0 0 1 2-2h6Zm-2 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm2 14a4 4 0 0 1-4-4v-3a2 2 0 0 1 2-2h6a4 4 0 0 1 4 4v3a2 2 0 0 1-2 2h-6Zm2-4a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>
+            </a>
+            <a href="https://pitchlense-mcp.readthedocs.io/en/latest/" target="_blank" rel="noopener noreferrer" title="Read the Docs" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5 3h12a2 2 0 0 1 2 2v14l-3-2-3 2-3-2-3 2-3-2V5a2 2 0 0 1 2-2Zm2 4v2h8V7H7Zm0 4v2h8v-2H7Z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Circular Heart Icon Button -->
+      <div class="footer-circle w-12 h-12 bg-[#2E3137] border border-white/10 rounded-full flex items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-all duration-300 ease-out shadow-lg hover:shadow-xl">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#ef4444" class="transition-transform duration-300 ease-out">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
+        </svg>
+      </div>
+    </footer>
+  </body>
+  </html>
+
+

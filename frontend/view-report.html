@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PitchLense — Reports</title>
+    <script>
+      tailwind.config = { theme: { extend: { colors: { background:'#1E1E21', surface:'#2E3137', text:'#ffffff', secondary:'#cfd4dd', accent:'#f1d85b' }}}}
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="bg-background text-text font-sans antialiased overflow-x-hidden bg-solid">
+    <div class="h-screen flex flex-col p-3 gap-3">
+      <header class="h-16 bg-[#2E3137] border border-white/10 rounded-[22px] flex items-center justify-between px-6">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-accent grid place-items-center"><img src="/static/logo.svg" class="w-5 h-5"/></div>
+          <div class="text-base font-semibold">PitchLense</div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div id="searchWrap" class="flex items-center gap-2">
+            <button id="searchBtn" class="w-9 h-9 grid place-items-center rounded-full bg-[#FFF27A] border border-white/10 text-[#1E1E21]">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="7"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </button>
+            <input id="searchInput" type="text" placeholder="Search" class="h-9 w-0 opacity-0 px-0 bg-[#1E1E21] border border-white/10 rounded-full text-sm text-white/80 outline-none transition-all duration-200" />
+            <button id="refreshBtn" title="Refresh" class="w-9 h-9 grid place-items-center rounded-full bg-[#FFF27A] border border-white/10 text-[#1E1E21]">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"/>
+                <polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10"/>
+                <path d="M20.49 15a9 9 0 0 1-14.13 3.36L1 14"/>
+              </svg>
+            </button>
+          </div>
+          <div class="w-9 h-9 rounded-full border border-white/10 bg-[#FFF27A] grid place-items-center text-[#1E1E21]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.31 0-6 2.69-6 6h12c0-3.31-2.69-6-6-6Z"/>
+            </svg>
+          </div>
+        </div>
+      </header>
+
+      <div class="grid flex-1 min-h-0" style="grid-template-columns: 84px 1fr; gap:12px;">
+        <aside class="bg-[#2C2F34] border border-white/10 rounded-[18px] flex flex-col items-center py-4 gap-3">
+          <nav class="flex flex-col gap-2 text-white/80 w-full items-center">
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10" href="/create-report.html" title="Create">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg bg-white/10 hover:bg-white/10" href="/view-report.html" title="Reports">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <line x1="9" y1="17" x2="9" y2="11"/>
+                <line x1="13" y1="17" x2="13" y2="7"/>
+                <line x1="17" y1="17" x2="17" y2="13"/>
+              </svg>
+            </a>
+          </nav>
+          <div class="flex-1"></div>
+          <button id="signoutBtn" class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 text-white/80" title="Sign out">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </button>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto p-4">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold">Reports</h2>
+            <div class="text-sm text-white/60" id="count"></div>
+          </div>
+          <div id="grid" class="grid gap-3" style="grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));"></div>
+          <div id="emptyState" class="hidden min-h-[60vh] grid place-items-center">
+            <div class="text-center">
+              <div class="mx-auto w-20 h-20 rounded-2xl bg-white/5 border border-white/10 grid place-items-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white/70">
+                  <rect x="3" y="3" width="18" height="18" rx="3"/>
+                  <line x1="8" y1="8" x2="16" y2="8"/>
+                  <line x1="8" y1="12" x2="16" y2="12"/>
+                  <line x1="8" y1="16" x2="13" y2="16"/>
+                </svg>
+              </div>
+              <div id="emptyTitle" class="text-lg font-semibold"></div>
+              <div id="emptySubtitle" class="text-sm text-white/60 mt-1"></div>
+              <div id="emptyCta" class="mt-4"></div>
+            </div>
+          </div>
+          <div id="paginationBar" class="fixed bottom-[88px] right-4 flex items-center gap-2">
+            <button id="prevBtn" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] border border-white/15 hover:opacity-90 disabled:opacity-40" title="Previous">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <span id="pageInfo" class="text-xs text-white/60"></span>
+            <button id="nextBtn" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] border border-white/15 hover:opacity-90 disabled:opacity-40" title="Next">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+          <!-- <footer class="fixed left-[104px] right-4 bottom-4 bg-[#2E3137] border border-white/10 rounded-[22px] px-4 py-3">
+            <div class="flex items-center justify-center gap-2 text-sm text-white/80 whitespace-nowrap overflow-x-auto">
+              <span>Created with</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="#ef4444"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              <span>by</span>
+              <a href="https://amanulla.in/" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Aman Ulla</a>
+              <span>,</span>
+              <a href="#" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Srinivas Alva</a>
+              <span class="text-white/40">|</span>
+              <a href="https://vision.hack2skill.com/event/genaiexchangehackathon/?utm_source=hack2skill&utm_medium=homepage#overview" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors">Hack2Skill‑Google Hackathon</a>
+              <span class="text-white/40">|</span>
+              <div class="flex items-center gap-2">
+                <a href="https://github.com/connectaman/PitchLense" target="_blank" rel="noopener noreferrer" title="GitHub" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.52 2.87 8.35 6.84 9.71.5.09.68-.22.68-.49 0-.24-.01-.87-.01-1.7-2.78.62-3.37-1.37-3.37-1.37-.46-1.2-1.13-1.52-1.13-1.52-.92-.65.07-.64.07-.64 1.02.07 1.56 1.06 1.56 1.06.9 1.58 2.36 1.12 2.94.86.09-.67.35-1.12.63-1.38-2.22-.26-4.56-1.14-4.56-5.08 0-1.12.39-2.04 1.04-2.76-.1-.26-.45-1.32.1-2.75 0 0 .84-.27 2.76 1.05.8-.23 1.66-.35 2.52-.35s1.72.12 2.52.35c1.92-1.32 2.76-1.05 2.76-1.05.55 1.43.2 2.49.1 2.75.65.72 1.04 1.64 1.04 2.76 0 3.95-2.34 4.82-4.57 5.07.36.31.68.93.68 1.88 0 1.35-.01 2.45-.01 2.78 0 .27.18.58.69.48A10.03 10.03 0 0 0 22 12.26C22 6.58 17.52 2 12 2Z"/></svg>
+                </a>
+                <a href="https://pypi.org/project/pitchlense-mcp/" target="_blank" rel="noopener noreferrer" title="PyPI" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3a4 4 0 0 1 4 4v3a2 2 0 0 1-2 2H8a4 4 0 0 1-4-4V5a2 2 0 0 1 2-2h6Zm-2 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm2 14a4 4 0 0 1-4-4v-3a2 2 0 0 1 2-2h6a4 4 0 0 1 4 4v3a2 2 0 0 1-2 2h-6Zm2-4a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>
+                </a>
+                <a href="https://pitchlense-mcp.readthedocs.io/en/latest/" target="_blank" rel="noopener noreferrer" title="Read the Docs" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5 3h12a2 2 0 0 1 2 2v14l-3-2-3 2-3-2-3 2-3-2V5a2 2 0 0 1 2-2Zm2 4v2h8V7H7Zm0 4v2h8v-2H7Z"/></svg>
+                </a>
+              </div>
+            </div>
+          </footer> -->
+        </main>
+      </div>
+    </div>
+
+    <script>
+      // Protect route: check session
+      fetch('/api/auth/me').then(r=>r.json()).then(d=>{ if(!d.user){ window.location.href='/auth.html'; } }).catch(()=> window.location.href='/auth.html');
+
+      // search expand
+      const btn = document.getElementById('searchBtn');
+      const inp = document.getElementById('searchInput');
+      const refreshBtn = document.getElementById('refreshBtn');
+      if (btn && inp) {
+        btn.addEventListener('click', () => {
+          const expanded = inp.classList.contains('opacity-100');
+          if (expanded) { inp.classList.remove('opacity-100'); inp.style.width='0px'; inp.style.paddingLeft='0px'; inp.style.paddingRight='0px'; inp.classList.add('opacity-0'); }
+          else { inp.style.width='220px'; inp.style.paddingLeft='12px'; inp.style.paddingRight='12px'; inp.classList.remove('opacity-0'); inp.classList.add('opacity-100'); inp.focus(); }
+        });
+        inp.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); state.search = inp.value.trim(); state.page = 0; loadReports(); }});
+      }
+      refreshBtn?.addEventListener('click', ()=>{ loadReports(); });
+
+      // sign out
+      const signout = document.getElementById('signoutBtn');
+      if (signout) {
+        signout.addEventListener('click', async ()=>{ try { await fetch('/api/auth/logout',{method:'POST'}); } catch(e) {} window.location.href='/auth.html'; });
+      }
+
+      // pagination + fetch
+      const state = { page: 0, limit: 12, search: '' };
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const grid = document.getElementById('grid');
+      const emptyState = document.getElementById('emptyState');
+      const emptyTitle = document.getElementById('emptyTitle');
+      const emptySubtitle = document.getElementById('emptySubtitle');
+      const emptyCta = document.getElementById('emptyCta');
+      const pageInfo = document.getElementById('pageInfo');
+
+      prevBtn?.addEventListener('click', ()=>{ if(state.page>0){ state.page--; loadReports(); } });
+      nextBtn?.addEventListener('click', ()=>{ if((state.page+1)*state.limit < (window.__total||0)){ state.page++; loadReports(); } });
+
+      function setEmpty(message, subtitle, withCta){
+        emptyTitle.textContent = message;
+        emptySubtitle.textContent = subtitle || '';
+        emptyCta.innerHTML = withCta ? '<a href="/create-report.html" class="inline-block px-5 py-2 rounded-full bg-[#FFF27A] text-[#1E1E21] font-semibold border border-white/15">Generate Report</a>' : '';
+        emptyState.classList.remove('hidden');
+        grid.classList.add('hidden');
+        pageInfo.textContent = '';
+      }
+
+      function formatCreated(input){
+        try {
+          const d = new Date(input);
+          if (isNaN(d.getTime())) return input;
+          const day = String(d.getDate()).padStart(2,'0');
+          const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sept','Oct','Nov','Dec'];
+          const mon = months[d.getMonth()];
+          const year = d.getFullYear();
+          return `${day}-${mon}-${year}`;
+        } catch { return input; }
+      }
+
+      async function loadReports(){
+        const params = new URLSearchParams({ page: String(state.page), limit: String(state.limit) });
+        if (state.search) params.set('search', state.search);
+        const resp = await fetch(`/api/reports?${params.toString()}`, { credentials: 'include' });
+        if (resp.status === 401) { window.location.href = '/auth.html'; return; }
+        const data = await resp.json();
+        const total = data.total || 0;
+        const totalPages = Math.max(1, Math.ceil(total / state.limit));
+        window.__total = total;
+        document.getElementById('count').textContent = `${total} reports`;
+        grid.innerHTML = '';
+
+        // Empty states
+        if (total === 0) {
+          const q = (state.search || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;');
+          if (state.search) setEmpty(`No Results found for \"${q}\"`, 'Try another search keyword.', false);
+          else setEmpty('No Reports', 'Create your first report to get started.', true);
+          prevBtn.disabled = true; nextBtn.disabled = true; pageInfo.textContent = '';
+          return;
+        }
+
+        emptyState.classList.add('hidden');
+        grid.classList.remove('hidden');
+
+        pageInfo.textContent = `Page ${data.page + 1} of ${totalPages}`;
+        prevBtn.disabled = state.page <= 0;
+        nextBtn.disabled = state.page + 1 >= totalPages;
+
+        data.reports.forEach(r => {
+          const card = document.createElement('div');
+          card.className = 'w-[400px] min-h-[240px] rounded-xl border border-white/10 bg-[#2E3137] p-6 hover:border-white/20 transition-colors glare-card';
+          const status = String(r.status || '').toLowerCase();
+          const statusBg = status === 'pending' ? '#FBBF24' : (status === 'success' ? '#22C55E' : (status === 'failed' ? '#FB5D5D' : 'rgba(255,255,255,0.12)'));
+          const statusStyle = `background:${statusBg};color:#1E1E21;border-color:transparent;vertical-align:middle;`;
+          const pinned = !!r.is_pinned;
+          const createdFmt = formatCreated(r.created_at);
+          card.innerHTML = `
+            <div class=\"flex items-start justify-between gap-2\">
+              <div class=\"min-w-0\">
+                <div class=\"text-xl font-semibold break-words\">${r.report_name}</div>
+              </div>
+              <div class=\"flex items-center gap-2\">
+                <button data-action=\"pin\" class=\"w-8 h-8 grid place-items-center rounded-full border border-white/10 bg-[#1E1E21] text-white/80 hover:bg-white/10\" title=\"Favorite\">
+                  <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\"><path d=\"M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z\"/></svg>
+                </button>
+                <button data-action=\"delete\" class=\"w-8 h-8 grid place-items-center rounded-full border border-white/10 bg-[#1E1E21] text-white/80 hover:bg-white/10\" title=\"Delete\">
+                  <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6\"/><path d=\"M10 11v6\"/><path d=\"M14 11v6\"/><path d=\"M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2\"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class=\"mt-3 text-sm\">
+              <span class=\"text-white/60\">Startup Name:</span>
+              <span class=\"text-white truncate inline-block align-bottom max-w-full\" title=\"${r.startup_name}\">${r.startup_name}</span>
+            </div>
+            <div class=\"mt-2 text-sm\">
+              <span class=\"text-white/60\">Founder:</span>
+              <span class=\"text-white truncate inline-block align-bottom max-w-full\" title=\"${r.founder_name}\">${r.founder_name}</span>
+            </div>
+            <div class=\"mt-2 text-sm\">
+              <span class=\"text-white/60\">Files Uploaded:</span>
+              <span class=\"text-white\">${r.file_count ?? r.total_files ?? 0}</span>
+            </div>
+            <div class=\"mt-2 text-sm\">
+              <span class=\"text-white/60\">Created:</span>
+              <span class=\"text-white truncate inline-block align-bottom max-w-full\" title=\"${r.created_at}\">${createdFmt}</span>
+            </div>
+            <div class=\"mt-2 text-sm\">
+              <span class=\"text-white/60\">Status:</span>
+              <span class=\"status-chip text-xs px-2 py-1 rounded-full border whitespace-nowrap inline-block\" style=\"${statusStyle}\">${r.status}</span>
+            </div>
+            <div class=\"mt-7 flex justify-center\">
+              <a data-role=\"view\" href=\"/report.html?report_id=${encodeURIComponent(r.report_id)}\" class=\"inline-block px-5 py-2 rounded-full bg-[#FFF27A] text-black font-semibold border border-white/15 btn-shine\">View Report</a>
+            </div>
+          `;
+
+          // Pin/delete/view state and handlers
+          const pinBtn = card.querySelector('[data-action="pin"]');
+          const delBtn = card.querySelector('[data-action="delete"]');
+          const viewBtn = card.querySelector('[data-role="view"]');
+          if (pinned) {
+            pinBtn.classList.remove('bg-[#1E1E21]','text-white/80');
+            pinBtn.classList.add('bg-[#FFF27A]','text-[#1E1E21]');
+          }
+          if (status === 'failed') {
+            // disable pin and view, allow delete
+            pinBtn.classList.add('opacity-40','pointer-events-none');
+            if (viewBtn) { viewBtn.classList.add('opacity-40','pointer-events-none'); viewBtn.setAttribute('tabindex','-1'); }
+          } else {
+            pinBtn.addEventListener('click', async (e)=>{
+              e.preventDefault();
+              try { await fetch(`/api/reports/${r.report_id}/pin`, { method:'PATCH', credentials:'include' }); } catch(_) {}
+              loadReports();
+            });
+          }
+          delBtn.addEventListener('click', async (e)=>{
+            e.preventDefault();
+            if (!confirm('Delete this report?')) return;
+            try { await fetch(`/api/reports/${r.report_id}`, { method:'DELETE', credentials:'include' }); } catch(_) {}
+            loadReports();
+          });
+
+          grid.appendChild(card);
+        });
+      }
+      loadReports().catch(()=>{});
+    </script>
+    
+    <!-- Circular Footer with Heart Icon -->
+    <footer class="fixed bottom-4 right-4 z-50">
+      <!-- Expanded Footer Content (Hidden by default) -->
+      <div class="footer-expanded bg-[#2E3137] border border-white/10 rounded-[22px] px-4 py-3 mb-2 opacity-0 transform translate-y-2 pointer-events-none transition-all duration-300 ease-out">
+        <div class="flex items-center justify-center gap-2 text-sm text-white/80 whitespace-nowrap overflow-x-auto">
+          <span>Created with</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="#ef4444"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <span>by</span>
+          <a href="https://amanulla.in/" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Aman Ulla</a>
+          <span>,</span>
+          <a href="#" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Srinivas Alva</a>
+          <span class="text-white/40">|</span>
+          <a href="https://vision.hack2skill.com/event/genaiexchangehackathon/?utm_source=hack2skill&utm_medium=homepage#overview" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors">Hack2Skill‑Google Hackathon</a>
+          <span class="text-white/40">|</span>
+          <div class="flex items-center gap-2">
+            <a href="https://github.com/connectaman/PitchLense" target="_blank" rel="noopener noreferrer" title="GitHub" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.52 2.87 8.35 6.84 9.71.5.09.68-.22.68-.49 0-.24-.01-.87-.01-1.7-2.78.62-3.37-1.37-3.37-1.37-.46-1.2-1.13-1.52-1.13-1.52-.92-.65.07-.64.07-.64 1.02.07 1.56 1.06 1.56 1.06.9 1.58 2.36 1.12 2.94.86.09-.67.35-1.12.63-1.38-2.22-.26-4.56-1.14-4.56-5.08 0-1.12.39-2.04 1.04-2.76-.1-.26-.45-1.32.1-2.75 0 0 .84-.27 2.76 1.05.8-.23 1.66-.35 2.52-.35s1.72.12 2.52.35c1.92-1.32 2.76-1.05 2.76-1.05.55 1.43.2 2.49.1 2.75.65.72 1.04 1.64 1.04 2.76 0 3.95-2.34 4.82-4.57 5.07.36.31.68.93.68 1.88 0 1.35-.01 2.45-.01 2.78 0 .27.18.58.69.48A10.03 10.03 0 0 0 22 12.26C22 6.58 17.52 2 12 2Z"/></svg>
+            </a>
+            <a href="https://pypi.org/project/pitchlense-mcp/" target="_blank" rel="noopener noreferrer" title="PyPI" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3a4 4 0 0 1 4 4v3a2 2 0 0 1-2 2H8a4 4 0 0 1-4-4V5a2 2 0 0 1 2-2h6Zm-2 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm2 14a4 4 0 0 1-4-4v-3a2 2 0 0 1 2-2h6a4 4 0 0 1 4 4v3a2 2 0 0 1-2 2h-6Zm2-4a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>
+            </a>
+            <a href="https://pitchlense-mcp.readthedocs.io/en/latest/" target="_blank" rel="noopener noreferrer" title="Read the Docs" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5 3h12a2 2 0 0 1 2 2v14l-3-2-3 2-3-2-3 2-3-2V5a2 2 0 0 1 2-2Zm2 4v2h8V7H7Zm0 4v2h8v-2H7Z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Circular Heart Icon Button -->
+      <div class="footer-circle w-12 h-12 bg-[#2E3137] border border-white/10 rounded-full flex items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-all duration-300 ease-out shadow-lg hover:shadow-xl">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#ef4444" class="transition-transform duration-300 ease-out">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
+        </svg>
+      </div>
+    </footer>
+  </body>
+</html>

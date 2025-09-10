@@ -1,0 +1,1589 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PitchLense — Report</title>
+    <script>tailwind=config={};</script>
+    <script>
+      tailwind.config = { theme: { extend: { colors: { background:'#1E1E21', surface:'#2E3137', text:'#ffffff', secondary:'#cfd4dd', accent:'#f1d85b' }}}}
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  </head>
+  <body class="bg-background text-text font-sans antialiased overflow-hidden bg-solid h-screen">
+    <!-- Page Level Loader -->
+    <div id="pageLoader" class="fixed inset-0 bg-background flex items-center justify-center z-50">
+      <div class="flex flex-col items-center gap-6">
+        <div class="relative">
+          <!-- Outer ring -->
+          <div class="w-16 h-16 border-4 border-accent/20 border-t-accent rounded-full animate-spin"></div>
+          <!-- Inner ring -->
+          <div class="absolute inset-2 w-12 h-12 border-4 border-transparent border-t-accent/60 rounded-full animate-spin" style="animation-delay: 0.15s; animation-duration: 0.8s;"></div>
+          <!-- Center dot -->
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div class="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+          </div>
+        </div>
+        <div class="text-center">
+          <div class="text-lg font-semibold text-white mb-2">Loading Report</div>
+          <div class="text-sm text-secondary">Fetching your report data...</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="app" class="h-screen flex flex-col p-3 gap-3 hidden overflow-hidden">
+      <header class="h-16 bg-[#2E3137] border border-white/10 rounded-[22px] flex items-center justify-between px-6">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-accent grid place-items-center"><img src="/static/logo.svg" class="w-5 h-5"/></div>
+          <div class="text-base font-semibold">PitchLense</div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div id="searchWrap" class="flex items-center gap-2">
+            <button id="searchBtn" class="w-9 h-9 grid place-items-center rounded-full bg-[#FFF27A] border border-white/10 text-[#1E1E21]">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="7"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </button>
+            <input id="searchInput" type="text" placeholder="Search" class="h-9 w-0 opacity-0 px-0 bg-[#1E1E21] border border-white/10 rounded-full text-sm text-white/80 outline-none transition-all duration-200" />
+          </div>
+          <div class="w-9 h-9 rounded-full border border-white/10 bg-[#FFF27A] grid place-items-center text-[#1E1E21]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.31 0-6 2.69-6 6h12c0-3.31-2.69-6-6-6Z"/>
+            </svg>
+          </div>
+        </div>
+      </header>
+      
+      <div class="grid flex-1 min-h-0 overflow-hidden" style="grid-template-columns: 84px 1fr; gap:12px;">
+      <aside class="bg-[#2C2F34] border border-white/10 rounded-[18px] flex flex-col items-center py-4 gap-3 h-full">
+        <nav class="flex flex-col gap-2 text-white/80 w-full items-center">
+          <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10" href="/create-report.html" title="Create">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </a>
+          <a class="w-10 h-10 grid place-items-center rounded-lg bg-white/10 hover:bg-white/10" href="/view-report.html" title="Report">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <line x1="9" y1="17" x2="9" y2="11"/>
+              <line x1="13" y1="17" x2="13" y2="7"/>
+              <line x1="17" y1="17" x2="17" y2="13"/>
+            </svg>
+          </a>
+        </nav>
+        <div class="flex-1"></div>
+        <button id="signoutBtn" class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 text-white/80" title="Sign out">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </button>
+      </aside>
+      <main class="h-full flex flex-col overflow-hidden">
+        <!-- Secondary Navigation Bar -->
+        <nav class="bg-[#2E3137] border border-white/10 rounded-[18px] mx-2 mb-3 flex-shrink-0">
+          <div class="flex items-center px-6 py-3">
+            <button id="overallAnalysisTab" class="tab-button active px-4 py-2 text-sm font-medium rounded-lg transition-colors" data-tab="overall">
+              Overall Analysis
+            </button>
+            <button id="detailedAnalysisTab" class="tab-button px-4 py-2 text-sm font-medium rounded-lg transition-colors ml-2" data-tab="detailed">
+              Detailed Analysis
+            </button>
+            <button id="uploadedFilesTab" class="tab-button px-4 py-2 text-sm font-medium rounded-lg transition-colors ml-2" data-tab="files">
+              Uploaded Files
+            </button>
+            <button id="documentationTab" class="tab-button px-4 py-2 text-sm font-medium rounded-lg transition-colors ml-auto flex items-center gap-2" data-tab="documentation">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              Documentation
+            </button>
+          </div>
+        </nav>
+        
+        <!-- Tab Content Container -->
+        <div class="flex-1 min-h-0 overflow-hidden">
+          <!-- Overall Analysis Tab (Default) -->
+          <div id="overallAnalysisContent" class="tab-content active overall-analysis h-full overflow-y-auto">
+            <section class="p-2 grid gap-3 items-start grid-cols-[2fr_1fr]">
+          <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div class="card p-0">
+                <div class="rounded-xl border border-white/10 relative overflow-hidden" style="height:320px">
+                  <canvas id="radarChart" style="width:100%;height:100%;display:block;position:absolute;top:0;left:0;z-index:1"></canvas>
+                </div>
+              </div>
+              <div class="card p-0">
+                <div class="rounded-xl border border-white/10 relative overflow-hidden" style="height:320px">
+                  <canvas id="marketValueChart" style="width:100%;height:100%;display:block;position:absolute;top:0;left:0;z-index:1;height:100%"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="card p-4">
+                <div class="text-sm mb-3">Startup Analysis</div>
+                <div class="max-h-80 overflow-y-auto">
+                  <ul id="startupAnalysisList" class="divide-y divide-white/10">
+                    <!-- Startup analysis items will be populated here -->
+                </ul>
+                    </div>
+              </div>
+              <div class="card p-4">
+                <div class="flex items-center justify-between">
+                  <div class="text-sm">Growth Potential</div>
+                  <div class="relative">
+                    <button class="px-3 py-1 pill bg-[#1E1E21] border border-white/10 text-white/70 text-sm" id="growthPotentialInfo">i</button>
+                    <!-- Tooltip -->
+                    <div id="growthPotentialTooltip" class="absolute bottom-full right-0 mb-2 w-80 bg-[#2E3137] border border-white/10 rounded-lg p-4 opacity-0 pointer-events-none transition-all duration-200 z-50">
+                      <div class="text-xs text-white/80 mb-2 font-semibold">Growth Potential Calculation</div>
+                      <div class="space-y-1 text-xs" id="growthPotentialTooltipContent">
+                        <!-- Dynamic content will be populated here -->
+                      </div>
+                    </div>
+              </div>
+                </div>
+                <div class="mt-2" style="height:220px"><canvas id="growthPotentialChart" style="width:100%;height:100%;display:block"></canvas></div>
+                <div class="mt-3 flex items-center justify-center text-xs">
+                  <span class="flex items-center gap-2"><i class="inline-block w-2.5 h-2.5 rounded-full" id="growthPotentialLegend" style="background:#FFF27A"></i> Growth Potential: <span id="growthPotentialScore" class="font-semibold">6.4/10</span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <!-- <div class="card p-4">
+              <div class="text-sm mb-3">Your cards</div>
+              <div class="rounded-xl p-4" style="background:linear-gradient(135deg,#6b70ff,#b286ff)">
+                <div class="text-xs">National WBank</div>
+                <div class="mt-6 text-lg tracking-widest">1253 5432 3521 3090</div>
+                <div class="mt-2 text-xs">Exp 09/24</div>
+              </div>
+            </div> -->
+            <div class="card p-4">
+              <div class="text-sm mb-2">Market Share</div>
+              <div id="marketShareContainer">
+                <!-- Market share data will be populated here -->
+                    </div>
+                  </div>
+            <div class="card p-4 flex flex-col">
+              <div class="text-sm mb-2">Industry News</div>
+              <div class="flex-1 overflow-y-auto max-h-[500px]">
+                <!-- Loading State -->
+                <div id="newsLoader" class="flex items-center justify-center py-8">
+                  <div class="flex flex-col items-center gap-3">
+                    <div class="relative">
+                      <div class="w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full animate-spin"></div>
+                      <div class="absolute inset-0 w-8 h-8 border-2 border-transparent border-t-accent/60 rounded-full animate-spin" style="animation-delay: 0.15s; animation-duration: 0.8s;"></div>
+                    </div>
+                    <div class="text-xs text-secondary">Loading news...</div>
+                  </div>
+                    </div>
+                <!-- News Content -->
+                <ul id="newsList" class="space-y-3 hidden">
+                  <!-- News items will be populated here -->
+              </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+          </div>
+          
+          <!-- Detailed Analysis Tab -->
+          <div id="detailedAnalysisContent" class="tab-content hidden h-full overflow-hidden">
+            <section class="p-2 h-full">
+              <div class="flex h-full gap-4">
+                <!-- Left Sidebar - Analysis Types (20%) -->
+                <div class="w-1/5 h-full">
+                  <div class="card p-4 h-full flex flex-col">
+                    <h3 class="text-sm font-semibold mb-4 text-white flex-shrink-0">Analysis Types</h3>
+                    <div id="analysisTypesList" class="space-y-2 flex-1 overflow-y-auto">
+                      <!-- Analysis types will be populated here -->
+            </div>
+                    </div>
+                  </div>
+                
+                <!-- Right Content Area (80%) -->
+                <div class="w-4/5 h-full">
+                  <div class="card p-6 h-full flex flex-col">
+                    <div id="detailedAnalysisContentArea" class="flex-1 overflow-y-auto">
+                      <!-- Content will be populated here -->
+                    </div>
+                  </div>
+                    </div>
+                  </div>
+            </section>
+          </div>
+          
+          <!-- Uploaded Files Tab -->
+          <div id="uploadedFilesContent" class="tab-content hidden h-full overflow-hidden">
+            <section class="p-2 h-full">
+              <div class="flex h-full gap-4">
+                <!-- Left Sidebar - File Names (20%) -->
+                <div class="w-1/5 h-full">
+                  <div class="card p-4 h-full flex flex-col">
+                    <h3 class="text-sm font-semibold mb-4 text-white flex-shrink-0">Uploaded Files</h3>
+                    <div id="uploadedFilesList" class="space-y-2 flex-1 overflow-y-auto">
+                      <!-- File names will be populated here -->
+                    </div>
+                    </div>
+                  </div>
+                
+                <!-- Right Content Area (80%) -->
+                <div class="w-4/5 h-full">
+                  <div class="card p-6 h-full flex flex-col">
+                    <div id="uploadedFileContentArea" class="flex-1 overflow-y-auto">
+                      <!-- File content will be populated here -->
+            </div>
+              </div>
+            </div>
+          </div>
+        </section>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Documentation Modal -->
+    <div id="documentationModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden">
+      <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-[#2E3137] border border-white/10 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+          <!-- Modal Header -->
+          <div class="flex items-center justify-between p-6 border-b border-white/10">
+            <h2 class="text-xl font-semibold text-white flex items-center gap-2">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              PitchLense Documentation
+            </h2>
+            <button id="closeDocumentation" class="text-white/60 hover:text-white transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Modal Content -->
+          <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+            <div class="space-y-6">
+              <!-- Overview Section -->
+              <div>
+                <h3 class="text-lg font-semibold text-white mb-3">Overview</h3>
+                <p class="text-white/80 text-sm leading-relaxed">
+                  PitchLense is an AI-powered startup analysis platform that provides comprehensive risk assessment and growth potential evaluation for early-stage ventures. Our platform analyzes multiple dimensions of startup risk and provides actionable insights for investors, founders, and stakeholders.
+                </p>
+              </div>
+
+              <!-- Features Section -->
+              <div>
+                <h3 class="text-lg font-semibold text-white mb-3">Key Features</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-2">Overall Analysis</h4>
+                    <p class="text-white/70 text-sm">Comprehensive dashboard showing market value trends, risk analysis, growth potential, and startup metrics.</p>
+                  </div>
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-2">Detailed Analysis</h4>
+                    <p class="text-white/70 text-sm">In-depth risk assessment across 9 key dimensions including market, team, product, and financial risks.</p>
+                  </div>
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-2">Uploaded Files</h4>
+                    <p class="text-white/70 text-sm">View and analyze uploaded documents including pitch decks, founder profiles, and business plans.</p>
+                  </div>
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-2">Industry News</h4>
+                    <p class="text-white/70 text-sm">Stay updated with the latest industry news and market trends relevant to your analysis.</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Risk Analysis Section -->
+              <div>
+                <h3 class="text-lg font-semibold text-white mb-3">Risk Analysis Framework</h3>
+                <div class="space-y-3">
+                  <div class="flex items-start gap-3">
+                    <div class="w-2 h-2 rounded-full bg-[#FB5D5D] mt-2 flex-shrink-0"></div>
+                    <div>
+                      <h4 class="text-white font-medium">High Risk (7-10)</h4>
+                      <p class="text-white/70 text-sm">Critical areas requiring immediate attention and mitigation strategies.</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <div class="w-2 h-2 rounded-full bg-[#FFF27A] mt-2 flex-shrink-0"></div>
+                    <div>
+                      <h4 class="text-white font-medium">Medium Risk (5-6)</h4>
+                      <p class="text-white/70 text-sm">Areas that need monitoring and potential improvement over time.</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <div class="w-2 h-2 rounded-full bg-[#10B981] mt-2 flex-shrink-0"></div>
+                    <div>
+                      <h4 class="text-white font-medium">Low Risk (1-4)</h4>
+                      <p class="text-white/70 text-sm">Strong areas that represent competitive advantages.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Growth Potential Section -->
+              <div>
+                <h3 class="text-lg font-semibold text-white mb-3">Growth Potential Calculation</h3>
+                <p class="text-white/80 text-sm leading-relaxed mb-3">
+                  Our growth potential score is calculated using a weighted formula that considers key startup dimensions:
+                </p>
+                <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                  <div class="text-sm text-white/80 font-mono">
+                    Growth Score = ∑(Dimension Score × Weightage)
+                  </div>
+                  <div class="mt-3 space-y-1 text-sm">
+                    <div class="flex justify-between">
+                      <span class="text-white/60">Market Potential</span>
+                      <span class="text-white">30%</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-white/60">Product Strength</span>
+                      <span class="text-white">10%</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-white/60">Team Quality</span>
+                      <span class="text-white">20%</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-white/60">Financial Health</span>
+                      <span class="text-white">10%</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-white/60">Traction & Growth</span>
+                      <span class="text-white">30%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Getting Started Section -->
+              <div>
+                <h3 class="text-lg font-semibold text-white mb-3">Getting Started</h3>
+                <div class="space-y-3">
+                  <div class="flex items-start gap-3">
+                    <div class="w-6 h-6 rounded-full bg-[#FFF27A] text-[#1E1E21] flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
+                    <div>
+                      <h4 class="text-white font-medium">Upload Documents</h4>
+                      <p class="text-white/70 text-sm">Upload your pitch deck, founder profile, and other relevant documents for analysis.</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <div class="w-6 h-6 rounded-full bg-[#FFF27A] text-[#1E1E21] flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
+                    <div>
+                      <h4 class="text-white font-medium">Review Analysis</h4>
+                      <p class="text-white/70 text-sm">Examine the overall analysis dashboard for key insights and risk assessments.</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <div class="w-6 h-6 rounded-full bg-[#FFF27A] text-[#1E1E21] flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
+                    <div>
+                      <h4 class="text-white font-medium">Deep Dive</h4>
+                      <p class="text-white/70 text-sm">Use the detailed analysis section to explore specific risk dimensions and recommendations.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Support Section -->
+              <div>
+                <h3 class="text-lg font-semibold text-white mb-3">Support & Resources</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-2">Documentation</h4>
+                    <p class="text-white/70 text-sm mb-2">Comprehensive guides and API documentation.</p>
+                    <a href="#" class="text-[#FFF27A] text-sm hover:underline">View Documentation →</a>
+                  </div>
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-2">Community</h4>
+                    <p class="text-white/70 text-sm mb-2">Join our community for support and discussions.</p>
+                    <a href="#" class="text-[#FFF27A] text-sm hover:underline">Join Community →</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+      <!-- Circular Footer with Heart Icon -->
+      <footer class="fixed bottom-4 right-4 z-50">
+        <!-- Expanded Footer Content (Hidden by default) -->
+        <div class="footer-expanded bg-[#2E3137] border border-white/10 rounded-[22px] px-4 py-3 mb-2 opacity-0 transform translate-y-2 pointer-events-none transition-all duration-300 ease-out">
+        <div class="flex items-center justify-center gap-2 text-sm text-white/80 whitespace-nowrap overflow-x-auto">
+          <span>Created with</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="#ef4444"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <span>by</span>
+          <a href="https://amanulla.in/" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Aman Ulla</a>
+          <span>,</span>
+          <a href="#" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Srinivas Alva</a>
+          <span class="text-white/40">|</span>
+          <a href="https://vision.hack2skill.com/event/genaiexchangehackathon/?utm_source=hack2skill&utm_medium=homepage#overview" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors">Hack2Skill‑Google Hackathon</a>
+          <span class="text-white/40">|</span>
+          <div class="flex items-center gap-2">
+            <a href="https://github.com/connectaman/PitchLense" target="_blank" rel="noopener noreferrer" title="GitHub" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.52 2.87 8.35 6.84 9.71.5.09.68-.22.68-.49 0-.24-.01-.87-.01-1.7-2.78.62-3.37-1.37-3.37-1.37-.46-1.2-1.13-1.52-1.13-1.52-.92-.65.07-.64.07-.64 1.02.07 1.56 1.06 1.56 1.06.9 1.58 2.36 1.12 2.94.86.09-.67.35-1.12.63-1.38-2.22-.26-4.56-1.14-4.56-5.08 0-1.12.39-2.04 1.04-2.76-.1-.26-.45-1.32.1-2.75 0 0 .84-.27 2.76 1.05.8-.23 1.66-.35 2.52-.35s1.72.12 2.52.35c1.92-1.32 2.76-1.05 2.76-1.05.55 1.43.2 2.49.1 2.75.65.72 1.04 1.64 1.04 2.76 0 3.95-2.34 4.82-4.57 5.07.36.31.68.93.68 1.88 0 1.35-.01 2.45-.01 2.78 0 .27.18.58.69.48A10.03 10.03 0 0 0 22 12.26C22 6.58 17.52 2 12 2Z"/></svg>
+            </a>
+            <a href="https://pypi.org/project/pitchlense-mcp/" target="_blank" rel="noopener noreferrer" title="PyPI" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3a4 4 0 0 1 4 4v3a2 2 0 0 1-2 2H8a4 4 0 0 1-4-4V5a2 2 0 0 1 2-2h6Zm-2 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm2 14a4 4 0 0 1-4-4v-3a2 2 0 0 1 2-2h6a4 4 0 0 1 4 4v3a2 2 0 0 1-2 2h-6Zm2-4a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>
+            </a>
+            <a href="https://pitchlense-mcp.readthedocs.io/en/latest/" target="_blank" rel="noopener noreferrer" title="Read the Docs" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5 3h12a2 2 0 0 1 2 2v14l-3-2-3 2-3-2-3 2-3-2V5a2 2 0 0 1 2-2Zm2 4v2h8V7H7Zm0 4v2h8v-2H7Z"/></svg>
+            </a>
+          </div>
+          </div>
+        </div>
+        
+        <!-- Circular Heart Icon Button -->
+        <div class="footer-circle w-12 h-12 bg-[#2E3137] border border-white/10 rounded-full flex items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-all duration-300 ease-out shadow-lg hover:shadow-xl">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#ef4444" class="transition-transform duration-300 ease-out">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      // Global variables
+      let reportData = null;
+
+      // Tab functionality
+      function initializeTabs() {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(button => {
+          button.addEventListener('click', () => {
+            const targetTab = button.getAttribute('data-tab');
+            
+            // Handle documentation tab separately
+            if (targetTab === 'documentation') {
+              openDocumentationModal();
+              return;
+            }
+            
+            // Remove active class from all buttons and contents
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.add('hidden'));
+            
+            // Add active class to clicked button
+            button.classList.add('active');
+            
+            // Show corresponding content
+            let targetContent;
+            if (targetTab === 'files') {
+              targetContent = document.getElementById('uploadedFilesContent');
+            } else {
+              targetContent = document.getElementById(`${targetTab}AnalysisContent`);
+            }
+            if (targetContent) {
+              targetContent.classList.remove('hidden');
+            }
+          });
+        });
+      }
+
+      // Open documentation modal
+      function openDocumentationModal() {
+        const modal = document.getElementById('documentationModal');
+        if (modal) {
+          modal.classList.remove('hidden');
+          document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+      }
+
+      // Close documentation modal
+      function closeDocumentationModal() {
+        const modal = document.getElementById('documentationModal');
+        if (modal) {
+          modal.classList.add('hidden');
+          document.body.style.overflow = ''; // Restore scrolling
+        }
+      }
+
+      // Initialize documentation modal
+      function initializeDocumentationModal() {
+        const documentationBtn = document.getElementById('documentationTab');
+        const closeBtn = document.getElementById('closeDocumentation');
+        const modal = document.getElementById('documentationModal');
+        
+        if (documentationBtn) {
+          documentationBtn.addEventListener('click', openDocumentationModal);
+        }
+        
+        if (closeBtn) {
+          closeBtn.addEventListener('click', closeDocumentationModal);
+        }
+        
+        if (modal) {
+          // Close modal when clicking outside
+          modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+              closeDocumentationModal();
+            }
+          });
+          
+          // Close modal with Escape key
+          document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+              closeDocumentationModal();
+            }
+          });
+        }
+      }
+
+      // Page loader functions
+      function showPageLoader() {
+        const loader = document.getElementById('pageLoader');
+        if (loader) loader.classList.remove('hidden');
+      }
+
+      function hidePageLoader() {
+        const loader = document.getElementById('pageLoader');
+        const app = document.getElementById('app');
+        if (loader) loader.classList.add('hidden');
+        if (app) app.classList.remove('hidden');
+      }
+
+      // Get report ID from URL
+      function getReportIdFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('report_id');
+      }
+
+      // Format date for news items
+      function formatNewsDate(dateString) {
+        try {
+          const date = new Date(dateString);
+          return date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        } catch {
+          return dateString;
+        }
+      }
+
+      // Show loading state
+      function showNewsLoader() {
+        const loader = document.getElementById('newsLoader');
+        const newsList = document.getElementById('newsList');
+        if (loader) loader.classList.remove('hidden');
+        if (newsList) newsList.classList.add('hidden');
+      }
+
+      // Hide loading state
+      function hideNewsLoader() {
+        const loader = document.getElementById('newsLoader');
+        const newsList = document.getElementById('newsList');
+        if (loader) loader.classList.add('hidden');
+        if (newsList) newsList.classList.remove('hidden');
+      }
+
+      // Populate market share section
+      function populateMarketShare(marketSizeData) {
+        const marketShareContainer = document.getElementById('marketShareContainer');
+        if (!marketSizeData || !Array.isArray(marketSizeData) || marketSizeData.length === 0) {
+          marketShareContainer.innerHTML = '<div class="text-sm text-secondary text-center py-4">No market data available</div>';
+          return;
+        }
+
+        marketShareContainer.innerHTML = marketSizeData.map((segment, index) => {
+          const colors = ['#f1d85b', '#78e6d0', '#ff6b6b', '#9a8cff', '#60a5fa'];
+          const color = colors[index % colors.length];
+          
+          return `
+            <div class="mb-3 last:mb-0">
+              <div class="flex items-center justify-between text-xs text-secondary mb-1">
+                <span>${segment.segment}</span>
+                <span>${segment.share_percent}%</span>
+              </div>
+              <div class="progress">
+                <span style="width:${segment.share_percent}%; background-color:${color};"></span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Create radar chart
+      function createRadarChart(radarData) {
+        const canvas = document.getElementById('radarChart');
+        if (!canvas || !radarData || !radarData.dimensions || !radarData.scores) {
+          return;
+        }
+
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        const ctx = canvas.getContext('2d');
+
+        // Create base connected radar chart with DCDCDD fill
+        const baseDataset = {
+          label: 'Risk Analysis',
+          data: radarData.scores,
+          backgroundColor: 'rgba(220, 220, 221, 0.3)',
+          borderColor: '#DCDCDD',
+          borderWidth: 2,
+          pointBackgroundColor: 'transparent',
+          pointBorderColor: 'transparent',
+          pointBorderWidth: 0,
+          pointRadius: 0
+        };
+
+        // Create color-coded datasets for individual risk points
+        const colorCodedDatasets = radarData.scores.map((score, index) => {
+          let color;
+          if (score <= 4) {
+            color = '#4ade80'; // Green
+          } else if (score <= 6) {
+            color = '#f1d85b'; // Yellow
+          } else {
+            color = '#FB5D5D'; // Red
+          }
+          
+          return {
+            label: radarData.dimensions[index],
+            data: Array(radarData.dimensions.length).fill(0).map((_, i) => i === index ? score : 0),
+            backgroundColor: 'transparent',
+            borderColor: 'transparent',
+            borderWidth: 0,
+            pointBackgroundColor: color,
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointRadius: 5
+          };
+        });
+
+        // Combine base and color-coded datasets
+        const datasets = [baseDataset, ...colorCodedDatasets];
+
+        new Chart(ctx, {
+          type: 'radar',
+          data: {
+            labels: radarData.dimensions,
+            datasets: datasets
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+              padding: 0
+            },
+            animation: {
+              duration: 2500,
+              easing: 'easeOutQuart',
+              delay: function(context) {
+                if (context.type === 'data' && context.mode === 'default') {
+                  return context.dataIndex * 200; // Staggered animation for each dataset
+                }
+                return 0;
+              }
+            },
+            plugins: {
+              tooltip: {
+                enabled: true,
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                titleColor: '#ffffff',
+                bodyColor: '#ffffff',
+                borderColor: 'rgba(255,255,255,0.2)',
+                borderWidth: 1,
+                cornerRadius: 8,
+                callbacks: {
+                  label: function(context) {
+                    return `${context.dataset.label}: ${context.parsed.r}/${radarData.scale}`;
+                  }
+                }
+              },
+              legend: {
+                display: true,
+                position: 'bottom',
+                labels: {
+                  color: 'rgba(255,255,255,0.8)',
+                  font: {
+                    size: 11
+                  },
+                  generateLabels: function(chart) {
+                    return [
+                      {
+                        text: 'Risk Profile',
+                        fillStyle: '#DCDCDD',
+                        strokeStyle: '#DCDCDD',
+                        lineWidth: 2,
+                        pointStyle: 'circle',
+                        hidden: false,
+                        index: 0
+                      },
+                      {
+                        text: 'Low Risk (1-4)',
+                        fillStyle: '#4ade80',
+                        strokeStyle: '#4ade80',
+                        lineWidth: 2,
+                        pointStyle: 'circle',
+                        hidden: false,
+                        index: 1
+                      },
+                      {
+                        text: 'Medium Risk (5-6)',
+                        fillStyle: '#f1d85b',
+                        strokeStyle: '#f1d85b',
+                        lineWidth: 2,
+                        pointStyle: 'circle',
+                        hidden: false,
+                        index: 2
+                      },
+                      {
+                        text: 'High Risk (7-10)',
+                        fillStyle: '#FB5D5D',
+                        strokeStyle: '#FB5D5D',
+                        lineWidth: 2,
+                        pointStyle: 'circle',
+                        hidden: false,
+                        index: 3
+                      }
+                    ];
+                  }
+                }
+              }
+            },
+            scales: {
+              r: {
+                beginAtZero: true,
+                max: radarData.scale,
+                min: 0,
+                ticks: {
+                  stepSize: 2,
+                  color: '#ffffff',
+                  font: {
+                    size: 12,
+                    weight: 'bold'
+                  },
+                  backdropColor: 'rgba(0,0,0,0.8)',
+                  backdropPadding: 4
+                },
+                grid: {
+                  color: 'rgba(255,255,255,0.1)'
+                },
+                angleLines: {
+                  color: 'rgba(255,255,255,0.1)'
+                },
+                pointLabels: {
+                  color: 'rgba(255,255,255,0.8)',
+                  font: {
+                    size: 10
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // Calculate growth potential score from startup analysis data
+      function calculateGrowthPotential(analyses) {
+        if (!analyses) return { score: 0, breakdown: [] };
+        
+        // Define the weightage mapping for Overall Analysis dimensions only
+        const weightageMap = {
+          'Market Potential': 0.30,    // Market Risk Analysis -> Market Potential
+          'Product Strength': 0.10,    // Product Risk Analysis -> Product Strength  
+          'Team Quality': 0.20,        // Team Risk Analysis -> Team Quality
+          'Financial Health': 0.10,    // Financial Risk Analysis -> Financial Health
+          'Traction & Growth': 0.30    // Customer Risk Analysis -> Traction & Growth
+        };
+        
+        // Map API category names to Overall Analysis dimension names
+        const categoryMapping = {
+          'Market Risks': 'Market Potential',
+          'Product Risks': 'Product Strength',
+          'Team & Founder Risks': 'Team Quality',
+          'Financial Risks': 'Financial Health',
+          'Customer & Traction Risks': 'Traction & Growth'
+        };
+        
+        let totalScore = 0;
+        const breakdown = [];
+        
+        // Convert analyses object to array and calculate weighted scores
+        Object.entries(analyses).forEach(([key, analysis]) => {
+          if (analysis.category_score !== undefined && analysis.category_score !== null) {
+            const apiCategoryName = analysis.category_name || key;
+            const dimensionName = categoryMapping[apiCategoryName];
+            
+            if (dimensionName && weightageMap[dimensionName]) {
+              const weightage = weightageMap[dimensionName];
+              
+              // Convert risk score to growth potential score (inverse relationship)
+              // Higher risk score (1-10) = Lower growth potential (1-10)
+              // Formula: growthScore = 11 - riskScore
+              const growthScore = Math.max(1, 11 - analysis.category_score);
+              const weightedScore = growthScore * weightage;
+              totalScore += weightedScore;
+              
+              breakdown.push({
+                dimension: dimensionName,
+                score: Math.round(growthScore * 10) / 10,
+                weightage: weightage * 100,
+                weightedScore: Math.round(weightedScore * 10) / 10
+              });
+            }
+          }
+        });
+        
+        return {
+          score: Math.round(totalScore * 10) / 10,
+          breakdown: breakdown
+        };
+      }
+
+      // Create growth potential donut chart
+      function createGrowthPotentialChart(score, maxScore = 10) {
+        const canvas = document.getElementById('growthPotentialChart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const percentage = (score / maxScore) * 100;
+        
+        // Destroy existing chart if it exists
+        if (window.growthPotentialChartInstance) {
+          window.growthPotentialChartInstance.destroy();
+        }
+        
+        // Determine color based on score ranges (1-10 scale)
+        let chartColor = '#FFF27A'; // Default yellow (3.5-6.5)
+        if (score >= 6.5) {
+          chartColor = '#10B981'; // Green for 6.5 and above
+        } else if (score < 3.5) {
+          chartColor = '#FB5D5D'; // Red for 1-3.5
+        }
+        
+        window.growthPotentialChartInstance = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            datasets: [{
+              data: [percentage, 100 - percentage],
+              backgroundColor: [chartColor, 'rgba(255,255,255,0.1)'],
+              borderWidth: 0,
+              cutout: '75%'
+            }]
+          },
+          options: {
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                enabled: false
+              }
+            },
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+              animateRotate: true,
+              duration: 1000,
+              easing: 'easeOutQuart'
+            }
+          }
+        });
+        
+        // Update the score display and legend color
+        const scoreElement = document.getElementById('growthPotentialScore');
+        const legendElement = document.getElementById('growthPotentialLegend');
+        if (scoreElement) {
+          scoreElement.textContent = `${score}/${maxScore}`;
+        }
+        if (legendElement) {
+          legendElement.style.background = chartColor;
+        }
+      }
+
+      // Update growth potential tooltip with dynamic data
+      function updateGrowthPotentialTooltip(breakdown) {
+        const tooltipContent = document.getElementById('growthPotentialTooltipContent');
+        if (!tooltipContent || !breakdown || breakdown.length === 0) return;
+        
+        const totalScore = breakdown.reduce((sum, item) => sum + item.weightedScore, 0);
+        
+        // Update the tooltip content with dynamic data
+        const content = `
+          <div class="text-xs text-white/70 mb-2 italic">Growth Score = ∑(Dimension Score × Weightage)</div>
+          ${breakdown.map(item => `
+            <div class="flex justify-between">
+              <span class="text-white/60">${item.dimension}</span>
+              <span class="text-white">${item.score} × ${item.weightage}% = ${item.weightedScore}</span>
+            </div>
+          `).join('')}
+          <div class="border-t border-white/10 pt-1 mt-2">
+            <div class="flex justify-between font-semibold">
+              <span class="text-white">Total Score</span>
+              <span class="text-[#f1d85b]">${Math.round(totalScore * 10) / 10} / 10</span>
+            </div>
+          </div>
+        `;
+        
+        tooltipContent.innerHTML = content;
+      }
+
+      // Initialize growth potential info button hover functionality
+      function initializeGrowthPotentialInfo() {
+        const infoButton = document.getElementById('growthPotentialInfo');
+        const tooltip = document.getElementById('growthPotentialTooltip');
+        
+        if (!infoButton || !tooltip) return;
+        
+        infoButton.addEventListener('mouseenter', () => {
+          tooltip.style.opacity = '1';
+          tooltip.style.pointerEvents = 'auto';
+        });
+        
+        infoButton.addEventListener('mouseleave', () => {
+          tooltip.style.opacity = '0';
+          tooltip.style.pointerEvents = 'none';
+        });
+      }
+
+
+      // Create market value chart
+      function createMarketValueChart(marketValueData) {
+        const canvas = document.getElementById('marketValueChart');
+        if (!canvas || !marketValueData || !Array.isArray(marketValueData) || marketValueData.length === 0) {
+          return;
+        }
+
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        const ctx = canvas.getContext('2d');
+
+        // Prepare data
+        const years = marketValueData.map(item => item.year.toString());
+        const values = marketValueData.map(item => item.value_usd_billion);
+        const maxValue = Math.max(...values);
+        
+        // Create colors array - yellow for current year and before, DCDCDD for future years
+        const currentYear = new Date().getFullYear();
+        const barColors = values.map((value, index) => {
+          const year = marketValueData[index].year;
+          return year <= currentYear ? '#f1d85b' : '#DCDCDD';
+        });
+
+        new Chart(ctx, {
+          type: 'bar',
+          data: { 
+            labels: years, 
+            datasets: [{ 
+              data: values, 
+              backgroundColor: barColors, 
+              borderRadius: 10, 
+              borderSkipped: false 
+            }]
+          },
+          options: {
+            responsive: true, 
+            maintainAspectRatio: false,
+            layout: {
+              padding: 0
+            },
+            animation: {
+              duration: 2000,
+              easing: 'easeOutQuart',
+              delay: function(context) {
+                return context.dataIndex * 100; // Staggered animation
+              }
+            },
+            plugins: { 
+              legend: { display: false }, 
+              tooltip: { 
+                enabled: true,
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                titleColor: '#ffffff',
+                bodyColor: '#ffffff',
+                borderColor: 'rgba(255,255,255,0.2)',
+                borderWidth: 1,
+                cornerRadius: 8,
+                callbacks: {
+                  title: function(context) {
+                    return `Year: ${context[0].label}`;
+                  },
+                  label: function(context) {
+                    return `Market Value: $${context.parsed.y.toFixed(1)}B`;
+                  }
+                }
+              } 
+            },
+            scales: {
+              x: { 
+                grid: { display: false }, 
+                ticks: { 
+                  color: 'rgba(255,255,255,0.6)',
+                  maxTicksLimit: years.length,
+                  font: {
+                    size: 10
+                  }
+                },
+                title: {
+                  display: true,
+                  text: 'Year',
+                  color: 'rgba(255,255,255,0.8)',
+                  font: {
+                    size: 12,
+                    weight: 'bold'
+                  }
+                }
+              },
+              y: { 
+                beginAtZero: true, 
+                max: Math.ceil(maxValue * 1.1), 
+                grid: { color: 'rgba(255,255,255,0.08)' }, 
+                ticks: { 
+                  callback: (v) => `$${v}B`, 
+                  color: 'rgba(255,255,255,0.6)' 
+                },
+                title: {
+                  display: true,
+                  text: 'Market Value (USD Billion)',
+                  color: 'rgba(255,255,255,0.8)',
+                  font: {
+                    size: 12,
+                    weight: 'bold'
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // Populate news section
+      function populateNews(newsData) {
+        const newsList = document.getElementById('newsList');
+        if (!newsData || !newsData.results || newsData.results.length === 0) {
+          newsList.innerHTML = '<li class="text-sm text-secondary text-center py-4">No news available</li>';
+          hideNewsLoader();
+          return;
+        }
+
+        // Show all news items
+        const newsItems = newsData.results;
+        newsList.innerHTML = newsItems.map(news => {
+          const title = news.title;
+          const source = news.source.name;
+          const date = formatNewsDate(news.date);
+          const sourceIcon = news.source.icon || '📰'; // Use source icon or fallback to news icon
+          const link = news.link || '#';
+          
+          return `
+            <li class="group">
+              <a href="${link}" target="_blank" rel="noopener noreferrer" class="flex items-start gap-2 text-sm hover:bg-white/5 rounded-lg p-2 transition-colors">
+                <div class="w-8 h-8 grid place-items-center rounded-lg bg-white/10 overflow-hidden flex-shrink-0">
+                  <img src="${sourceIcon}" alt="${source}" class="w-6 h-6 object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                  <span class="text-xs" style="display:none;">📰</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-white group-hover:text-accent transition-colors leading-tight">${title}</div>
+                  <div class="text-xs text-secondary mt-1">${source} • ${date}</div>
+                </div>
+                <div class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg class="w-4 h-4 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                  </svg>
+                </div>
+              </a>
+            </li>
+          `;
+        }).join('');
+        
+        hideNewsLoader();
+      }
+
+      // Fetch report data
+      async function fetchReportData() {
+        const reportId = getReportIdFromUrl();
+        if (!reportId) {
+          console.log('No report ID found in URL');
+          // Show content even without report ID
+          hidePageLoader();
+          return;
+        }
+
+        // Show news loader when starting API call
+        showNewsLoader();
+
+        try {
+          const response = await fetch(`/api/reports/${reportId}/data`, {
+            credentials: 'include'
+          });
+
+          if (response.status === 401) {
+            window.location.href = '/auth.html';
+            return;
+          }
+
+          if (!response.ok) {
+            console.log('Failed to fetch report data');
+            // Show error state
+            const newsList = document.getElementById('newsList');
+            if (newsList) {
+              newsList.innerHTML = '<li class="text-sm text-secondary text-center py-4">Failed to load news</li>';
+              hideNewsLoader();
+            }
+            hidePageLoader();
+            return;
+          }
+
+          const result = await response.json();
+          reportData = result;
+          
+          // Populate news if available
+          if (result.data && result.data.news) {
+            populateNews(result.data.news);
+          } else {
+            // No news data available
+            const newsList = document.getElementById('newsList');
+            if (newsList) {
+              newsList.innerHTML = '<li class="text-sm text-secondary text-center py-4">No news data available</li>';
+              hideNewsLoader();
+            }
+          }
+
+          // Populate market share if available
+          if (result.data && result.data.startup_analysis && result.data.startup_analysis.market_size) {
+            populateMarketShare(result.data.startup_analysis.market_size);
+          } else {
+            // No market share data available
+            const marketShareContainer = document.getElementById('marketShareContainer');
+            if (marketShareContainer) {
+              marketShareContainer.innerHTML = '<div class="text-sm text-secondary text-center py-4">No market data available</div>';
+            }
+          }
+
+          // Create market value chart if available
+          if (result.data && result.data.startup_analysis && result.data.startup_analysis.market_value) {
+            createMarketValueChart(result.data.startup_analysis.market_value);
+          }
+
+          // Create radar chart if available
+          if (result.data && result.data.startup_analysis && result.data.startup_analysis.radar_chart) {
+            createRadarChart(result.data.startup_analysis.radar_chart);
+          }
+
+          // Populate startup analysis data
+          if (result.data && result.data.startup_analysis && result.data.startup_analysis.analyses) {
+            populateStartupAnalysis(result.data.startup_analysis.analyses);
+            populateDetailedAnalysisTypes(result.data.startup_analysis.analyses);
+            
+            // Calculate and display growth potential
+            const growthPotential = calculateGrowthPotential(result.data.startup_analysis.analyses);
+            createGrowthPotentialChart(growthPotential.score);
+            updateGrowthPotentialTooltip(growthPotential.breakdown);
+          }
+
+          // Populate uploaded files data
+          if (result.data && result.data.files && Array.isArray(result.data.files)) {
+            populateUploadedFiles(result.data.files);
+          }
+
+          
+          // Hide page loader after successful data fetch
+          hidePageLoader();
+        } catch (error) {
+          console.error('Error fetching report data:', error);
+          // Show error state
+          const newsList = document.getElementById('newsList');
+          if (newsList) {
+            newsList.innerHTML = '<li class="text-sm text-secondary text-center py-4">Error loading news</li>';
+            hideNewsLoader();
+          }
+          hidePageLoader();
+        }
+      }
+
+      // Function to populate startup analysis data
+      function populateStartupAnalysis(analyses) {
+        const analysisList = document.getElementById('startupAnalysisList');
+        if (!analysisList || !analyses) {
+          return;
+        }
+
+        // Clear existing content
+        analysisList.innerHTML = '';
+
+        // Define colors for different risk levels
+        const getRiskColor = (riskLevel) => {
+          switch (riskLevel) {
+            case 'low': return '#4ade80'; // Green
+            case 'medium': return '#f1d85b'; // Yellow
+            case 'high': return '#ff6b6b'; // Red
+            case 'critical': return '#ef4444'; // Dark red
+            default: return '#9a8cff'; // Purple
+          }
+        };
+
+        // Convert analyses object to array, filter out undefined ratings, and sort by category score
+        const analysisArray = Object.entries(analyses)
+          .map(([key, analysis]) => ({
+            name: key,
+            ...analysis
+          }))
+          .filter(analysis => analysis.category_score !== undefined && analysis.category_score !== null)
+          .sort((a, b) => b.category_score - a.category_score);
+
+        // Create list items for each analysis
+        analysisArray.forEach(analysis => {
+          const percentage = (analysis.category_score / 10) * 100;
+          const color = getRiskColor(analysis.overall_risk_level);
+          
+          // Create main analysis item
+          const listItem = document.createElement('li');
+          listItem.className = 'py-3';
+          
+          // Main analysis header
+          const headerDiv = document.createElement('div');
+          headerDiv.className = 'flex items-center gap-3 mb-2';
+          headerDiv.innerHTML = `
+            <span class="relative inline-grid place-items-center w-10 h-10 rounded-full" style="background:conic-gradient(${color} 0 ${percentage}%, transparent ${percentage}% 100%);">
+              <span class="w-7 h-7 rounded-full bg-[#2E3137] grid place-items-center text-xs">${analysis.category_score}</span>
+            </span>
+            <div class="flex-1">
+              <div class="text-sm">${analysis.category_name}</div>
+              <div class="text-xs text-secondary">Risk: ${analysis.overall_risk_level}</div>
+            </div>
+            <div class="text-right text-xs">
+              <div class="text-secondary">Score</div>
+              <div class="text-white">${analysis.category_score}/10</div>
+            </div>
+          `;
+          
+          listItem.appendChild(headerDiv);
+          
+          // Add indicators if they exist
+          if (analysis.indicators && Array.isArray(analysis.indicators)) {
+            const indicatorsDiv = document.createElement('div');
+            indicatorsDiv.className = 'ml-13 space-y-1';
+            
+            analysis.indicators.forEach(indicator => {
+              if (indicator.score !== undefined && indicator.score !== null) {
+                const indicatorPercentage = (indicator.score / 10) * 100;
+                const indicatorColor = getRiskColor(indicator.risk_level);
+                
+                const indicatorItem = document.createElement('div');
+                indicatorItem.className = 'flex items-center gap-2 text-xs';
+                indicatorItem.innerHTML = `
+                  <span class="relative inline-grid place-items-center w-6 h-6 rounded-full" style="background:conic-gradient(${indicatorColor} 0 ${indicatorPercentage}%, transparent ${indicatorPercentage}% 100%);">
+                    <span class="w-4 h-4 rounded-full bg-[#2E3137] grid place-items-center text-xs" style="font-size: 8px;">${indicator.score}</span>
+                  </span>
+                  <div class="flex-1">
+                    <div class="text-xs text-white/80">${indicator.indicator}</div>
+                    <div class="text-xs text-white/50">${indicator.risk_level} (${indicator.score}/10)</div>
+                  </div>
+                `;
+                
+                indicatorsDiv.appendChild(indicatorItem);
+              }
+            });
+            
+            if (indicatorsDiv.children.length > 0) {
+              listItem.appendChild(indicatorsDiv);
+            }
+          }
+          
+          analysisList.appendChild(listItem);
+        });
+      }
+
+      // Function to populate detailed analysis types
+      function populateDetailedAnalysisTypes(analyses) {
+        const analysisTypesList = document.getElementById('analysisTypesList');
+        if (!analysisTypesList || !analyses) {
+          return;
+        }
+
+        // Clear existing content
+        analysisTypesList.innerHTML = '';
+
+        // Convert analyses object to array
+        const analysisArray = Object.entries(analyses).map(([key, analysis]) => ({
+          name: key,
+          ...analysis
+        }));
+
+        // Create analysis type buttons
+        analysisArray.forEach((analysis, index) => {
+          const button = document.createElement('button');
+          button.className = `analysis-type-btn w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 ${index === 0 ? 'active' : ''}`;
+          button.textContent = analysis.category_name;
+          button.setAttribute('data-analysis-key', analysis.name);
+          
+          button.addEventListener('click', () => {
+            // Remove active class from all buttons
+            document.querySelectorAll('.analysis-type-btn').forEach(btn => btn.classList.remove('active'));
+            // Add active class to clicked button
+            button.classList.add('active');
+            // Show detailed content
+            showDetailedAnalysisContent(analysis);
+          });
+          
+          analysisTypesList.appendChild(button);
+        });
+
+        // Show first analysis by default
+        if (analysisArray.length > 0) {
+          showDetailedAnalysisContent(analysisArray[0]);
+        }
+      }
+
+      // Function to show detailed analysis content
+      function showDetailedAnalysisContent(analysis) {
+        const contentArea = document.getElementById('detailedAnalysisContentArea');
+        if (!contentArea) {
+          return;
+        }
+
+        // Create content with animation
+        contentArea.style.opacity = '0';
+        contentArea.style.transform = 'translateX(20px)';
+        
+        setTimeout(() => {
+          contentArea.innerHTML = `
+            <div class="analysis-content">
+              <div class="flex items-center justify-between mb-6">
+                <div>
+                  <h2 class="text-xl font-semibold text-white mb-2">${analysis.category_name}</h2>
+                  <div class="flex items-center gap-4">
+                    <span class="px-3 py-1 rounded-full text-xs font-medium ${getRiskLevelClass(analysis.overall_risk_level)}">
+                      ${analysis.overall_risk_level.toUpperCase()} RISK
+                    </span>
+                    <span class="text-sm text-white/70">Score: ${analysis.category_score}/10</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="mb-6">
+                <h3 class="text-lg font-medium text-white mb-3">Summary</h3>
+                <p class="text-white/80 leading-relaxed">${analysis.summary}</p>
+              </div>
+              
+              <div class="mb-6">
+                <h3 class="text-lg font-medium text-white mb-4">Risk Indicators</h3>
+                <div class="space-y-4">
+                  ${analysis.indicators ? analysis.indicators.map(indicator => `
+                    <div class="indicator-card p-4 rounded-lg border border-white/10">
+                      <div class="flex items-start justify-between mb-3">
+                        <h4 class="font-medium text-white">${indicator.indicator}</h4>
+                        <div class="flex items-center gap-2">
+                          <span class="px-2 py-1 rounded text-xs font-medium ${getRiskLevelClass(indicator.risk_level)}">
+                            ${indicator.risk_level.toUpperCase()}
+                          </span>
+                          <span class="text-sm text-white/70">${indicator.score}/10</span>
+                        </div>
+                      </div>
+                      <p class="text-white/70 text-sm mb-3">${indicator.description}</p>
+                      <div class="recommendation p-3 bg-white/5 rounded border-l-4 border-accent">
+                        <p class="text-sm text-white/80"><strong>Recommendation:</strong> ${indicator.recommendation}</p>
+                      </div>
+                    </div>
+                  `).join('') : '<p class="text-white/70">No indicators available</p>'}
+                </div>
+              </div>
+            </div>
+          `;
+          
+          // Animate in
+          contentArea.style.transition = 'all 0.3s ease-out';
+          contentArea.style.opacity = '1';
+          contentArea.style.transform = 'translateX(0)';
+        }, 150);
+      }
+
+      // Helper function to get risk level CSS class
+      function getRiskLevelClass(riskLevel) {
+        switch (riskLevel) {
+          case 'low': return 'bg-green-500/20 text-green-400 border border-green-500/30';
+          case 'medium': return 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30';
+          case 'high': return 'bg-red-500/20 text-red-400 border border-red-500/30';
+          case 'critical': return 'bg-red-600/20 text-red-300 border border-red-600/30';
+          default: return 'bg-gray-500/20 text-gray-400 border border-gray-500/30';
+        }
+      }
+
+      // Function to populate uploaded files list
+      function populateUploadedFiles(files) {
+        const uploadedFilesList = document.getElementById('uploadedFilesList');
+        if (!uploadedFilesList || !files || !Array.isArray(files)) {
+          return;
+        }
+
+        // Clear existing content
+        uploadedFilesList.innerHTML = '';
+
+        // Check if files array is empty
+        if (files.length === 0) {
+          uploadedFilesList.innerHTML = '<p class="text-white/60 text-sm">No files uploaded yet</p>';
+          return;
+        }
+
+        // Create file buttons
+        files.forEach((file, index) => {
+          const button = document.createElement('button');
+          button.className = `file-btn w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 ${index === 0 ? 'active' : ''}`;
+          button.textContent = file.filename;
+          button.setAttribute('data-file-index', index);
+          
+          button.addEventListener('click', () => {
+            // Remove active class from all buttons
+            document.querySelectorAll('.file-btn').forEach(btn => btn.classList.remove('active'));
+            // Add active class to clicked button
+            button.classList.add('active');
+            // Show file content
+            showUploadedFileContent(file);
+          });
+          
+          uploadedFilesList.appendChild(button);
+        });
+
+        // Show first file by default
+        if (files.length > 0) {
+          showUploadedFileContent(files[0]);
+        } else {
+          // Show empty state message
+          const contentArea = document.getElementById('uploadedFileContentArea');
+          if (contentArea) {
+            contentArea.innerHTML = `
+              <div class="flex items-center justify-center h-full">
+                <div class="text-center">
+                  <p class="text-white/60 text-lg mb-2">No files uploaded</p>
+                  <p class="text-white/40 text-sm">Upload files to view their content here</p>
+                </div>
+              </div>
+            `;
+          }
+        }
+      }
+
+      // Function to show uploaded file content
+      function showUploadedFileContent(file) {
+        const contentArea = document.getElementById('uploadedFileContentArea');
+        if (!contentArea) {
+          return;
+        }
+
+        // Create content with animation
+        contentArea.style.opacity = '0';
+        contentArea.style.transform = 'translateX(20px)';
+        
+        setTimeout(() => {
+          contentArea.innerHTML = `
+            <div class="file-content">
+              <div class="flex items-center justify-between mb-6">
+                <div>
+                  <h2 class="text-xl font-semibold text-white mb-2">${file.filename}</h2>
+                  <div class="flex items-center gap-4">
+                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                      ${file.filetype.toUpperCase()}
+                    </span>
+                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-400 border border-gray-500/30">
+                      ${file.file_extension.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="mb-6">
+                <h3 class="text-lg font-medium text-white mb-3">File Content</h3>
+                <div class="bg-white/5 rounded-lg p-4 border border-white/10">
+                  <div class="text-white/80 leading-relaxed whitespace-pre-wrap">${file.content}</div>
+                </div>
+              </div>
+            </div>
+          `;
+          
+          // Animate in
+          contentArea.style.transition = 'all 0.3s ease-out';
+          contentArea.style.opacity = '1';
+          contentArea.style.transform = 'translateX(0)';
+        }, 150);
+      }
+
+      // Initialize page
+      document.addEventListener('DOMContentLoaded', () => {
+        // Initialize tabs
+        initializeTabs();
+        initializeGrowthPotentialInfo();
+        initializeDocumentationModal();
+        
+        // Show page loader initially
+        showPageLoader();
+        
+        // Check authentication and load data
+      fetch('/api/auth/me').then(r=>r.json()).then(d=>{
+          if(!d.user){ 
+            window.location.href='/auth.html'; 
+          } else {
+            // Load report data after authentication check
+            fetchReportData();
+          }
+        }).catch(()=> {
+          window.location.href='/auth.html';
+        });
+      });
+      
+      const logoutBtn = document.getElementById('logout');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', async ()=>{
+          await fetch('/api/auth/logout',{method:'POST'});
+          window.location.href='/auth.html';
+        });
+      }
+      // Charts (initialize after layout)
+      window.addEventListener('load', () => {
+        if (!window.Chart) return;
+        // Search expand/collapse
+        const btn = document.getElementById('searchBtn');
+        const inp = document.getElementById('searchInput');
+        if (btn && inp) {
+          btn.addEventListener('click', () => {
+            const expanded = inp.classList.contains('opacity-100');
+            if (expanded) {
+              inp.classList.remove('opacity-100'); inp.style.width='0px'; inp.style.paddingLeft='0px'; inp.style.paddingRight='0px'; inp.classList.add('opacity-0');
+            } else {
+              inp.style.width='180px'; inp.style.paddingLeft='12px'; inp.style.paddingRight='12px'; inp.classList.remove('opacity-0'); inp.classList.add('opacity-100'); inp.focus();
+            }
+          });
+        }
+        // Market value chart will be created dynamically from API data
+        // The old static income chart code has been replaced with createMarketValueChart()
+
+        // Donut chart
+        const donutCanvas = document.getElementById('donutChart');
+        if (donutCanvas) {
+          const rect = donutCanvas.parentElement.getBoundingClientRect();
+          donutCanvas.width = rect.width; donutCanvas.height = rect.height;
+          const dctx = donutCanvas.getContext('2d');
+          new Chart(dctx, { type: 'doughnut', data: { datasets: [{ data: [65,25,10], backgroundColor: ['#f1d85b','#ffffff','#ff6b6b'], borderWidth: 0, cutout: '68%' }]}, options: { plugins: { legend: { display:false } }, responsive: true, maintainAspectRatio: false } });
+        }
+      });
+
+      // Sidebar sign out
+      const signout = document.getElementById('signoutBtn');
+      if (signout) {
+        signout.addEventListener('click', async ()=>{
+          try { await fetch('/api/auth/logout',{method:'POST'}); } catch(e) {}
+          window.location.href='/auth.html';
+        });
+      }
+    </script>
+  </body>
+  </html>
+
+
