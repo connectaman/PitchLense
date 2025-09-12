@@ -141,7 +141,31 @@ app.use((req, res, next) => {
 // Serve static frontend from ../frontend
 const staticDir = path.join(__dirname, '..', 'frontend');
 app.use(express.static(staticDir));
-app.use(express.json({ limit: '10mb' })); // Limit request size
+
+// Enhanced JSON parsing with better error handling
+app.use(express.json({ 
+  limit: '10mb',
+  verify: (req, res, buf, encoding) => {
+    try {
+      JSON.parse(buf);
+    } catch (e) {
+      console.error('JSON parse error:', e.message);
+      console.error('Buffer content:', buf.toString());
+      throw new Error('Invalid JSON');
+    }
+  }
+}));
+
+// Additional middleware to log request details for auth endpoints
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/auth/')) {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+    console.log('Content-Type:', req.headers['content-type']);
+    console.log('Body received:', JSON.stringify(req.body, null, 2));
+  }
+  next();
+});
+
 app.use(cookieParser());
 
 app.get('/health', (_req, res) => {
@@ -175,8 +199,20 @@ app.post('/api/auth/signup', async (req, res) => {
       return res.status(429).json({ error: 'Too many attempts. Please try again later.' });
     }
     
+    console.log('Signup request received:', {
+      body: req.body,
+      contentType: req.headers['content-type'],
+      method: req.method
+    });
+    
     const { email, password, salt, name } = req.body || {};
-    if (!email || !password || !salt) return res.status(400).json({ error: 'email, password, and salt required' });
+    if (!email || !password || !salt) {
+      console.log('Missing required fields:', { email: !!email, password: !!password, salt: !!salt });
+      return res.status(400).json({ 
+        error: 'email, password, and salt required',
+        received: { email: !!email, password: !!password, salt: !!salt }
+      });
+    }
     
     // The password is already hashed on the client side with PBKDF2 + salt
     // Store it directly for the secure method
@@ -187,10 +223,11 @@ app.post('/api/auth/signup', async (req, res) => {
     res.cookie('auth', token, { httpOnly: true, sameSite: 'lax' });
     res.json({ user });
   } catch (e) {
+    console.error('Signup error:', e);
     if (e && (e.code === 'SQLITE_CONSTRAINT' || String(e.message || '').includes('UNIQUE'))) {
       return res.status(409).json({ error: 'Email already exists' });
     }
-    console.error(e); res.status(500).json({ error: 'signup_failed' });
+    res.status(500).json({ error: 'signup_failed', details: e.message });
   }
 });
 
@@ -202,8 +239,20 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(429).json({ error: 'Too many attempts. Please try again later.' });
     }
     
+    console.log('Login request received:', {
+      body: req.body,
+      contentType: req.headers['content-type'],
+      method: req.method
+    });
+    
     const { email, password, salt } = req.body || {};
-    if (!email || !password || !salt) return res.status(400).json({ error: 'email, password, and salt required' });
+    if (!email || !password || !salt) {
+      console.log('Missing required fields:', { email: !!email, password: !!password, salt: !!salt });
+      return res.status(400).json({ 
+        error: 'email, password, and salt required',
+        received: { email: !!email, password: !!password, salt: !!salt }
+      });
+    }
     
     console.log('Secure login attempt for:', email, 'password length:', password.length);
     console.log('Received salt:', salt);
@@ -225,7 +274,10 @@ app.post('/api/auth/login', async (req, res) => {
     const token = jwt.sign({ sub: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
     res.cookie('auth', token, { httpOnly: true, sameSite: 'lax' });
     res.json({ user: { id: user.id, email: user.email, name: user.name } });
-  } catch (e) { console.error(e); res.status(500).json({ error: 'login_failed' }); }
+  } catch (e) { 
+    console.error('Login error:', e); 
+    res.status(500).json({ error: 'login_failed', details: e.message }); 
+  }
 });
 
 
