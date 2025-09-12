@@ -13,7 +13,66 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./styles.css" />
+    <style>
+      .markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4, .markdown-content h5, .markdown-content h6 {
+        color: #f1d85b;
+        font-weight: 600;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+      }
+      .markdown-content h1 { font-size: 1.25rem; }
+      .markdown-content h2 { font-size: 1.125rem; }
+      .markdown-content h3 { font-size: 1rem; }
+      .markdown-content p {
+        margin-bottom: 0.75rem;
+        line-height: 1.5;
+      }
+      .markdown-content ul, .markdown-content ol {
+        margin-left: 1rem;
+        margin-bottom: 0.75rem;
+      }
+      .markdown-content li {
+        margin-bottom: 0.25rem;
+      }
+      .markdown-content strong {
+        color: #f1d85b;
+        font-weight: 600;
+      }
+      .markdown-content code {
+        background-color: rgba(255, 255, 255, 0.1);
+        padding: 0.125rem 0.25rem;
+        border-radius: 0.25rem;
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+      }
+      .markdown-content pre {
+        background-color: rgba(255, 255, 255, 0.05);
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        margin-bottom: 0.75rem;
+      }
+      .markdown-content pre code {
+        background: none;
+        padding: 0;
+      }
+      .markdown-content blockquote {
+        border-left: 3px solid #f1d85b;
+        padding-left: 1rem;
+        margin-left: 0;
+        margin-bottom: 0.75rem;
+        color: #cfd4dd;
+      }
+      
+      /* Ensure send button is visible */
+      #sendButton {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
   </head>
   <body class="bg-background text-text font-sans antialiased overflow-hidden bg-solid h-screen">
     <!-- Page Level Loader -->
@@ -96,6 +155,9 @@
             </button>
             <button id="detailedAnalysisTab" class="tab-button px-4 py-2 text-sm font-medium rounded-lg transition-colors ml-2" data-tab="detailed">
               Detailed Analysis
+            </button>
+            <button id="qnaTab" class="tab-button px-4 py-2 text-sm font-medium rounded-lg transition-colors ml-2" data-tab="qna">
+              QnA
             </button>
             <button id="uploadedFilesTab" class="tab-button px-4 py-2 text-sm font-medium rounded-lg transition-colors ml-2" data-tab="files">
               Uploaded Files
@@ -218,6 +280,64 @@
                   </div>
                     </div>
                   </div>
+            </section>
+          </div>
+          
+          <!-- QnA Tab -->
+          <div id="qnaContent" class="tab-content hidden h-full overflow-hidden">
+            <section class="p-2 h-full">
+              <div class="flex h-full gap-4">
+                <!-- Chatbot Card -->
+                <div class="flex-1 h-full">
+                  <div class="card p-6 h-full flex flex-col">
+                    <div class="flex items-center gap-3 mb-6">
+                      <div class="w-10 h-10 rounded-full bg-accent grid place-items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 class="text-lg font-semibold text-white">Ask Pitchlense</h3>
+                      </div>
+                    </div>
+                    
+                    <!-- Chat Messages Area -->
+                    <div id="chatMessages" class="flex-1 overflow-y-auto mb-4 space-y-4 pr-2">
+                      <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-full bg-accent/20 grid place-items-center flex-shrink-0">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                          </svg>
+                        </div>
+                        <div class="bg-[#2E3137] border border-white/10 rounded-lg p-3 max-w-[80%]">
+                          <p class="text-sm text-white">Hello! I'm your AI assistant. I can help you understand your report data, answer questions about the analysis, and provide insights. What would you like to know?</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Chat Input Area -->
+                    <div class="flex gap-3">
+                      <div class="flex-1 relative">
+                        <input 
+                          id="chatInput" 
+                          type="text" 
+                          placeholder="Ask a question about your report..." 
+                          class="w-full h-12 px-4 pr-12 bg-[#1E1E21] border border-white/10 rounded-lg text-white placeholder:text-white/50 outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                        />
+                        <button 
+                          id="sendButton" 
+                          class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-accent hover:bg-accent/80 rounded-lg flex items-center justify-center text-white transition-colors z-10 border-2 border-accent"
+                          title="Send message"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </section>
           </div>
           
@@ -482,6 +602,8 @@
             let targetContent;
             if (targetTab === 'files') {
               targetContent = document.getElementById('uploadedFilesContent');
+            } else if (targetTab === 'qna') {
+              targetContent = document.getElementById('qnaContent');
             } else {
               targetContent = document.getElementById(`${targetTab}AnalysisContent`);
             }
@@ -1516,11 +1638,172 @@
       }
 
       // Initialize page
+      // Chat functionality
+      function initializeChat() {
+        const chatInput = document.getElementById('chatInput');
+        const sendButton = document.getElementById('sendButton');
+        const chatMessages = document.getElementById('chatMessages');
+
+        function addMessage(message, isUser = false) {
+          const messageDiv = document.createElement('div');
+          messageDiv.className = `flex items-start gap-3 ${isUser ? 'justify-end' : ''}`;
+          
+          if (isUser) {
+            messageDiv.innerHTML = `
+              <div class="bg-accent text-white rounded-lg p-3 max-w-[80%]">
+                <p class="text-sm">${message}</p>
+              </div>
+              <div class="w-8 h-8 rounded-full bg-accent/20 grid place-items-center flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                  <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.31 0-6 2.69-6 6h12c0-3.31-2.69-6-6-6Z"/>
+                </svg>
+              </div>
+            `;
+          } else {
+            // Render markdown for AI responses
+            const htmlContent = marked.parse(message);
+            messageDiv.innerHTML = `
+              <div class="w-8 h-8 rounded-full bg-accent/20 grid place-items-center flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+              </div>
+              <div class="bg-[#2E3137] border border-white/10 rounded-lg p-3 max-w-[80%] prose prose-invert prose-sm max-w-none">
+                <div class="text-sm text-white markdown-content">${htmlContent}</div>
+              </div>
+            `;
+          }
+          
+          chatMessages.appendChild(messageDiv);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function sendMessage() {
+          const message = chatInput.value.trim();
+          if (!message) return;
+
+          // Add user message
+          addMessage(message, true);
+          chatInput.value = '';
+
+          // Show loading indicator
+          const loadingDiv = document.createElement('div');
+          loadingDiv.className = 'flex items-start gap-3';
+          loadingDiv.innerHTML = `
+            <div class="w-8 h-8 rounded-full bg-accent/20 grid place-items-center flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              </svg>
+            </div>
+            <div class="bg-[#2E3137] border border-white/10 rounded-lg p-3 max-w-[80%]">
+              <div class="flex items-center gap-2">
+                <span class="text-sm text-white/70">Generating answer</span>
+                <div class="flex gap-1">
+                  <div class="w-1 h-1 bg-accent rounded-full animate-bounce"></div>
+                  <div class="w-1 h-1 bg-accent rounded-full animate-bounce" style="animation-delay: 0.1s;"></div>
+                  <div class="w-1 h-1 bg-accent rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
+                </div>
+              </div>
+            </div>
+          `;
+          chatMessages.appendChild(loadingDiv);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+
+          try {
+            // Get report ID from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const reportId = urlParams.get('report_id');
+            
+            if (!reportId) {
+              throw new Error('Report ID not found');
+            }
+
+            // Call the QnA API
+            const response = await fetch('/api/qna/ask', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                report_id: reportId,
+                question: message
+              })
+            });
+
+            // Remove loading indicator
+            chatMessages.removeChild(loadingDiv);
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || 'Failed to get response');
+            }
+
+            const data = await response.json();
+            addMessage(data.response);
+
+          } catch (error) {
+            // Remove loading indicator
+            chatMessages.removeChild(loadingDiv);
+            addMessage(`Sorry, I encountered an error: ${error.message}`);
+          }
+        }
+
+        // Load chat history
+        async function loadChatHistory() {
+          try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const reportId = urlParams.get('report_id');
+            
+            if (!reportId) return;
+
+            const response = await fetch(`/api/qna/history/${reportId}`, {
+              credentials: 'include'
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              if (data.success && data.chats.length > 0) {
+                // Clear existing messages except the welcome message
+                const welcomeMessage = chatMessages.querySelector('.flex.items-start.gap-3');
+                chatMessages.innerHTML = '';
+                if (welcomeMessage) {
+                  chatMessages.appendChild(welcomeMessage);
+                }
+
+                // Add chat history
+                data.chats.forEach(chat => {
+                  addMessage(chat.user_message, true);
+                  addMessage(chat.ai_response, false);
+                });
+              }
+            }
+          } catch (error) {
+            console.error('Failed to load chat history:', error);
+          }
+        }
+
+        // Event listeners
+        sendButton.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            sendMessage();
+          }
+        });
+
+        // Load chat history when QnA tab is opened
+        const qnaTab = document.getElementById('qnaTab');
+        if (qnaTab) {
+          qnaTab.addEventListener('click', loadChatHistory);
+        }
+      }
+
       document.addEventListener('DOMContentLoaded', () => {
         // Initialize tabs
         initializeTabs();
         initializeGrowthPotentialInfo();
         initializeDocumentationModal();
+        initializeChat();
         
         // Show page loader initially
         showPageLoader();
