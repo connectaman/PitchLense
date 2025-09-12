@@ -22,10 +22,38 @@ const multer = require('multer');
 const crypto = require('crypto');
 const { Storage } = require('@google-cloud/storage');
 const axios = require('axios');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const app = express();
 
 const PORT = process.env.PORT || 3000;
+
+// Simple in-memory rate limiting for auth endpoints
+const authAttempts = new Map();
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
+const MAX_ATTEMPTS = 15; // Max attempts per window (3x increase)
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const attempts = authAttempts.get(ip) || [];
+  
+  // Remove old attempts outside the window
+  const recentAttempts = attempts.filter(time => now - time < RATE_LIMIT_WINDOW);
+  
+  if (recentAttempts.length >= MAX_ATTEMPTS) {
+    return false; // Rate limited
+  }
+  
+  // Add current attempt
+  recentAttempts.push(now);
+  authAttempts.set(ip, recentAttempts);
+  
+  return true; // Not rate limited
+}
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
+const FIXED_SALT = 'pitchlense_fixed_salt_2024_secure_auth';
+
+// Initialize Gemini AI
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'your-gemini-api-key-here');
 // Support multiple names for bucket/Cloud Run URL
 const GCS_BUCKET = process.env.BUCKET || process.env.GCS_BUCKET || process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
 const CLOUD_RUN_URL = process.env.CLOUD_RUN_URL || process.env.CLOUDRUN_URL || process.env.CLOUD_RUN_ENDPOINT;
@@ -41,7 +69,7 @@ async function ensureTables() {
   // Enable FK constraints
   await dbRun(`PRAGMA foreign_keys = ON`);
 
-  // Users (existing)
+  // Users (simplified for secure method only)
   await dbRun(`CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
@@ -78,12 +106,42 @@ async function ensureTables() {
     CONSTRAINT fk_report FOREIGN KEY (report_id) REFERENCES reports(report_id) ON DELETE CASCADE
   )`);
   await dbRun(`CREATE INDEX IF NOT EXISTS idx_uploads_report_id ON uploads(report_id)`);
+
+  // Chats table for QnA functionality
+  await dbRun(`CREATE TABLE IF NOT EXISTS chats (
+    chat_id TEXT PRIMARY KEY,
+    report_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    user_message TEXT NOT NULL,
+    ai_response TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    CONSTRAINT fk_chat_report FOREIGN KEY (report_id) REFERENCES reports(report_id) ON DELETE CASCADE
+  )`);
+  await dbRun(`CREATE INDEX IF NOT EXISTS idx_chats_report_id ON chats(report_id)`);
+  await dbRun(`CREATE INDEX IF NOT EXISTS idx_chats_user_id ON chats(user_id)`);
 }
+
+// Security headers
+app.use((req, res, next) => {
+  // Prevent clickjacking
+  res.setHeader('X-Frame-Options', 'DENY');
+  // Prevent MIME type sniffing
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  // Enable XSS protection
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  // Strict transport security (HTTPS only)
+  if (req.secure || req.headers['x-forwarded-proto'] === 'https') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  // Content Security Policy
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self';");
+  next();
+});
 
 // Serve static frontend from ../frontend
 const staticDir = path.join(__dirname, '..', 'frontend');
 app.use(express.static(staticDir));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Limit request size
 app.use(cookieParser());
 
 app.get('/health', (_req, res) => {
@@ -111,11 +169,19 @@ function requireAuth(req, res, next) {
 // Auth routes
 app.post('/api/auth/signup', async (req, res) => {
   try {
-    const { email, password, name } = req.body || {};
-    if (!email || !password) return res.status(400).json({ error: 'email and password required' });
-    const passwordHash = await bcrypt.hash(password, 10);
+    // Rate limiting
+    const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    if (!checkRateLimit(clientIP)) {
+      return res.status(429).json({ error: 'Too many attempts. Please try again later.' });
+    }
+    
+    const { email, password, salt, name } = req.body || {};
+    if (!email || !password || !salt) return res.status(400).json({ error: 'email, password, and salt required' });
+    
+    // The password is already hashed on the client side with PBKDF2 + salt
+    // Store it directly for the secure method
     const id = crypto.randomUUID();
-    await dbRun('INSERT INTO users (id,email,password_hash,name) VALUES (?,?,?,?)', [id, String(email).toLowerCase(), passwordHash, name || null]);
+    await dbRun('INSERT INTO users (id,email,password_hash,name) VALUES (?,?,?,?)', [id, String(email).toLowerCase(), password, name || null]);
     const user = { id, email: String(email).toLowerCase(), name: name || null };
     const token = jwt.sign({ sub: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
     res.cookie('auth', token, { httpOnly: true, sameSite: 'lax' });
@@ -130,17 +196,38 @@ app.post('/api/auth/signup', async (req, res) => {
 
 app.post('/api/auth/login', async (req, res) => {
   try {
-    const { email, password } = req.body || {};
-    if (!email || !password) return res.status(400).json({ error: 'email and password required' });
+    // Rate limiting
+    const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    if (!checkRateLimit(clientIP)) {
+      return res.status(429).json({ error: 'Too many attempts. Please try again later.' });
+    }
+    
+    const { email, password, salt } = req.body || {};
+    if (!email || !password || !salt) return res.status(400).json({ error: 'email, password, and salt required' });
+    
+    console.log('Secure login attempt for:', email, 'password length:', password.length);
+    console.log('Received salt:', salt);
+    console.log('Expected salt:', FIXED_SALT);
+    console.log('Salt matches:', salt === FIXED_SALT);
+    
     const user = await dbGet('SELECT id,email,password_hash,name FROM users WHERE email=?', [String(email).toLowerCase()]);
     if (!user) return res.status(401).json({ error: 'invalid_credentials' });
-    const ok = await bcrypt.compare(password, user.password_hash);
+    
+    // Direct comparison of PBKDF2 hashes
+    console.log('Stored hash:', user.password_hash);
+    console.log('Received hash:', password);
+    console.log('Hashes match:', password === user.password_hash);
+    const ok = password === user.password_hash;
+    console.log('Secure comparison result:', ok);
+    
     if (!ok) return res.status(401).json({ error: 'invalid_credentials' });
+    
     const token = jwt.sign({ sub: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
     res.cookie('auth', token, { httpOnly: true, sameSite: 'lax' });
     res.json({ user: { id: user.id, email: user.email, name: user.name } });
   } catch (e) { console.error(e); res.status(500).json({ error: 'login_failed' }); }
 });
+
 
 app.post('/api/auth/logout', (req, res) => {
   res.clearCookie('auth');
@@ -155,6 +242,103 @@ app.get('/api/auth/me', (req, res) => {
     res.json({ user: { id: payload.sub, email: payload.email } });
   } catch {
     res.status(401).json({ user: null });
+  }
+});
+
+// QnA API endpoints
+app.post('/api/qna/ask', requireAuth, async (req, res) => {
+  try {
+    const { report_id, question } = req.body || {};
+    if (!report_id || !question) return res.status(400).json({ error: 'report_id and question required' });
+
+    // Get report data
+    const report = await dbGet('SELECT * FROM reports WHERE report_id=? AND is_delete=0', [report_id]);
+    if (!report) return res.status(404).json({ error: 'Report not found' });
+
+    // Check if report is ready
+    if (report.status !== 'success' || !report.report_path) {
+      return res.status(400).json({ error: 'Report is not ready for QnA yet' });
+    }
+
+    // Fetch report data from GCS
+    let reportData;
+    try {
+      const parsed = parseGsUri(report.report_path);
+      if (!parsed) throw new Error('Invalid report path');
+      
+      const client = getGcsClient();
+      const file = client.bucket(parsed.bucket).file(parsed.object);
+      const [data] = await file.download();
+      reportData = JSON.parse(data.toString());
+    } catch (fetchError) {
+      console.error('Failed to fetch report data:', fetchError);
+      return res.status(500).json({ error: 'Failed to load report data' });
+    }
+
+    // Prepare context for Gemini
+    let context = `You are an AI assistant helping users understand their startup pitch analysis report. Here are the files and their content:\n\n`;
+    
+    if (reportData.files && Array.isArray(reportData.files)) {
+      reportData.files.forEach((file, index) => {
+        context += `File ${index + 1}:\n`;
+        context += `- Filename: ${file.filename}\n`;
+        context += `- File Type: ${file.filetype}\n`;
+        context += `- Format: ${file.file_extension}\n`;
+        context += `- Content: ${file.content}\n\n`;
+      });
+    }
+
+    // Create prompt for Gemini
+    const prompt = `${context}\n\nUser Question: ${question}\n\nIMPORTANT: You MUST answer ONLY from the given content in the context above. If the information is not found in the provided context, respond with "I don't know" or "This information is not available in the report data." Do not make up or infer information that is not explicitly provided in the context.\n\nPlease provide a helpful and detailed answer based on the report data above. Focus on insights, analysis, and actionable recommendations.`;
+
+    // Get response from Gemini
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const aiResponse = response.text();
+
+    // Save chat to database
+    const chatId = crypto.randomUUID();
+    await dbRun(
+      'INSERT INTO chats (chat_id, report_id, user_id, user_message, ai_response, created_at) VALUES (?, ?, ?, ?, ?, datetime("now"))',
+      [chatId, report_id, req.user.id, question, aiResponse]
+    );
+
+    res.json({ 
+      success: true, 
+      response: aiResponse,
+      chat_id: chatId 
+    });
+
+  } catch (error) {
+    console.error('QnA API error:', error);
+    res.status(500).json({ error: 'Failed to process question' });
+  }
+});
+
+// Get chat history for a report
+app.get('/api/qna/history/:report_id', requireAuth, async (req, res) => {
+  try {
+    const { report_id } = req.params;
+    
+    // Verify user has access to this report
+    const report = await dbGet('SELECT * FROM reports WHERE report_id=? AND is_delete=0', [report_id]);
+    if (!report) return res.status(404).json({ error: 'Report not found' });
+
+    // Get chat history
+    const chats = await dbAll(
+      'SELECT chat_id, user_message, ai_response, created_at FROM chats WHERE report_id=? ORDER BY created_at ASC',
+      [report_id]
+    );
+
+    res.json({ 
+      success: true, 
+      chats: chats 
+    });
+
+  } catch (error) {
+    console.error('Chat history API error:', error);
+    res.status(500).json({ error: 'Failed to fetch chat history' });
   }
 });
 
