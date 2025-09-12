@@ -181,7 +181,7 @@
         <div class="flex-1 min-h-0 overflow-hidden">
           <!-- Overall Analysis Tab (Default) -->
           <div id="overallAnalysisContent" class="tab-content active overall-analysis h-full overflow-y-auto">
-            <section class="p-2 grid gap-3 items-start grid-cols-[2fr_1fr]">
+            <section class="p-2 grid gap-3 items-start grid-cols-[2fr_1fr] h-full overflow-hidden">
           <div class="space-y-3">
             <div class="grid grid-cols-2 gap-3">
               <div class="card p-0">
@@ -240,23 +240,53 @@
                 <!-- Market share data will be populated here -->
                     </div>
                   </div>
-            <div class="card p-4 flex flex-col">
-              <div class="text-sm mb-2">Industry News</div>
-              <div class="flex-1 overflow-y-auto max-h-[500px]">
-                <!-- Loading State -->
-                <div id="newsLoader" class="flex items-center justify-center py-8">
-                  <div class="flex flex-col items-center gap-3">
-                    <div class="relative">
-                      <div class="w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full animate-spin"></div>
-                      <div class="absolute inset-0 w-8 h-8 border-2 border-transparent border-t-accent/60 rounded-full animate-spin" style="animation-delay: 0.15s; animation-duration: 0.8s;"></div>
+            <div class="card p-4 flex flex-col max-h-[500px]">
+              <!-- Tab Navigation -->
+              <div class="flex items-center gap-2 mb-4">
+                <button id="industryNewsTab" class="tab-button active px-3 py-2 text-sm font-medium rounded-lg transition-colors" data-tab="news">
+                  Industry News
+                </button>
+                <button id="internetDocumentsTab" class="tab-button px-3 py-2 text-sm font-medium rounded-lg transition-colors" data-tab="documents">
+                  Internet Documents
+                </button>
+              </div>
+              
+              <div class="flex-1 overflow-y-auto max-h-[300px]">
+                <!-- Industry News Content -->
+                <div id="industryNewsContent" class="news-tab-content">
+                  <!-- Loading State -->
+                  <div id="newsLoader" class="flex items-center justify-center py-8">
+                    <div class="flex flex-col items-center gap-3">
+                      <div class="relative">
+                        <div class="w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full animate-spin"></div>
+                        <div class="absolute inset-0 w-8 h-8 border-2 border-transparent border-t-accent/60 rounded-full animate-spin" style="animation-delay: 0.15s; animation-duration: 0.8s;"></div>
+                      </div>
+                      <div class="text-xs text-secondary">Loading news...</div>
                     </div>
-                    <div class="text-xs text-secondary">Loading news...</div>
                   </div>
+                  <!-- News Content -->
+                  <ul id="newsList" class="space-y-3 hidden">
+                    <!-- News items will be populated here -->
+                  </ul>
+                </div>
+
+                <!-- Internet Documents Content -->
+                <div id="internetDocumentsContent" class="news-tab-content hidden">
+                  <!-- Loading State -->
+                  <div id="documentsLoader" class="flex items-center justify-center py-8">
+                    <div class="flex flex-col items-center gap-3">
+                      <div class="relative">
+                        <div class="w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full animate-spin"></div>
+                        <div class="absolute inset-0 w-8 h-8 border-2 border-transparent border-t-accent/60 rounded-full animate-spin" style="animation-delay: 0.15s; animation-duration: 0.8s;"></div>
+                      </div>
+                      <div class="text-xs text-secondary">Loading documents...</div>
                     </div>
-                <!-- News Content -->
-                <ul id="newsList" class="space-y-3 hidden">
-                  <!-- News items will be populated here -->
-              </ul>
+                  </div>
+                  <!-- Documents Content -->
+                  <ul id="documentsList" class="space-y-3 hidden">
+                    <!-- Document items will be populated here -->
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
@@ -584,7 +614,7 @@
 
       // Tab functionality
       function initializeTabs() {
-        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabButtons = document.querySelectorAll('.tab-button:not([data-tab="news"]):not([data-tab="documents"])');
         const tabContents = document.querySelectorAll('.tab-content');
 
         tabButtons.forEach(button => {
@@ -597,7 +627,7 @@
               return;
             }
             
-            // Remove active class from all buttons and contents
+            // Remove active class from all main navigation buttons and contents
             tabButtons.forEach(btn => btn.classList.remove('active'));
             tabContents.forEach(content => content.classList.add('hidden'));
             
@@ -1235,6 +1265,95 @@
         hideNewsLoader();
       }
 
+      // Populate documents section
+      function populateDocuments(documentsData) {
+        const documentsList = document.getElementById('documentsList');
+        if (!documentsData || !documentsData.results || documentsData.results.length === 0) {
+          documentsList.innerHTML = '<li class="text-sm text-secondary text-center py-4">No documents available</li>';
+          hideDocumentsLoader();
+          return;
+        }
+
+        // Show all document items
+        const documentItems = documentsData.results;
+        documentsList.innerHTML = documentItems.map(doc => {
+          const title = doc.title;
+          const link = doc.link || '#';
+          const snippet = doc.snippet || '';
+          const displayedLink = doc.displayed_link || link;
+          const fileFormat = doc.file_format || 'PDF';
+          
+          return `
+            <li class="group">
+              <a href="${link}" target="_blank" rel="noopener noreferrer" class="flex items-start gap-2 text-sm hover:bg-white/5 rounded-lg p-2 transition-colors">
+                <div class="w-8 h-8 grid place-items-center rounded-lg bg-white/10 overflow-hidden flex-shrink-0">
+                  <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-white group-hover:text-accent transition-colors leading-tight">${title}</div>
+                  <div class="text-xs text-secondary mt-1">${displayedLink}</div>
+                  ${snippet ? `<div class="text-xs text-white/60 mt-1 line-clamp-2">${snippet}</div>` : ''}
+                  <div class="flex items-center gap-2 mt-1">
+                    <span class="inline-flex items-center px-2 py-1 rounded text-xs bg-accent/20 text-accent">${fileFormat}</span>
+                  </div>
+                </div>
+                <div class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg class="w-4 h-4 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                  </svg>
+                </div>
+              </a>
+            </li>
+          `;
+        }).join('');
+        
+        hideDocumentsLoader();
+      }
+
+      // Show documents loader
+      function showDocumentsLoader() {
+        const loader = document.getElementById('documentsLoader');
+        const documentsList = document.getElementById('documentsList');
+        
+        if (loader) loader.classList.remove('hidden');
+        if (documentsList) documentsList.classList.add('hidden');
+      }
+
+      // Hide documents loader
+      function hideDocumentsLoader() {
+        const loader = document.getElementById('documentsLoader');
+        const documentsList = document.getElementById('documentsList');
+        
+        if (loader) loader.classList.add('hidden');
+        if (documentsList) documentsList.classList.remove('hidden');
+      }
+
+      // Tab switching functionality for news/documents
+      function switchNewsTab(tabName) {
+        const industryNewsTab = document.getElementById('industryNewsTab');
+        const internetDocumentsTab = document.getElementById('internetDocumentsTab');
+        const industryNewsContent = document.getElementById('industryNewsContent');
+        const internetDocumentsContent = document.getElementById('internetDocumentsContent');
+
+        if (tabName === 'news') {
+          // Activate news tab
+          industryNewsTab.classList.add('active');
+          internetDocumentsTab.classList.remove('active');
+          
+          industryNewsContent.classList.remove('hidden');
+          internetDocumentsContent.classList.add('hidden');
+        } else if (tabName === 'documents') {
+          // Activate documents tab
+          internetDocumentsTab.classList.add('active');
+          industryNewsTab.classList.remove('active');
+          
+          internetDocumentsContent.classList.remove('hidden');
+          industryNewsContent.classList.add('hidden');
+        }
+      }
+
       // Fetch report data
       async function fetchReportData() {
         const reportId = getReportIdFromUrl();
@@ -1282,6 +1401,18 @@
             if (newsList) {
               newsList.innerHTML = '<li class="text-sm text-secondary text-center py-4">No news data available</li>';
               hideNewsLoader();
+            }
+          }
+
+          // Populate documents if available
+          if (result.data && result.data.internet_documents) {
+            populateDocuments(result.data.internet_documents);
+          } else {
+            // No documents data available
+            const documentsList = document.getElementById('documentsList');
+            if (documentsList) {
+              documentsList.innerHTML = '<li class="text-sm text-secondary text-center py-4">No documents data available</li>';
+              hideDocumentsLoader();
             }
           }
 
@@ -1810,6 +1941,18 @@
         initializeGrowthPotentialInfo();
         initializeDocumentationModal();
         initializeChat();
+        
+        // Initialize news/documents tab switching
+        const industryNewsTab = document.getElementById('industryNewsTab');
+        const internetDocumentsTab = document.getElementById('internetDocumentsTab');
+        
+        if (industryNewsTab) {
+          industryNewsTab.addEventListener('click', () => switchNewsTab('news'));
+        }
+        
+        if (internetDocumentsTab) {
+          internetDocumentsTab.addEventListener('click', () => switchNewsTab('documents'));
+        }
         
         // Show page loader initially
         showPageLoader();

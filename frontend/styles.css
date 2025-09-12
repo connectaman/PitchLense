@@ -96,6 +96,11 @@ body {
   display: none;
 }
 
+/* News/Documents Tab Content Styles */
+.news-tab-content.hidden {
+  display: none;
+}
+
 /* Card Hover Effects - Only for Overall Analysis */
 .overall-analysis .card {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
