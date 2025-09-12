@@ -37,7 +37,7 @@
     </div>
 
     <div id="app" class="h-screen flex flex-col p-3 gap-3 hidden overflow-hidden">
-      <header class="h-16 bg-[#2E3137] border border-white/10 rounded-[22px] flex items-center justify-between px-6">
+      <header class="h-16 bg-[#2E3137] border border-white/10 rounded-[22px] flex items-center justify-between px-6 mobile-header">
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 rounded-full bg-accent grid place-items-center"><img src="/static/logo.svg" class="w-5 h-5"/></div>
           <div class="text-base font-semibold">PitchLense</div>
@@ -60,7 +60,7 @@
         </div>
       </header>
       
-      <div class="grid flex-1 min-h-0 overflow-hidden" style="grid-template-columns: 84px 1fr; gap:12px;">
+      <div class="grid flex-1 min-h-0 overflow-hidden mobile-navbar" style="grid-template-columns: 84px 1fr; gap:12px;">
       <aside class="bg-[#2C2F34] border border-white/10 rounded-[18px] flex flex-col items-center py-4 gap-3 h-full">
         <nav class="flex flex-col gap-2 text-white/80 w-full items-center">
           <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10" href="/create-report.html" title="Create">
@@ -87,9 +87,9 @@
           </svg>
         </button>
       </aside>
-      <main class="h-full flex flex-col overflow-hidden">
+      <main class="h-full flex flex-col overflow-hidden mobile-main">
         <!-- Secondary Navigation Bar -->
-        <nav class="bg-[#2E3137] border border-white/10 rounded-[18px] mx-2 mb-3 flex-shrink-0">
+        <nav class="bg-[#2E3137] border border-white/10 rounded-[18px] mx-2 mb-3 flex-shrink-0 mobile-nav">
           <div class="flex items-center px-6 py-3">
             <button id="overallAnalysisTab" class="tab-button active px-4 py-2 text-sm font-medium rounded-lg transition-colors" data-tab="overall">
               Overall Analysis

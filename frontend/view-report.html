@@ -15,7 +15,7 @@
   </head>
   <body class="bg-background text-text font-sans antialiased overflow-x-hidden bg-solid">
     <div class="h-screen flex flex-col p-3 gap-3">
-      <header class="h-16 bg-[#2E3137] border border-white/10 rounded-[22px] flex items-center justify-between px-6">
+      <header class="h-16 bg-[#2E3137] border border-white/10 rounded-[22px] flex items-center justify-between px-6 mobile-header">
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 rounded-full bg-accent grid place-items-center"><img src="/static/logo.svg" class="w-5 h-5"/></div>
           <div class="text-base font-semibold">PitchLense</div>
@@ -46,7 +46,7 @@
         </div>
       </header>
 
-      <div class="grid flex-1 min-h-0" style="grid-template-columns: 84px 1fr; gap:12px;">
+      <div class="grid flex-1 min-h-0 mobile-navbar" style="grid-template-columns: 84px 1fr; gap:12px;">
         <aside class="bg-[#2C2F34] border border-white/10 rounded-[18px] flex flex-col items-center py-4 gap-3">
           <nav class="flex flex-col gap-2 text-white/80 w-full items-center">
             <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10" href="/create-report.html" title="Create">
@@ -74,12 +74,12 @@
           </button>
         </aside>
 
-        <main class="flex-1 overflow-y-auto p-4">
+        <main class="flex-1 overflow-y-auto p-4 mobile-main">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-semibold">Reports</h2>
             <div class="text-sm text-white/60" id="count"></div>
           </div>
-          <div id="grid" class="grid gap-3" style="grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));"></div>
+          <div id="grid" class="grid gap-3 mobile-cards" style="grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));"></div>
           <div id="emptyState" class="hidden min-h-[60vh] grid place-items-center">
             <div class="text-center">
               <div class="mx-auto w-20 h-20 rounded-2xl bg-white/5 border border-white/10 grid place-items-center mb-4">
@@ -95,7 +95,7 @@
               <div id="emptyCta" class="mt-4"></div>
             </div>
           </div>
-          <div id="paginationBar" class="fixed bottom-[88px] right-4 flex items-center gap-2">
+          <div id="paginationBar" class="fixed bottom-[88px] right-4 flex items-center gap-2 mobile-pagination">
             <button id="prevBtn" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] border border-white/15 hover:opacity-90 disabled:opacity-40" title="Previous">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
@@ -221,7 +221,7 @@
 
         data.reports.forEach(r => {
           const card = document.createElement('div');
-          card.className = 'w-[400px] min-h-[240px] rounded-xl border border-white/10 bg-[#2E3137] p-6 hover:border-white/20 transition-colors glare-card';
+          card.className = 'w-[400px] min-h-[240px] rounded-xl border border-white/10 bg-[#2E3137] p-6 hover:border-white/20 transition-colors glare-card mobile-card';
           const status = String(r.status || '').toLowerCase();
           const statusBg = status === 'pending' ? '#FBBF24' : (status === 'success' ? '#22C55E' : (status === 'failed' ? '#FB5D5D' : 'rgba(255,255,255,0.12)'));
           const statusStyle = `background:${statusBg};color:#1E1E21;border-color:transparent;vertical-align:middle;`;
