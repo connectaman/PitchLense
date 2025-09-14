@@ -285,7 +285,8 @@ app.post('/api/auth/signup', async (req, res) => {
     res.json({ user });
   } catch (e) {
     console.error('Signup error:', e);
-    if (e && (e.code === 'SQLITE_CONSTRAINT' || String(e.message || '').includes('UNIQUE'))) {
+    // Check for MySQL duplicate entry error (code 1062) or unique constraint violations
+    if (e && (e.code === 'ER_DUP_ENTRY' || e.code === 1062 || String(e.message || '').includes('Duplicate entry') || String(e.message || '').includes('UNIQUE'))) {
       return res.status(409).json({ error: 'Email already exists' });
     }
     res.status(500).json({ error: 'signup_failed', details: e.message });
@@ -589,6 +590,11 @@ app.post('/api/reports', requireAuth, upload.array('files'), async (req, res) =>
 
 app.get('/api/reports', requireAuth, async (req, res) => {
   try {
+    // Validate user authentication
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    
     let { skip, limit = 100, page, search, status, pinned_only } = req.query;
     limit = parseInt(limit, 10);
     if (page !== undefined && (skip === undefined || skip === null)) {
@@ -624,26 +630,46 @@ app.get('/api/reports', requireAuth, async (req, res) => {
       throw new Error(`Invalid skip parameter: ${skip}`);
     }
     
-    const queryParams = [
-      ...params, 
-      limitInt, 
-      skipInt
-    ];
-    console.log('Reports query params:', { 
+    // Create a clean copy of params to avoid any reference issues
+    const queryParams = [...params, limitInt, skipInt];
+    
+    // Count expected parameters
+    const expectedParamCount = where.filter(w => w.includes('?')).length + 2; // +2 for LIMIT and OFFSET
+    
+    console.log('Reports query debug:', { 
+      whereSql,
+      where,
+      params,
       limit, 
       skip, 
       limitInt,
       skipInt,
       queryParams, 
-      paramTypes: queryParams.map(p => typeof p)
+      paramTypes: queryParams.map(p => typeof p),
+      paramCount: queryParams.length,
+      expectedCount: expectedParamCount
     });
+    
+    // Validate parameter count
+    if (queryParams.length !== expectedParamCount) {
+      throw new Error(`Parameter count mismatch: expected ${expectedParamCount}, got ${queryParams.length}`);
+    }
     
     let rows;
     try {
-      rows = await dbAll(
-        `SELECT * FROM ${tableName('reports')} ${whereSql} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-        queryParams
-      );
+      // Try alternative parameter binding approach
+      const sql = `SELECT * FROM ${tableName('reports')} ${whereSql} ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+      
+      // Convert all parameters to strings first, then back to appropriate types
+      const safeParams = queryParams.map((param, index) => {
+        if (index === queryParams.length - 2) return parseInt(param, 10); // limit
+        if (index === queryParams.length - 1) return parseInt(param, 10); // offset
+        return String(param); // all other params as strings
+      });
+      
+      console.log('Safe params:', safeParams, 'Types:', safeParams.map(p => typeof p));
+      
+      rows = await dbAll(sql, safeParams);
     } catch (error) {
       console.error('Error in reports query:', {
         error: error.message,
@@ -651,7 +677,18 @@ app.get('/api/reports', requireAuth, async (req, res) => {
         params: queryParams,
         paramTypes: queryParams.map(p => typeof p)
       });
-      throw error;
+      
+      // Try fallback approach without prepared statements
+      try {
+        console.log('Trying fallback query without prepared statements...');
+        const fallbackSql = `SELECT * FROM ${tableName('reports')} ${whereSql} ORDER BY created_at DESC LIMIT ${limitInt} OFFSET ${skipInt}`;
+        console.log('Fallback SQL:', fallbackSql);
+        rows = await dbAll(fallbackSql, params);
+        console.log('Fallback query succeeded');
+      } catch (fallbackError) {
+        console.error('Fallback query also failed:', fallbackError.message);
+        throw error; // Throw original error
+      }
     }
 
     for (const r of rows) {

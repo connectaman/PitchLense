@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PitchLense — Sign in</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
       tailwind.config = { theme: { extend: { colors: { background: '#1E1E21', surface: '#2E3137', accent: '#f1d85b', text: '#ffffff', secondary: '#cfd4dd' } } } };
     </script>
@@ -30,8 +31,28 @@
             <h1 class="text-center text-[20px] font-bold text-white" id="title">Welcome back!</h1>
             <p class="text-center text-white text-[12px]">Sign in to continue</p>
             <form id="auth-form" class="mt-5 space-y-3">
-              <input class="w-full h-11 rounded-full bg-transparent border border-white/15 px-4 outline-none focus:ring-2 focus:ring-accent placeholder:text-white" type="email" placeholder="Your email address" required />
-              <input class="w-full h-11 rounded-full bg-transparent border border-white/15 px-4 outline-none focus:ring-2 focus:ring-accent placeholder:text-white" type="password" placeholder="Password" required />
+              <input id="email-input" class="w-full h-11 rounded-full bg-transparent border border-white/15 px-4 outline-none focus:ring-2 focus:ring-accent placeholder:text-white" type="email" placeholder="Your email address" required />
+              <div class="relative">
+                <input id="password-input" class="w-full h-11 rounded-full bg-transparent border border-white/15 px-4 outline-none focus:ring-2 focus:ring-accent placeholder:text-white" type="password" placeholder="Password" required />
+                <div id="password-requirements" class="hidden mt-2 p-3 bg-[#1E1E21] border border-white/10 rounded-lg text-xs text-white/70 space-y-1">
+                  <div class="flex items-center gap-2">
+                    <span id="length-check" class="w-2 h-2 rounded-full bg-red-500"></span>
+                    <span>At least 8 characters</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span id="lowercase-check" class="w-2 h-2 rounded-full bg-red-500"></span>
+                    <span>One lowercase letter</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span id="uppercase-check" class="w-2 h-2 rounded-full bg-red-500"></span>
+                    <span>One uppercase letter</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span id="special-check" class="w-2 h-2 rounded-full bg-red-500"></span>
+                    <span>One special character</span>
+                  </div>
+                </div>
+              </div>
 
               <div class="flex items-center justify-between text-[12px] text-white px-1">
                 <label class="inline-flex items-center gap-2">
@@ -112,6 +133,29 @@
         return 'pitchlense_fixed_salt_2024_secure_auth';
       }
 
+      // Password validation function
+      function validatePassword(password) {
+        const errors = [];
+        
+        if (password.length < 8) {
+          errors.push('Password must be at least 8 characters long');
+        }
+        
+        if (!/[a-z]/.test(password)) {
+          errors.push('Password must contain at least one lowercase letter');
+        }
+        
+        if (!/[A-Z]/.test(password)) {
+          errors.push('Password must contain at least one uppercase letter');
+        }
+        
+        if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+          errors.push('Password must contain at least one special character');
+        }
+        
+        return errors;
+      }
+
       const submit = async (e) => {
         e.preventDefault();
         try {
@@ -120,8 +164,29 @@
           const password = passEl.value;
           
           if (!email || !password) {
-            alert('Please fill in all fields');
+            await Swal.fire({
+              icon: 'warning',
+              title: 'Missing Information',
+              text: 'Please fill in all fields',
+              confirmButtonColor: '#f1d85b',
+              confirmButtonText: 'OK'
+            });
             return;
+          }
+
+          // Password validation for signup
+          if (mode === 'signup') {
+            const passwordErrors = validatePassword(password);
+            if (passwordErrors.length > 0) {
+              await Swal.fire({
+                icon: 'error',
+                title: 'Password Requirements Not Met',
+                html: '<div style="text-align: left;"><strong>Please ensure your password includes:</strong><br>• ' + passwordErrors.join('<br>• ') + '</div>',
+                confirmButtonColor: '#f1d85b',
+                confirmButtonText: 'OK'
+              });
+              return;
+            }
           }
 
           let res, data;
@@ -169,10 +234,48 @@
             const text = await res.text();
             if (!res.ok) throw new Error(text || 'Request failed');
           }
-          if (!res.ok) throw new Error((data && (data.error || data.message)) || 'Request failed');
+          if (!res.ok) {
+            // Handle specific error cases
+            if (res.status === 409 && mode === 'signup') {
+              await Swal.fire({
+                icon: 'warning',
+                title: 'Email Already Registered',
+                text: 'This email address is already registered. Please use a different email or try signing in instead.',
+                confirmButtonColor: '#f1d85b',
+                confirmButtonText: 'OK'
+              });
+              return;
+            }
+            throw new Error((data && (data.error || data.message)) || 'Request failed');
+          }
           window.location.href = '/view-report.html';
         } catch (err) {
-          alert(err?.message || 'Something went wrong');
+          // Handle specific error messages
+          if (err.message.includes('Email already exists') || err.message.includes('already registered')) {
+            await Swal.fire({
+              icon: 'warning',
+              title: 'Email Already Registered',
+              text: 'This email address is already registered. Please use a different email or try signing in instead.',
+              confirmButtonColor: '#f1d85b',
+              confirmButtonText: 'OK'
+            });
+          } else if (err.message.includes('Invalid credentials')) {
+            await Swal.fire({
+              icon: 'error',
+              title: 'Invalid Credentials',
+              text: 'Invalid email or password. Please check your credentials and try again.',
+              confirmButtonColor: '#f1d85b',
+              confirmButtonText: 'OK'
+            });
+          } else {
+            await Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: err?.message || 'Something went wrong',
+              confirmButtonColor: '#f1d85b',
+              confirmButtonText: 'OK'
+            });
+          }
         }
       };
       form.addEventListener('submit', submit);
@@ -181,6 +284,52 @@
         titleEl.textContent = mode === 'login' ? 'Welcome back!' : 'Create your account';
         primaryBtn.textContent = mode === 'login' ? 'Sign in' : 'Sign up';
         switchBtn.textContent = mode === 'login' ? 'Create an account' : 'Have an account? Sign in';
+        
+        // Show/hide password requirements based on mode
+        const passwordRequirements = document.getElementById('password-requirements');
+        if (mode === 'signup') {
+          passwordRequirements.classList.remove('hidden');
+        } else {
+          passwordRequirements.classList.add('hidden');
+        }
+      });
+
+      // Password validation visual feedback
+      const passwordInput = document.getElementById('password-input');
+      const passwordRequirements = document.getElementById('password-requirements');
+      
+      function updatePasswordRequirements(password) {
+        if (mode !== 'signup') return;
+        
+        const lengthCheck = document.getElementById('length-check');
+        const lowercaseCheck = document.getElementById('lowercase-check');
+        const uppercaseCheck = document.getElementById('uppercase-check');
+        const specialCheck = document.getElementById('special-check');
+        
+        // Update visual indicators
+        lengthCheck.className = password.length >= 8 ? 'w-2 h-2 rounded-full bg-green-500' : 'w-2 h-2 rounded-full bg-red-500';
+        lowercaseCheck.className = /[a-z]/.test(password) ? 'w-2 h-2 rounded-full bg-green-500' : 'w-2 h-2 rounded-full bg-red-500';
+        uppercaseCheck.className = /[A-Z]/.test(password) ? 'w-2 h-2 rounded-full bg-green-500' : 'w-2 h-2 rounded-full bg-red-500';
+        specialCheck.className = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? 'w-2 h-2 rounded-full bg-green-500' : 'w-2 h-2 rounded-full bg-red-500';
+      }
+      
+      passwordInput.addEventListener('input', (e) => {
+        updatePasswordRequirements(e.target.value);
+      });
+      
+      passwordInput.addEventListener('focus', () => {
+        if (mode === 'signup') {
+          passwordRequirements.classList.remove('hidden');
+        }
+      });
+      
+      passwordInput.addEventListener('blur', () => {
+        // Keep requirements visible for a moment after blur
+        setTimeout(() => {
+          if (mode === 'signup' && passwordInput.value.length === 0) {
+            passwordRequirements.classList.add('hidden');
+          }
+        }, 200);
       });
     </script>
     

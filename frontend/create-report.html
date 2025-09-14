@@ -8,6 +8,7 @@
       tailwind.config = { theme: { extend: { colors: { background:'#1E1E21', surface:'#2E3137', text:'#ffffff', secondary:'#cfd4dd', accent:'#f1d85b' }}}}
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -191,10 +192,37 @@
           const startup_name = startupNameEl?.value?.trim();
           const founder_name = founderNamesEl?.value?.trim();
           const launch_date = launchDateEl?.value?.trim();
-          if (!startup_name || !founder_name || !launch_date) { alert('Please fill all fields'); return; }
-          if (!currentFiles.length) { alert('Please add at least one file'); return; }
+          if (!startup_name || !founder_name || !launch_date) { 
+            await Swal.fire({
+              icon: 'warning',
+              title: 'Missing Information',
+              text: 'Please fill all fields',
+              confirmButtonColor: '#f1d85b',
+              confirmButtonText: 'OK'
+            });
+            return; 
+          }
+          if (!currentFiles.length) { 
+            await Swal.fire({
+              icon: 'warning',
+              title: 'No Files Added',
+              text: 'Please add at least one file',
+              confirmButtonColor: '#f1d85b',
+              confirmButtonText: 'OK'
+            });
+            return; 
+          }
           const selects = Array.from(list.querySelectorAll('select'));
-          if (selects.length !== currentFiles.length) { alert('Please select document types for each file'); return; }
+          if (selects.length !== currentFiles.length) { 
+            await Swal.fire({
+              icon: 'warning',
+              title: 'Document Types Required',
+              text: 'Please select document types for each file',
+              confirmButtonColor: '#f1d85b',
+              confirmButtonText: 'OK'
+            });
+            return; 
+          }
           const fd = new FormData();
           fd.append('startup_name', startup_name);
           fd.append('founder_name', founder_name);
@@ -211,7 +239,13 @@
           const data = await resp.json();
           window.location.href = '/view-report.html';
         } catch (err) {
-          alert(err?.message || 'Something went wrong');
+          await Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: err?.message || 'Something went wrong',
+            confirmButtonColor: '#f1d85b',
+            confirmButtonText: 'OK'
+          });
         }
       });
 

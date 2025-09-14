@@ -9,6 +9,7 @@
       tailwind.config = { theme: { extend: { colors: { background:'#1E1E21', surface:'#2E3137', text:'#ffffff', secondary:'#cfd4dd', accent:'#f1d85b' }}}}
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -532,6 +533,290 @@
                 </div>
               </div>
 
+              <!-- Key Risk Indicators Section -->
+              <div>
+                <h3 class="text-lg font-semibold text-white mb-3">Key Risk Indicators Investors Look For</h3>
+                <p class="text-white/80 text-sm leading-relaxed mb-4">
+                  Understanding these risk categories helps investors make informed decisions. PitchLense analyzes each of these dimensions to provide comprehensive risk assessment.
+                </p>
+                
+                <div class="space-y-4">
+                  <!-- Market Risks -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-2 flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-[#FB5D5D]"></span>
+                      Market Risks
+                    </h4>
+                    <ul class="text-white/70 text-sm space-y-1">
+                      <li>• Small or overstated TAM (Total Addressable Market)</li>
+                      <li>• Weak growth rate in target industry</li>
+                      <li>• Overcrowded space with strong incumbents</li>
+                      <li>• Lack of differentiation → startup doesn't stand out</li>
+                      <li>• Overdependence on a niche (market too narrow)</li>
+                    </ul>
+                  </div>
+
+                  <!-- Product Risks -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-2 flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-[#FB5D5D]"></span>
+                      Product Risks
+                    </h4>
+                    <ul class="text-white/70 text-sm space-y-1">
+                      <li>• Product still at idea/MVP stage, no working version</li>
+                      <li>• Unclear product–market fit → no proof customers want it</li>
+                      <li>• High technical uncertainty → feasibility doubts</li>
+                      <li>• Weak IP protection → easily copied by competitors</li>
+                      <li>• Poor scalability of product/tech stack</li>
+                    </ul>
+                  </div>
+
+                  <!-- Team/Founder Risks -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-2 flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-[#FB5D5D]"></span>
+                      Team / Founder Risks
+                    </h4>
+                    <ul class="text-white/70 text-sm space-y-1">
+                      <li>• Single founder (no co-founders or leadership depth)</li>
+                      <li>• High founder churn risk (no vesting, unstable commitment)</li>
+                      <li>• Skill gaps in key areas (tech, sales, operations)</li>
+                      <li>• Past credibility issues (bad track record, lawsuits)</li>
+                      <li>• Misaligned incentives or founder–investor conflicts</li>
+                    </ul>
+                  </div>
+
+                  <!-- Financial Risks -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-2 flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-[#FB5D5D]"></span>
+                      Financial Risks
+                    </h4>
+                    <ul class="text-white/70 text-sm space-y-1">
+                      <li>• Inconsistent financial metrics (revenues don't match user growth)</li>
+                      <li>• High burn rate with short runway (<12 months)</li>
+                      <li>• Overly optimistic projections (inflated TAM, hockey-stick forecasts)</li>
+                      <li>• High CAC vs LTV ratio → customer acquisition unsustainable</li>
+                      <li>• Low or negative margins with no path to profitability</li>
+                      <li>• Dependence on continuous external funding to survive</li>
+                    </ul>
+                  </div>
+
+                  <!-- Customer & Traction Risks -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-2 flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-[#FB5D5D]"></span>
+                      Customer & Traction Risks
+                    </h4>
+                    <ul class="text-white/70 text-sm space-y-1">
+                      <li>• Low or no traction despite long time in market</li>
+                      <li>• High churn rate (customers dropping off)</li>
+                      <li>• Low retention/engagement (DAU/MAU weak)</li>
+                      <li>• Lack of marquee customers or paying clients</li>
+                      <li>• Dependence on one or two large customers (concentration risk)</li>
+                    </ul>
+                  </div>
+
+                  <!-- Operational Risks -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-2 flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-[#FB5D5D]"></span>
+                      Operational Risks
+                    </h4>
+                    <ul class="text-white/70 text-sm space-y-1">
+                      <li>• Weak supply chain or vendor dependencies</li>
+                      <li>• No clear go-to-market (GTM) strategy</li>
+                      <li>• Inefficient operations → high costs for low output</li>
+                      <li>• Poor execution history → delays, missed milestones</li>
+                    </ul>
+                  </div>
+
+                  <!-- Competitive Risks -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-2 flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-[#FB5D5D]"></span>
+                      Competitive Risks
+                    </h4>
+                    <ul class="text-white/70 text-sm space-y-1">
+                      <li>• Strong incumbent competitors with deep pockets</li>
+                      <li>• Low entry barriers → anyone can replicate</li>
+                      <li>• Unclear defensibility (no moat: IP, network effects, brand)</li>
+                    </ul>
+                  </div>
+
+                  <!-- Legal & Regulatory Risks -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-2 flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-[#FB5D5D]"></span>
+                      Legal & Regulatory Risks
+                    </h4>
+                    <ul class="text-white/70 text-sm space-y-1">
+                      <li>• Unregulated/grey areas (crypto, healthtech, fintech)</li>
+                      <li>• Potential compliance issues (data privacy, labor laws, financial regulations)</li>
+                      <li>• Pending lawsuits or legal disputes</li>
+                    </ul>
+                  </div>
+
+                  <!-- Exit Risks -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-2 flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-[#FB5D5D]"></span>
+                      Exit Risks
+                    </h4>
+                    <ul class="text-white/70 text-sm space-y-1">
+                      <li>• Unclear exit pathways (IPO, M&A)</li>
+                      <li>• Sector with low historical exit activity</li>
+                      <li>• Unlikely to attract late-stage investors</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Investment Analysis Framework Section -->
+              <div>
+                <h3 class="text-lg font-semibold text-white mb-3">Investment Analysis Framework</h3>
+                <p class="text-white/80 text-sm leading-relaxed mb-4">
+                  Investors evaluate startups across multiple dimensions to create a comprehensive risk profile. Here's how PitchLense structures this analysis:
+                </p>
+                
+                <div class="space-y-4">
+                  <!-- Market Analysis -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-2 flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-[#10B981]"></span>
+                      Market Analysis
+                    </h4>
+                    <ul class="text-white/70 text-sm space-y-1">
+                      <li>• <strong>TAM, SAM, SOM:</strong> Total, Serviceable, and Obtainable markets</li>
+                      <li>• <strong>Growth potential:</strong> CAGR, trends, adoption curve</li>
+                      <li>• <strong>Competitive landscape:</strong> Incumbents, market crowding</li>
+                      <li>• <strong>Differentiation:</strong> Unique value proposition</li>
+                    </ul>
+                  </div>
+
+                  <!-- Product Analysis -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-2 flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-[#10B981]"></span>
+                      Product Analysis
+                    </h4>
+                    <ul class="text-white/70 text-sm space-y-1">
+                      <li>• <strong>Stage:</strong> Idea, MVP, early traction, or product–market fit (PMF)</li>
+                      <li>• <strong>Technology:</strong> Scalability, defensibility, innovation</li>
+                      <li>• <strong>Moat:</strong> Patents, IP, data advantage, network effects</li>
+                      <li>• <strong>Customer feedback:</strong> NPS, testimonials, early adoption signals</li>
+                    </ul>
+                  </div>
+
+                  <!-- Team Analysis -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-2 flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-[#10B981]"></span>
+                      Team Analysis
+                    </h4>
+                    <ul class="text-white/70 text-sm space-y-1">
+                      <li>• <strong>Founders' background:</strong> Prior startups, industry expertise, network</li>
+                      <li>• <strong>Team balance:</strong> Tech, business, ops → complementary skills</li>
+                      <li>• <strong>Commitment:</strong> Full-time vs side-project, long-term vision</li>
+                      <li>• <strong>Execution ability:</strong> Track record of delivering milestones</li>
+                    </ul>
+                  </div>
+
+                  <!-- Financial Analysis -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-2 flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-[#10B981]"></span>
+                      Financial Analysis
+                    </h4>
+                    <ul class="text-white/70 text-sm space-y-1">
+                      <li>• <strong>Unit economics:</strong> CAC (Customer Acquisition Cost), LTV (Lifetime Value)</li>
+                      <li>• <strong>Margins:</strong> Gross and net profitability</li>
+                      <li>• <strong>Burn rate & runway:</strong> How long till cash runs out</li>
+                      <li>• <strong>Revenue quality:</strong> Recurring vs one-off revenue</li>
+                      <li>• <strong>Financial projections:</strong> Realistic vs over-optimistic forecasts</li>
+                    </ul>
+                  </div>
+
+                  <!-- Traction Analysis -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-2 flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-[#10B981]"></span>
+                      Traction Analysis
+                    </h4>
+                    <ul class="text-white/70 text-sm space-y-1">
+                      <li>• <strong>Customer base:</strong> Paying vs free users, marquee clients</li>
+                      <li>• <strong>Growth rates:</strong> MoM or YoY revenue/users</li>
+                      <li>• <strong>Retention & churn:</strong> Product stickiness</li>
+                      <li>• <strong>Sales pipeline:</strong> Strong, weak, or non-existent</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Red Flags Section -->
+              <div>
+                <h3 class="text-lg font-semibold text-white mb-3">🚩 Red Flags Investors Look For</h3>
+                <p class="text-white/80 text-sm leading-relaxed mb-4">
+                  These warning signs can significantly impact investment decisions and should be carefully evaluated:
+                </p>
+                
+                <div class="space-y-3">
+                  <div class="bg-[#1E1E21] border border-red-500/20 rounded-lg p-4">
+                    <h4 class="text-red-400 font-medium mb-2">Market Red Flags</h4>
+                    <ul class="text-white/70 text-sm space-y-1">
+                      <li>• Tiny market or TAM exaggerated by founder</li>
+                      <li>• No clear competitive advantage → "me-too startup"</li>
+                    </ul>
+                  </div>
+
+                  <div class="bg-[#1E1E21] border border-red-500/20 rounded-lg p-4">
+                    <h4 class="text-red-400 font-medium mb-2">Product Red Flags</h4>
+                    <ul class="text-white/70 text-sm space-y-1">
+                      <li>• No working MVP after long time</li>
+                      <li>• Easily replicable → no moat</li>
+                      <li>• Heavy dependence on buzzwords (AI, blockchain) without substance</li>
+                    </ul>
+                  </div>
+
+                  <div class="bg-[#1E1E21] border border-red-500/20 rounded-lg p-4">
+                    <h4 class="text-red-400 font-medium mb-2">Team Red Flags</h4>
+                    <ul class="text-white/70 text-sm space-y-1">
+                      <li>• Solo founder → lack of diversity in leadership</li>
+                      <li>• Frequent founder conflicts or departures</li>
+                      <li>• Lack of skin in the game (founder not full-time or heavily diluted)</li>
+                    </ul>
+                  </div>
+
+                  <div class="bg-[#1E1E21] border border-red-500/20 rounded-lg p-4">
+                    <h4 class="text-red-400 font-medium mb-2">Financial Red Flags</h4>
+                    <ul class="text-white/70 text-sm space-y-1">
+                      <li>• Burning too fast with <6 months runway</li>
+                      <li>• Unrealistic projections ("10x in 1 year" with no evidence)</li>
+                      <li>• Unit economics broken → CAC > LTV</li>
+                      <li>• Overly complex or unclear cap table</li>
+                    </ul>
+                  </div>
+
+                  <div class="bg-[#1E1E21] border border-red-500/20 rounded-lg p-4">
+                    <h4 class="text-red-400 font-medium mb-2">Traction Red Flags</h4>
+                    <ul class="text-white/70 text-sm space-y-1">
+                      <li>• No paying customers despite years of work</li>
+                      <li>• High churn → customers not staying</li>
+                      <li>• Inflated vanity metrics (downloads, signups) without engagement</li>
+                    </ul>
+                  </div>
+
+                  <div class="bg-[#1E1E21] border border-red-500/20 rounded-lg p-4">
+                    <h4 class="text-red-400 font-medium mb-2">Founder / Soft Red Flags</h4>
+                    <ul class="text-white/70 text-sm space-y-1">
+                      <li>• Lack of transparency in data shared with investors</li>
+                      <li>• Pivoting too often without clear rationale</li>
+                      <li>• Overconfidence / arrogance → "We don't have competitors" (big red flag)</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
               <!-- Growth Potential Section -->
               <div>
                 <h3 class="text-lg font-semibold text-white mb-3">Growth Potential Calculation</h3>
@@ -595,22 +880,6 @@
                 </div>
               </div>
 
-              <!-- Support Section -->
-              <div>
-                <h3 class="text-lg font-semibold text-white mb-3">Support & Resources</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
-                    <h4 class="text-white font-medium mb-2">Documentation</h4>
-                    <p class="text-white/70 text-sm mb-2">Comprehensive guides and API documentation.</p>
-                    <a href="#" class="text-[#FFF27A] text-sm hover:underline">View Documentation →</a>
-                  </div>
-                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
-                    <h4 class="text-white font-medium mb-2">Community</h4>
-                    <p class="text-white/70 text-sm mb-2">Join our community for support and discussions.</p>
-                    <a href="#" class="text-[#FFF27A] text-sm hover:underline">Join Community →</a>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>

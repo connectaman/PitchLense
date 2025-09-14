@@ -2,6 +2,26 @@
 
 PitchLense is a comprehensive AI-powered startup analysis platform that provides detailed risk assessment and growth potential evaluation for early-stage ventures. The platform analyzes multiple dimensions of startup risk and provides actionable insights for investors, founders, and stakeholders.
 
+## 🔗 Quick Links
+
+<div align="center">
+
+[![YouTube Tutorial](https://img.shields.io/badge/📺_YouTube_Tutorial-red?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/watch?v=pAhPH3thXTo&si=c_BmRh3jfv2Hc2Ie)
+[![Website](https://img.shields.io/badge/🌐_Website-black?style=for-the-badge&logo=googlechrome&logoColor=white)](https://www.pitchlense.com/)
+[![GitHub Repository](https://img.shields.io/badge/💻_GitHub-black?style=for-the-badge&logo=github&logoColor=white)](https://github.com/connectaman/PitchLense)
+[![MCP Repository](https://img.shields.io/badge/🔧_MCP_Repository-black?style=for-the-badge&logo=github&logoColor=white)](https://github.com/connectaman/Pitchlense-mcp)
+[![PyPI Package](https://img.shields.io/badge/🐍_PyPI_Package-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://pypi.org/project/pitchlense-mcp/)
+[![Documentation](https://img.shields.io/badge/📚_Documentation-FFD43B?style=for-the-badge&logo=readthedocs&logoColor=black)](https://pitchlense-mcp.readthedocs.io/en/latest/api.html)
+
+</div>
+
+### 📖 How to Use PitchLense
+Watch our comprehensive tutorial video to learn how to use PitchLense effectively:
+
+[![How to use PitchLense](https://img.youtube.com/vi/pAhPH3thXTo/0.jpg)](https://www.youtube.com/watch?v=pAhPH3thXTo&si=c_BmRh3jfv2Hc2Ie)
+
+**Click the image above to watch the tutorial on YouTube**
+
 ## Features
 
 ### 📊 Comprehensive Analysis
@@ -54,25 +74,49 @@ npm install
 Create a `backend/.env` file with the following variables:
 
 ```bash
-# Database configuration (MySQL/Cloud SQL)
-DB_HOST=your_database_host
-DB_PORT=3306
-DB_USER=your_database_user
-DB_PASSWORD=your_database_password
-DB_NAME=your_database_name
-
-# Cloud SQL specific (optional)
-DB_SSL=true
-INSTANCE_UNIX_SOCKET=/cloudsql/PROJECT:REGION:INSTANCE
-
-# JWT secret for authentication
-JWT_SECRET=your_jwt_secret_key
-
-# Google Cloud services
+# Google AI/Gemini API
 GEMINI_API_KEY=your_gemini_api_key
+
+# Google Cloud Storage
 BUCKET=your_gcs_bucket_name
+
+# Google Cloud Project
+GOOGLE_CLOUD_PROJECT=your_project_id
+
+# Cloud Run deployment URL
 CLOUD_RUN_URL=your_cloud_run_endpoint_url
+
+# Application environment
+NODE_ENV=production
+
+# Google Cloud credentials (for service account)
+GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account-key.json
+
+# Database configuration (MySQL/Cloud SQL)
+DB_USER=your_database_user
+DB_PASS=your_database_password
+DB_HOST=your_database_host
+DB_NAME=your_database_name
+DB_PORT=3306
+DB_SSL=true
 ```
+
+### Environment Variables Explained
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `GEMINI_API_KEY` | Google Gemini AI API key for document analysis | ✅ |
+| `BUCKET` | Google Cloud Storage bucket name for file storage | ✅ |
+| `GOOGLE_CLOUD_PROJECT` | Your Google Cloud Project ID | ✅ |
+| `CLOUD_RUN_URL` | Cloud Run service URL for deployment | ✅ |
+| `NODE_ENV` | Application environment (production/development) | ✅ |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Path to Google Cloud service account key | ✅ |
+| `DB_USER` | MySQL database username | ✅ |
+| `DB_PASS` | MySQL database password | ✅ |
+| `DB_HOST` | MySQL database host (Cloud SQL instance) | ✅ |
+| `DB_NAME` | MySQL database name | ✅ |
+| `DB_PORT` | MySQL database port (default: 3306) | ✅ |
+| `DB_SSL` | Enable SSL for database connection | ✅ |
 
 3) Run the server
 

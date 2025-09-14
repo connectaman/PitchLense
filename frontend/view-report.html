@@ -8,6 +8,7 @@
       tailwind.config = { theme: { extend: { colors: { background:'#1E1E21', surface:'#2E3137', text:'#ffffff', secondary:'#cfd4dd', accent:'#f1d85b' }}}}
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -97,6 +98,18 @@
             <div class="text-sm text-white/60" id="count"></div>
           </div>
           <div id="grid" class="grid gap-3 mobile-cards" style="grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));"></div>
+          
+          <!-- Loading State -->
+          <div id="loadingState" class="hidden min-h-[60vh] grid place-items-center">
+            <div class="text-center">
+              <div class="mx-auto w-20 h-20 rounded-2xl bg-white/5 border border-white/10 grid place-items-center mb-4">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFF27A]"></div>
+              </div>
+              <div class="text-lg font-semibold text-white">Loading Reports...</div>
+              <div class="text-sm text-white/60 mt-1">Please wait while we fetch your reports</div>
+            </div>
+          </div>
+          
           <div id="emptyState" class="hidden min-h-[60vh] grid place-items-center">
             <div class="text-center">
               <div class="mx-auto w-20 h-20 rounded-2xl bg-white/5 border border-white/10 grid place-items-center mb-4">
@@ -175,7 +188,19 @@
         });
         inp.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); state.search = inp.value.trim(); state.page = 0; loadReports(); }});
       }
-      refreshBtn?.addEventListener('click', ()=>{ loadReports(); });
+      refreshBtn?.addEventListener('click', ()=>{ 
+        // Add loading animation to refresh button
+        const refreshIcon = refreshBtn.querySelector('svg');
+        if (refreshIcon) {
+          refreshIcon.classList.add('animate-spin');
+        }
+        loadReports().finally(() => {
+          // Remove loading animation
+          if (refreshIcon) {
+            refreshIcon.classList.remove('animate-spin');
+          }
+        });
+      });
 
       // sign out
       const signout = document.getElementById('signoutBtn');
@@ -189,6 +214,7 @@
       const nextBtn = document.getElementById('nextBtn');
       const grid = document.getElementById('grid');
       const emptyState = document.getElementById('emptyState');
+      const loadingState = document.getElementById('loadingState');
       const emptyTitle = document.getElementById('emptyTitle');
       const emptySubtitle = document.getElementById('emptySubtitle');
       const emptyCta = document.getElementById('emptyCta');
@@ -202,6 +228,7 @@
         emptySubtitle.textContent = subtitle || '';
         emptyCta.innerHTML = withCta ? '<a href="/create-report.html" class="inline-block px-5 py-2 rounded-full bg-[#FFF27A] text-[#1E1E21] font-semibold border border-white/15">Generate Report</a>' : '';
         emptyState.classList.remove('hidden');
+        loadingState.classList.add('hidden');
         grid.classList.add('hidden');
         pageInfo.textContent = '';
       }
@@ -219,28 +246,37 @@
       }
 
       async function loadReports(){
-        const params = new URLSearchParams({ page: String(state.page), limit: String(state.limit) });
-        if (state.search) params.set('search', state.search);
-        const resp = await fetch(`/api/reports?${params.toString()}`, { credentials: 'include' });
-        if (resp.status === 401) { window.location.href = '/auth.html'; return; }
-        const data = await resp.json();
-        const total = data.total || 0;
-        const totalPages = Math.max(1, Math.ceil(total / state.limit));
-        window.__total = total;
-        document.getElementById('count').textContent = `${total} reports`;
-        grid.innerHTML = '';
-
-        // Empty states
-        if (total === 0) {
-          const q = (state.search || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;');
-          if (state.search) setEmpty(`No Results found for \"${q}\"`, 'Try another search keyword.', false);
-          else setEmpty('No Reports', 'Create your first report to get started.', true);
-          prevBtn.disabled = true; nextBtn.disabled = true; pageInfo.textContent = '';
-          return;
-        }
-
+        // Show loading state
+        loadingState.classList.remove('hidden');
         emptyState.classList.add('hidden');
-        grid.classList.remove('hidden');
+        grid.classList.add('hidden');
+        
+        try {
+          const params = new URLSearchParams({ page: String(state.page), limit: String(state.limit) });
+          if (state.search) params.set('search', state.search);
+          const resp = await fetch(`/api/reports?${params.toString()}`, { credentials: 'include' });
+          if (resp.status === 401) { window.location.href = '/auth.html'; return; }
+          const data = await resp.json();
+          const total = data.total || 0;
+          const totalPages = Math.max(1, Math.ceil(total / state.limit));
+          window.__total = total;
+          document.getElementById('count').textContent = `${total} reports`;
+          grid.innerHTML = '';
+
+          // Hide loading state
+          loadingState.classList.add('hidden');
+
+          // Empty states
+          if (total === 0) {
+            const q = (state.search || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;');
+            if (state.search) setEmpty(`No Results found for \"${q}\"`, 'Try another search keyword.', false);
+            else setEmpty('No Reports', 'Create your first report to get started.', true);
+            prevBtn.disabled = true; nextBtn.disabled = true; pageInfo.textContent = '';
+            return;
+          }
+
+          emptyState.classList.add('hidden');
+          grid.classList.remove('hidden');
 
         pageInfo.textContent = `Page ${data.page + 1} of ${totalPages}`;
         prevBtn.disabled = state.page <= 0;
@@ -314,13 +350,42 @@
           }
           delBtn.addEventListener('click', async (e)=>{
             e.preventDefault();
-            if (!confirm('Delete this report?')) return;
-            try { await fetch(`/api/reports/${r.report_id}`, { method:'DELETE', credentials:'include' }); } catch(_) {}
-            loadReports();
+            const result = await Swal.fire({
+              title: 'Delete Report',
+              text: 'Are you sure you want to delete this report? This action cannot be undone.',
+              icon: 'warning',
+              showCancelButton: true,
+              confirmButtonColor: '#ef4444',
+              cancelButtonColor: '#6b7280',
+              confirmButtonText: 'Yes, delete it!',
+              cancelButtonText: 'Cancel'
+            });
+            
+            if (result.isConfirmed) {
+              try { 
+                await fetch(`/api/reports/${r.report_id}`, { method:'DELETE', credentials:'include' }); 
+                await Swal.fire({
+                  title: 'Deleted!',
+                  text: 'Your report has been deleted.',
+                  icon: 'success',
+                  confirmButtonColor: '#f1d85b',
+                  confirmButtonText: 'OK'
+                });
+              } catch(_) {}
+              loadReports();
+            }
           });
 
           grid.appendChild(card);
         });
+        } catch (error) {
+          // Hide loading state on error
+          loadingState.classList.add('hidden');
+          console.error('Error loading reports:', error);
+          
+          // Show error state
+          setEmpty('Failed to Load Reports', 'There was an error loading your reports. Please try again.', false);
+        }
       }
       loadReports().catch(()=>{});
     </script>
