@@ -141,6 +141,49 @@ const RiskGrid = () => {
   );
 };
 
+const YouTubeVideo = () => {
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('reveal-visible');
+        }
+      });
+    }, { threshold: 0.2 });
+
+    if (videoRef.current) io.observe(videoRef.current);
+    return () => io.disconnect();
+  }, []);
+
+  return (
+    <section id="demo" className="py-20 bg-black/10">
+      <div className="max-w-7xl mx-auto px-6">
+        <div ref={videoRef} className="text-center reveal" style={{ '--ty': '30px' }}>
+          <h2 className="text-2xl md:text-3xl font-bold mb-4">See PitchLense in Action</h2>
+          <p className="text-secondary mb-8 max-w-2xl mx-auto">
+            Watch our demo video to see how PitchLense transforms startup evaluation with AI-powered insights and comprehensive risk assessment.
+          </p>
+          <div className="relative max-w-4xl mx-auto">
+            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+              <iframe
+                className="absolute top-0 left-0 w-full h-full rounded-xl shadow-card border border-white/10"
+                src="https://www.youtube.com/embed/pAhPH3thXTo?si=c_BmRh3jfv2Hc2Ie&vq=hd720"
+                title="PitchLense Demo Video"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                loading="lazy"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const Capabilities = () => (
   <section id="capabilities" className="py-20">
     <div className="max-w-7xl mx-auto px-6">
@@ -185,6 +228,7 @@ const App = () => (
     <main>
       <Hero />
       <Features />
+      <YouTubeVideo />
       <RiskGrid />
       {/* <CTA /> */}
     </main>

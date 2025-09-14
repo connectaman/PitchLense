@@ -62,7 +62,7 @@ const CLOUD_RUN_URL = process.env.CLOUD_RUN_URL || process.env.CLOUDRUN_URL || p
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT) || 3306,
-  user: process.env.DB_USER || 'root',
+  user: process.env.DB_USER || 'admin',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'pitchlense',
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
@@ -81,6 +81,16 @@ const dbConfig = {
 // Create MySQL connection pool
 let db;
 let dbRun, dbGet, dbAll;
+
+// Helper function to get database name from environment
+function getDbName() {
+  return process.env.DB_NAME || 'pitchlense';
+}
+
+// Helper function to format table names with database prefix
+function tableName(table) {
+  return `${getDbName()}.${table}`;
+}
 
 async function initializeDatabase() {
   try {
@@ -126,107 +136,37 @@ async function initializeDatabase() {
   }
 }
 
-async function ensureTables() {
+async function checkTables() {
   try {
-    console.log('Ensuring database tables exist...');
+    console.log('Checking if database tables exist...');
     
-    // Check if user_id column exists in reports table and add it if missing
-    try {
-      const tableInfo = await dbAll(`DESCRIBE reports`);
-      const hasUserId = tableInfo.some(col => col.Field === 'user_id');
-      
-      if (!hasUserId) {
-        console.log('Adding user_id column to reports table...');
-        await dbRun(`ALTER TABLE reports ADD COLUMN user_id VARCHAR(255)`);
-        await dbRun(`CREATE INDEX idx_reports_user_id ON reports(user_id)`);
-        console.log('user_id column added to reports table');
+    const tables = ['users', 'reports', 'uploads', 'chats'];
+    const existingTables = [];
+    const missingTables = [];
+    
+    for (const table of tables) {
+      try {
+        await dbAll(`DESCRIBE ${tableName(table)}`);
+        existingTables.push(table);
+        console.log(`✅ Table ${tableName(table)} exists`);
+      } catch (e) {
+        missingTables.push(table);
+        console.log(`❌ Table ${tableName(table)} does not exist`);
       }
-    } catch (e) {
-      console.log('Reports table does not exist yet, will be created...');
-    }
-
-    // Users (simplified for secure method only)
-    await dbRun(`CREATE TABLE IF NOT EXISTS users (
-      id VARCHAR(255) PRIMARY KEY,
-      email VARCHAR(255) UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      name VARCHAR(255),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`);
-
-    // Reports based on provided FastAPI model
-    await dbRun(`CREATE TABLE IF NOT EXISTS reports (
-      report_id VARCHAR(255) PRIMARY KEY,
-      user_id VARCHAR(255) NOT NULL,
-      report_name VARCHAR(255) NOT NULL,
-      startup_name VARCHAR(255) NOT NULL,
-      founder_name VARCHAR(255) NOT NULL,
-      launch_date VARCHAR(255),
-      status VARCHAR(50) NOT NULL DEFAULT 'pending',
-      is_delete TINYINT(1) NOT NULL DEFAULT 0,
-      is_pinned TINYINT(1) NOT NULL DEFAULT 0,
-      report_path TEXT,
-      total_files INT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT fk_reports_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )`);
-    
-    // Create indexes (MySQL doesn't support IF NOT EXISTS for indexes)
-    try {
-      await dbRun(`CREATE INDEX idx_reports_report_name ON reports(report_name)`);
-    } catch (e) {
-      // Index might already exist
-    }
-    try {
-      await dbRun(`CREATE INDEX idx_reports_user_id ON reports(user_id)`);
-    } catch (e) {
-      // Index might already exist
-    }
-
-    // Uploads based on provided FastAPI model
-    await dbRun(`CREATE TABLE IF NOT EXISTS uploads (
-      file_id VARCHAR(255) PRIMARY KEY,
-      user_id VARCHAR(255) NOT NULL,
-      report_id VARCHAR(255) NOT NULL,
-      filename VARCHAR(255) NOT NULL,
-      file_format VARCHAR(100) NOT NULL,
-      upload_path TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT fk_upload_report FOREIGN KEY (report_id) REFERENCES reports(report_id) ON DELETE CASCADE
-    )`);
-    
-    try {
-      await dbRun(`CREATE INDEX idx_uploads_report_id ON uploads(report_id)`);
-    } catch (e) {
-      // Index might already exist
-    }
-
-    // Chats table for QnA functionality
-    await dbRun(`CREATE TABLE IF NOT EXISTS chats (
-      chat_id VARCHAR(255) PRIMARY KEY,
-      report_id VARCHAR(255) NOT NULL,
-      user_id VARCHAR(255) NOT NULL,
-      user_message TEXT NOT NULL,
-      ai_response TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT fk_chat_report FOREIGN KEY (report_id) REFERENCES reports(report_id) ON DELETE CASCADE
-    )`);
-    
-    try {
-      await dbRun(`CREATE INDEX idx_chats_report_id ON chats(report_id)`);
-    } catch (e) {
-      // Index might already exist
-    }
-    try {
-      await dbRun(`CREATE INDEX idx_chats_user_id ON chats(user_id)`);
-    } catch (e) {
-      // Index might already exist
     }
     
-    console.log('✅ Database tables ensured successfully');
+    if (missingTables.length > 0) {
+      console.log(`\n⚠️  Missing tables: ${missingTables.join(', ')}`);
+      console.log('💡 Please run the SQL setup script to create the missing tables.');
+      console.log('📄 See backend/setup-database.sql for the complete setup script.');
+    } else {
+      console.log('\n✅ All required tables exist and are accessible');
+    }
+    
+    return { existingTables, missingTables };
     
   } catch (error) {
-    console.error('❌ Error ensuring database tables:', error);
+    console.error('❌ Error checking database tables:', error);
     throw error;
   }
 }
@@ -243,8 +183,21 @@ app.use((req, res, next) => {
   if (req.secure || req.headers['x-forwarded-proto'] === 'https') {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   }
-  // Content Security Policy
-  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self';");
+  // Content Security Policy - Allow YouTube embeds
+  const csp = 
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://unpkg.com; " +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    "font-src 'self' https://fonts.gstatic.com; " +
+    "img-src 'self' data: https: blob:; " +
+    "connect-src 'self' https:; " +
+    "frame-src 'self' https://www.youtube.com https://youtube.com https://*.youtube.com https://*.ytimg.com; " +
+    "media-src 'self' https://www.youtube.com https://youtube.com; " +
+    "object-src 'none'; " +
+    "base-uri 'self';";
+  
+  res.setHeader('Content-Security-Policy', csp);
+  console.log('CSP Header set:', csp);
   next();
 });
 
@@ -327,7 +280,7 @@ app.post('/api/auth/signup', async (req, res) => {
     // The password is already hashed on the client side with PBKDF2 + salt
     // Store it directly for the secure method
     const id = crypto.randomUUID();
-    await dbRun('INSERT INTO users (id,email,password_hash,name) VALUES (?,?,?,?)', [id, String(email).toLowerCase(), password, name || null]);
+    await dbRun(`INSERT INTO ${tableName('users')} (id,email,password_hash,name) VALUES (?,?,?,?)`, [id, String(email).toLowerCase(), password, name || null]);
     const user = { id, email: String(email).toLowerCase(), name: name || null };
     const token = jwt.sign({ sub: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
     res.cookie('auth', token, { httpOnly: true, sameSite: 'lax' });
@@ -369,7 +322,7 @@ app.post('/api/auth/login', async (req, res) => {
     console.log('Expected salt:', FIXED_SALT);
     console.log('Salt matches:', salt === FIXED_SALT);
     
-    const user = await dbGet('SELECT id,email,password_hash,name FROM users WHERE email=?', [String(email).toLowerCase()]);
+    const user = await dbGet(`SELECT id,email,password_hash,name FROM ${tableName('users')} WHERE email=?`, [String(email).toLowerCase()]);
     if (!user) return res.status(401).json({ error: 'invalid_credentials' });
     
     // Direct comparison of PBKDF2 hashes
@@ -414,7 +367,7 @@ app.post('/api/qna/ask', requireAuth, async (req, res) => {
     if (!report_id || !question) return res.status(400).json({ error: 'report_id and question required' });
 
     // Get report data
-    const report = await dbGet('SELECT * FROM reports WHERE report_id=? AND user_id=? AND is_delete=0', [report_id, req.user.id]);
+    const report = await dbGet(`SELECT * FROM ${tableName('reports')} WHERE report_id=? AND user_id=? AND is_delete=0`, [report_id, req.user.id]);
     if (!report) return res.status(404).json({ error: 'Report not found' });
 
     // Check if report is ready
@@ -462,7 +415,7 @@ app.post('/api/qna/ask', requireAuth, async (req, res) => {
     // Save chat to database
     const chatId = crypto.randomUUID();
     await dbRun(
-      'INSERT INTO chats (chat_id, report_id, user_id, user_message, ai_response, created_at) VALUES (?, ?, ?, ?, ?, NOW())',
+      `INSERT INTO ${tableName('chats')} (chat_id, report_id, user_id, user_message, ai_response, created_at) VALUES (?, ?, ?, ?, ?, NOW())`,
       [chatId, report_id, req.user.id, question, aiResponse]
     );
 
@@ -484,12 +437,12 @@ app.get('/api/qna/history/:report_id', requireAuth, async (req, res) => {
     const { report_id } = req.params;
     
     // Verify user has access to this report
-    const report = await dbGet('SELECT * FROM reports WHERE report_id=? AND user_id=? AND is_delete=0', [report_id, req.user.id]);
+    const report = await dbGet(`SELECT * FROM ${tableName('reports')} WHERE report_id=? AND user_id=? AND is_delete=0`, [report_id, req.user.id]);
     if (!report) return res.status(404).json({ error: 'Report not found' });
 
     // Get chat history
     const chats = await dbAll(
-      'SELECT chat_id, user_message, ai_response, created_at FROM chats WHERE report_id=? AND user_id=? ORDER BY created_at ASC',
+      `SELECT chat_id, user_message, ai_response, created_at FROM ${tableName('chats')} WHERE report_id=? AND user_id=? ORDER BY created_at ASC`,
       [report_id, req.user.id]
     );
 
@@ -574,13 +527,13 @@ app.post('/api/reports', requireAuth, upload.array('files'), async (req, res) =>
     const report_path = GCS_BUCKET ? `gs://${GCS_BUCKET}/runs/${report_id}.json` : null;
     console.log(`[api] creating report_id=${report_id} name=${report_name} total_files=${files.length} report_path=${report_path}`);
     await dbRun(
-      `INSERT INTO reports (report_id, user_id, report_name, startup_name, founder_name, launch_date, status, is_delete, is_pinned, report_path, total_files, created_at)
+      `INSERT INTO ${tableName('reports')} (report_id, user_id, report_name, startup_name, founder_name, launch_date, status, is_delete, is_pinned, report_path, total_files, created_at)
        VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, 0, ?, ?, NOW())`,
       [report_id, req.user.id, report_name, startup_name, founder_name, launch_date, report_path, files.length]
     );
 
     // Respond immediately
-    const report = await dbGet('SELECT * FROM reports WHERE report_id=?', [report_id]);
+    const report = await dbGet(`SELECT * FROM ${tableName('reports')} WHERE report_id=?`, [report_id]);
     res.json(report);
 
     // Background: upload files to GCS and create uploads rows, then trigger Cloud Run
@@ -596,7 +549,7 @@ app.post('/api/reports', requireAuth, upload.array('files'), async (req, res) =>
           console.log(`[bg] upload ${i+1}/${files.length} -> ${objectPath} type=${f.mimetype} size=${f.size}`);
           const gcsPath = await gcsSaveBytes(GCS_BUCKET, objectPath, f.buffer, f.mimetype || 'application/octet-stream');
           await dbRun(
-            `INSERT INTO uploads (file_id, user_id, report_id, filename, file_format, upload_path, created_at)
+            `INSERT INTO ${tableName('uploads')} (file_id, user_id, report_id, filename, file_format, upload_path, created_at)
              VALUES (?, ?, ?, ?, ?, ?, NOW())`,
             [crypto.randomUUID(), req.user.id, report_id, f.originalname, kind, gcsPath]
           );
@@ -627,7 +580,7 @@ app.post('/api/reports', requireAuth, upload.array('files'), async (req, res) =>
         }
       } catch (err) {
         console.error(`[bg] processing failed report_id=${report_id}:`, err?.message || err);
-        try { await dbRun(`UPDATE reports SET status='failed' WHERE report_id=?`, [report_id]); } catch {}
+        try { await dbRun(`UPDATE ${tableName('reports')} SET status='failed' WHERE report_id=?`, [report_id]); } catch {}
       }
     });
   } catch (e) {
@@ -639,11 +592,11 @@ app.post('/api/reports', requireAuth, upload.array('files'), async (req, res) =>
 app.get('/api/reports', requireAuth, async (req, res) => {
   try {
     let { skip, limit = 100, page, search, status, pinned_only } = req.query;
-    limit = Number(limit);
+    limit = parseInt(limit, 10);
     if (page !== undefined && (skip === undefined || skip === null)) {
-      skip = Number(page) * limit;
+      skip = parseInt(page, 10) * limit;
     }
-    skip = Number(skip || 0);
+    skip = parseInt(skip || 0, 10);
 
     const where = ['is_delete = 0', 'user_id = ?'];
     const params = [req.user.id];
@@ -652,10 +605,15 @@ app.get('/api/reports', requireAuth, async (req, res) => {
     if (status) { where.push('status = ?'); params.push(String(status)); }
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
-    const totalRow = await dbGet(`SELECT COUNT(*) as c FROM reports ${whereSql}`, params);
+    const totalRow = await dbGet(`SELECT COUNT(*) as c FROM ${tableName('reports')} ${whereSql}`, params);
+    
+    // Ensure limit and skip are integers for MySQL
+    const queryParams = [...params, parseInt(limit, 10), parseInt(skip, 10)];
+    console.log('Reports query params:', { limit, skip, queryParams });
+    
     const rows = await dbAll(
-      `SELECT * FROM reports ${whereSql} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-      [...params, limit, skip]
+      `SELECT * FROM ${tableName('reports')} ${whereSql} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+      queryParams
     );
 
     for (const r of rows) {
@@ -664,12 +622,12 @@ app.get('/api/reports', requireAuth, async (req, res) => {
         const exists = await gcsFileExists(r.report_path);
         if (exists) {
           try {
-            await dbRun(`UPDATE reports SET status='success' WHERE report_id=?`, [r.report_id]);
+            await dbRun(`UPDATE ${tableName('reports')} SET status='success' WHERE report_id=?`, [r.report_id]);
             r.status = 'success';
           } catch {}
         }
       }
-      const row = await dbGet('SELECT COUNT(*) as c FROM uploads WHERE report_id=?', [r.report_id]);
+      const row = await dbGet(`SELECT COUNT(*) as c FROM ${tableName('uploads')} WHERE report_id=?`, [r.report_id]);
       r.file_count = row?.c || 0;
     }
     res.json({ reports: rows, total: totalRow?.c || 0, skip, limit, page: Math.floor(skip / limit) });
@@ -678,13 +636,13 @@ app.get('/api/reports', requireAuth, async (req, res) => {
 
 app.get('/api/reports/:id', requireAuth, async (req, res) => {
   try {
-    const r = await dbGet('SELECT * FROM reports WHERE report_id=? AND user_id=?', [req.params.id, req.user.id]);
+    const r = await dbGet(`SELECT * FROM ${tableName('reports')} WHERE report_id=? AND user_id=?`, [req.params.id, req.user.id]);
     if (!r || r.is_delete) return res.status(404).json({ error: 'not_found' });
     // If not already success, check if output exists in GCS and mark success
     if (r.status !== 'success' && r.report_path) {
       const exists = await gcsFileExists(r.report_path);
       if (exists) {
-        try { await dbRun(`UPDATE reports SET status='success' WHERE report_id=?`, [r.report_id]); r.status = 'success'; } catch {}
+        try { await dbRun(`UPDATE ${tableName('reports')} SET status='success' WHERE report_id=?`, [r.report_id]); r.status = 'success'; } catch {}
       }
     }
     res.json(r);
@@ -694,9 +652,9 @@ app.get('/api/reports/:id', requireAuth, async (req, res) => {
 app.delete('/api/reports/:id', requireAuth, async (req, res) => {
   try {
     const id = req.params.id;
-    const r = await dbGet('SELECT * FROM reports WHERE report_id=? AND user_id=?', [id, req.user.id]);
+    const r = await dbGet(`SELECT * FROM ${tableName('reports')} WHERE report_id=? AND user_id=?`, [id, req.user.id]);
     if (!r || r.is_delete) return res.status(404).json({ error: 'not_found' });
-    await dbRun('UPDATE reports SET is_delete=1 WHERE report_id=? AND user_id=?', [id, req.user.id]);
+    await dbRun(`UPDATE ${tableName('reports')} SET is_delete=1 WHERE report_id=? AND user_id=?`, [id, req.user.id]);
     res.json({ ok: true });
   } catch (e) { console.error(e); res.status(500).json({ error: 'delete_report_failed' }); }
 });
@@ -704,10 +662,10 @@ app.delete('/api/reports/:id', requireAuth, async (req, res) => {
 app.patch('/api/reports/:id/pin', requireAuth, async (req, res) => {
   try {
     const id = req.params.id;
-    const r = await dbGet('SELECT is_pinned FROM reports WHERE report_id=? AND user_id=?', [id, req.user.id]);
+    const r = await dbGet(`SELECT is_pinned FROM ${tableName('reports')} WHERE report_id=? AND user_id=?`, [id, req.user.id]);
     if (!r) return res.status(404).json({ error: 'not_found' });
     const next = r.is_pinned ? 0 : 1;
-    await dbRun('UPDATE reports SET is_pinned=? WHERE report_id=? AND user_id=?', [next, id, req.user.id]);
+    await dbRun(`UPDATE ${tableName('reports')} SET is_pinned=? WHERE report_id=? AND user_id=?`, [next, id, req.user.id]);
     res.json({ pinned: !!next });
   } catch (e) { console.error(e); res.status(500).json({ error: 'toggle_pin_failed' }); }
 });
@@ -715,7 +673,7 @@ app.patch('/api/reports/:id/pin', requireAuth, async (req, res) => {
 app.get('/api/reports/:id/data', requireAuth, async (req, res) => {
   try {
     const id = req.params.id;
-    const r = await dbGet('SELECT * FROM reports WHERE report_id=? AND user_id=? AND is_delete=0', [id, req.user.id]);
+    const r = await dbGet(`SELECT * FROM ${tableName('reports')} WHERE report_id=? AND user_id=? AND is_delete=0`, [id, req.user.id]);
     if (!r) return res.status(404).json({ error: 'not_found' });
     
     // If report is not success, return the report metadata without data
@@ -771,7 +729,7 @@ app.get('*', (_req, res) => {
 async function startServer() {
   try {
     await initializeDatabase();
-    await ensureTables();
+    await checkTables();
     
     app.listen(PORT, () => {
       console.log(`🚀 PitchLense server running at http://localhost:${PORT}`);
