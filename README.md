@@ -54,15 +54,24 @@ npm install
 Create a `backend/.env` file with the following variables:
 
 ```bash
-# Database configuration
+# Database configuration (MySQL/Cloud SQL)
 DB_HOST=your_database_host
 DB_PORT=3306
 DB_USER=your_database_user
 DB_PASSWORD=your_database_password
 DB_NAME=your_database_name
 
+# Cloud SQL specific (optional)
+DB_SSL=true
+INSTANCE_UNIX_SOCKET=/cloudsql/PROJECT:REGION:INSTANCE
+
 # JWT secret for authentication
 JWT_SECRET=your_jwt_secret_key
+
+# Google Cloud services
+GEMINI_API_KEY=your_gemini_api_key
+BUCKET=your_gcs_bucket_name
+CLOUD_RUN_URL=your_cloud_run_endpoint_url
 ```
 
 3) Run the server
@@ -78,16 +87,27 @@ Open your browser and navigate to `http://localhost:5178`
 
 ### Database Migration
 
-If you're upgrading from a previous version, the server will automatically:
-- Add the `user_id` column to the reports table
-- Create necessary indexes
-- Handle existing data gracefully
+The application now uses **MySQL/Cloud SQL** instead of SQLite. If you're upgrading from a previous version:
 
-For cleanup of orphaned reports (if any), you can run:
-```bash
-cd backend
-node cleanup-orphaned-reports.js
-```
+1. **Set up MySQL database** with the environment variables above
+2. **The server will automatically**:
+   - Connect to your MySQL database
+   - Create all necessary tables with proper schema
+   - Add the `user_id` column to reports table
+   - Create necessary indexes
+   - Handle existing data gracefully
+
+3. **For cleanup of orphaned reports** (if any), you can run:
+   ```bash
+   cd backend
+   node cleanup-orphaned-reports.js
+   ```
+
+### Cloud SQL Connection
+
+For Google Cloud SQL, you can use either:
+- **TCP connection**: Set `DB_HOST`, `DB_PORT`, `DB_SSL=true`
+- **Unix socket**: Set `INSTANCE_UNIX_SOCKET=/cloudsql/PROJECT:REGION:INSTANCE`
 
 ### Development
 
@@ -158,13 +178,20 @@ PitchLense/
 
 - **Frontend**: HTML5, CSS3, JavaScript (ES6+), Tailwind CSS
 - **Backend**: Node.js, Express.js
-- **Database**: MySQL (Cloud SQL compatible)
+- **Database**: MySQL 8.0+ (Cloud SQL compatible)
 - **Authentication**: JWT with httpOnly cookies
 - **Charts**: Chart.js for data visualization
 - **Icons**: Lucide React icons
 - **Styling**: Custom dark theme with glassmorphism effects
 
 ## Recent Updates
+
+### 🗄️ MySQL/Cloud SQL Migration
+- **Migrated from SQLite to MySQL**: Full support for Google Cloud SQL
+- Added connection pooling and proper error handling
+- Support for both TCP and Unix socket connections
+- Automatic table creation and schema migration
+- Enhanced database performance and scalability
 
 ### 🔒 User Data Isolation Fix
 - **Fixed critical security issue**: Reports were being shared across all users

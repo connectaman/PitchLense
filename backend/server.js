@@ -14,7 +14,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const sqlite3 = require('sqlite3').verbose();
+const mysql = require('mysql2/promise');
 const { promisify } = require('util');
 const fs = require('fs');
 const fsp = fs.promises;
@@ -58,85 +58,177 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'your-gemini-
 const GCS_BUCKET = process.env.BUCKET || process.env.GCS_BUCKET || process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
 const CLOUD_RUN_URL = process.env.CLOUD_RUN_URL || process.env.CLOUDRUN_URL || process.env.CLOUD_RUN_ENDPOINT;
 
-// SQLite database for local development
-const dbFile = path.join(__dirname, 'data.db');
-const db = new sqlite3.Database(dbFile);
-const dbRun = promisify(db.run.bind(db));
-const dbGet = promisify(db.get.bind(db));
-const dbAll = promisify(db.all.bind(db));
+// MySQL database connection configuration
+const dbConfig = {
+  host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT) || 3306,
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'pitchlense',
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  // Cloud SQL connection settings
+  socketPath: process.env.INSTANCE_UNIX_SOCKET || null,
+  // Connection pool settings (MySQL2 compatible)
+  connectionLimit: 10,
+  queueLimit: 0,
+  // Connection timeout settings
+  connectTimeout: 60000,
+  // Additional options for better reliability
+  charset: 'utf8mb4',
+  timezone: 'Z'
+};
+
+// Create MySQL connection pool
+let db;
+let dbRun, dbGet, dbAll;
+
+async function initializeDatabase() {
+  try {
+    // Remove socketPath if not set
+    if (!dbConfig.socketPath) {
+      delete dbConfig.socketPath;
+    }
+    
+    console.log('Connecting to MySQL database...', {
+      host: dbConfig.host,
+      port: dbConfig.port,
+      database: dbConfig.database,
+      ssl: !!dbConfig.ssl,
+      socketPath: !!dbConfig.socketPath
+    });
+    
+    db = mysql.createPool(dbConfig);
+    
+    // Test connection
+    const connection = await db.getConnection();
+    console.log('✅ Successfully connected to MySQL database');
+    connection.release();
+    
+    // Create wrapper functions for compatibility
+    dbRun = async (query, params = []) => {
+      const [result] = await db.execute(query, params);
+      return result;
+    };
+    
+    dbGet = async (query, params = []) => {
+      const [rows] = await db.execute(query, params);
+      return rows[0] || null;
+    };
+    
+    dbAll = async (query, params = []) => {
+      const [rows] = await db.execute(query, params);
+      return rows;
+    };
+    
+  } catch (error) {
+    console.error('❌ Failed to connect to MySQL database:', error);
+    throw error;
+  }
+}
 
 async function ensureTables() {
-  // Enable FK constraints
-  await dbRun(`PRAGMA foreign_keys = ON`);
-
-  // Check if user_id column exists in reports table and add it if missing
   try {
-    const tableInfo = await dbAll(`PRAGMA table_info(reports)`);
-    const hasUserId = tableInfo.some(col => col.name === 'user_id');
+    console.log('Ensuring database tables exist...');
     
-    if (!hasUserId) {
-      console.log('Adding user_id column to reports table...');
-      await dbRun(`ALTER TABLE reports ADD COLUMN user_id TEXT`);
-      await dbRun(`CREATE INDEX IF NOT EXISTS idx_reports_user_id ON reports(user_id)`);
-      console.log('user_id column added to reports table');
+    // Check if user_id column exists in reports table and add it if missing
+    try {
+      const tableInfo = await dbAll(`DESCRIBE reports`);
+      const hasUserId = tableInfo.some(col => col.Field === 'user_id');
+      
+      if (!hasUserId) {
+        console.log('Adding user_id column to reports table...');
+        await dbRun(`ALTER TABLE reports ADD COLUMN user_id VARCHAR(255)`);
+        await dbRun(`CREATE INDEX idx_reports_user_id ON reports(user_id)`);
+        console.log('user_id column added to reports table');
+      }
+    } catch (e) {
+      console.log('Reports table does not exist yet, will be created...');
     }
-  } catch (e) {
-    console.error('Error checking/adding user_id column:', e);
+
+    // Users (simplified for secure method only)
+    await dbRun(`CREATE TABLE IF NOT EXISTS users (
+      id VARCHAR(255) PRIMARY KEY,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      name VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    // Reports based on provided FastAPI model
+    await dbRun(`CREATE TABLE IF NOT EXISTS reports (
+      report_id VARCHAR(255) PRIMARY KEY,
+      user_id VARCHAR(255) NOT NULL,
+      report_name VARCHAR(255) NOT NULL,
+      startup_name VARCHAR(255) NOT NULL,
+      founder_name VARCHAR(255) NOT NULL,
+      launch_date VARCHAR(255),
+      status VARCHAR(50) NOT NULL DEFAULT 'pending',
+      is_delete TINYINT(1) NOT NULL DEFAULT 0,
+      is_pinned TINYINT(1) NOT NULL DEFAULT 0,
+      report_path TEXT,
+      total_files INT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT fk_reports_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`);
+    
+    // Create indexes (MySQL doesn't support IF NOT EXISTS for indexes)
+    try {
+      await dbRun(`CREATE INDEX idx_reports_report_name ON reports(report_name)`);
+    } catch (e) {
+      // Index might already exist
+    }
+    try {
+      await dbRun(`CREATE INDEX idx_reports_user_id ON reports(user_id)`);
+    } catch (e) {
+      // Index might already exist
+    }
+
+    // Uploads based on provided FastAPI model
+    await dbRun(`CREATE TABLE IF NOT EXISTS uploads (
+      file_id VARCHAR(255) PRIMARY KEY,
+      user_id VARCHAR(255) NOT NULL,
+      report_id VARCHAR(255) NOT NULL,
+      filename VARCHAR(255) NOT NULL,
+      file_format VARCHAR(100) NOT NULL,
+      upload_path TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT fk_upload_report FOREIGN KEY (report_id) REFERENCES reports(report_id) ON DELETE CASCADE
+    )`);
+    
+    try {
+      await dbRun(`CREATE INDEX idx_uploads_report_id ON uploads(report_id)`);
+    } catch (e) {
+      // Index might already exist
+    }
+
+    // Chats table for QnA functionality
+    await dbRun(`CREATE TABLE IF NOT EXISTS chats (
+      chat_id VARCHAR(255) PRIMARY KEY,
+      report_id VARCHAR(255) NOT NULL,
+      user_id VARCHAR(255) NOT NULL,
+      user_message TEXT NOT NULL,
+      ai_response TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT fk_chat_report FOREIGN KEY (report_id) REFERENCES reports(report_id) ON DELETE CASCADE
+    )`);
+    
+    try {
+      await dbRun(`CREATE INDEX idx_chats_report_id ON chats(report_id)`);
+    } catch (e) {
+      // Index might already exist
+    }
+    try {
+      await dbRun(`CREATE INDEX idx_chats_user_id ON chats(user_id)`);
+    } catch (e) {
+      // Index might already exist
+    }
+    
+    console.log('✅ Database tables ensured successfully');
+    
+  } catch (error) {
+    console.error('❌ Error ensuring database tables:', error);
+    throw error;
   }
-
-  // Users (simplified for secure method only)
-  await dbRun(`CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    name TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  )`);
-
-  // Reports based on provided FastAPI model
-  await dbRun(`CREATE TABLE IF NOT EXISTS reports (
-    report_id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    report_name TEXT NOT NULL,
-    startup_name TEXT NOT NULL,
-    founder_name TEXT NOT NULL,
-    launch_date TEXT,
-    status TEXT NOT NULL DEFAULT 'pending',
-    is_delete INTEGER NOT NULL DEFAULT 0,
-    is_pinned INTEGER NOT NULL DEFAULT 0,
-    report_path TEXT,
-    total_files INTEGER,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    CONSTRAINT fk_reports_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  )`);
-  await dbRun(`CREATE INDEX IF NOT EXISTS idx_reports_report_name ON reports(report_name)`);
-  await dbRun(`CREATE INDEX IF NOT EXISTS idx_reports_user_id ON reports(user_id)`);
-
-  // Uploads based on provided FastAPI model
-  await dbRun(`CREATE TABLE IF NOT EXISTS uploads (
-    file_id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    report_id TEXT NOT NULL,
-    filename TEXT NOT NULL,
-    file_format TEXT NOT NULL,
-    upload_path TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    CONSTRAINT fk_report FOREIGN KEY (report_id) REFERENCES reports(report_id) ON DELETE CASCADE
-  )`);
-  await dbRun(`CREATE INDEX IF NOT EXISTS idx_uploads_report_id ON uploads(report_id)`);
-
-  // Chats table for QnA functionality
-  await dbRun(`CREATE TABLE IF NOT EXISTS chats (
-    chat_id TEXT PRIMARY KEY,
-    report_id TEXT NOT NULL,
-    user_id TEXT NOT NULL,
-    user_message TEXT NOT NULL,
-    ai_response TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    CONSTRAINT fk_chat_report FOREIGN KEY (report_id) REFERENCES reports(report_id) ON DELETE CASCADE
-  )`);
-  await dbRun(`CREATE INDEX IF NOT EXISTS idx_chats_report_id ON chats(report_id)`);
-  await dbRun(`CREATE INDEX IF NOT EXISTS idx_chats_user_id ON chats(user_id)`);
 }
 
 // Security headers
@@ -370,7 +462,7 @@ app.post('/api/qna/ask', requireAuth, async (req, res) => {
     // Save chat to database
     const chatId = crypto.randomUUID();
     await dbRun(
-      'INSERT INTO chats (chat_id, report_id, user_id, user_message, ai_response, created_at) VALUES (?, ?, ?, ?, ?, datetime("now"))',
+      'INSERT INTO chats (chat_id, report_id, user_id, user_message, ai_response, created_at) VALUES (?, ?, ?, ?, ?, NOW())',
       [chatId, report_id, req.user.id, question, aiResponse]
     );
 
@@ -483,7 +575,7 @@ app.post('/api/reports', requireAuth, upload.array('files'), async (req, res) =>
     console.log(`[api] creating report_id=${report_id} name=${report_name} total_files=${files.length} report_path=${report_path}`);
     await dbRun(
       `INSERT INTO reports (report_id, user_id, report_name, startup_name, founder_name, launch_date, status, is_delete, is_pinned, report_path, total_files, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, 0, ?, ?, datetime('now'))`,
+       VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, 0, ?, ?, NOW())`,
       [report_id, req.user.id, report_name, startup_name, founder_name, launch_date, report_path, files.length]
     );
 
@@ -505,7 +597,7 @@ app.post('/api/reports', requireAuth, upload.array('files'), async (req, res) =>
           const gcsPath = await gcsSaveBytes(GCS_BUCKET, objectPath, f.buffer, f.mimetype || 'application/octet-stream');
           await dbRun(
             `INSERT INTO uploads (file_id, user_id, report_id, filename, file_format, upload_path, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
+             VALUES (?, ?, ?, ?, ?, ?, NOW())`,
             [crypto.randomUUID(), req.user.id, report_id, f.originalname, kind, gcsPath]
           );
           console.log(`[bg] db upload row inserted report_id=${report_id} file=${f.originalname} path=${gcsPath}`);
@@ -562,7 +654,7 @@ app.get('/api/reports', requireAuth, async (req, res) => {
 
     const totalRow = await dbGet(`SELECT COUNT(*) as c FROM reports ${whereSql}`, params);
     const rows = await dbAll(
-      `SELECT * FROM reports ${whereSql} ORDER BY datetime(created_at) DESC LIMIT ? OFFSET ?`,
+      `SELECT * FROM reports ${whereSql} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
       [...params, limit, skip]
     );
 
@@ -675,12 +767,41 @@ app.get('*', (_req, res) => {
   res.sendFile(path.join(staticDir, 'index.html'));
 });
 
-ensureTables()
-  .catch((e) => { console.error('Failed to ensure users table:', e); })
-  .finally(() => {
+// Initialize database and start server
+async function startServer() {
+  try {
+    await initializeDatabase();
+    await ensureTables();
+    
     app.listen(PORT, () => {
-      console.log(`PitchLense demo server running at http://localhost:${PORT}`);
+      console.log(`🚀 PitchLense server running at http://localhost:${PORT}`);
+      console.log(`📊 Connected to MySQL database: ${dbConfig.database}`);
     });
-  });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('\n🛑 Shutting down server...');
+  if (db) {
+    await db.end();
+    console.log('📊 Database connection closed');
+  }
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  console.log('\n🛑 Shutting down server...');
+  if (db) {
+    await db.end();
+    console.log('📊 Database connection closed');
+  }
+  process.exit(0);
+});
+
+startServer();
 
 

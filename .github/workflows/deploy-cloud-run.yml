@@ -81,6 +81,5 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --port 80 \
-            $SET_ENV_FLAG \
             --quiet
 

@@ -6,23 +6,38 @@
  * to clean up any reports that don't belong to any user.
  */
 
-const sqlite3 = require('sqlite3').verbose();
+const mysql = require('mysql2/promise');
 const path = require('path');
-const { promisify } = require('util');
 
-const dbFile = path.join(__dirname, 'data.db');
-const db = new sqlite3.Database(dbFile);
-const dbRun = promisify(db.run.bind(db));
-const dbGet = promisify(db.get.bind(db));
-const dbAll = promisify(db.all.bind(db));
+// MySQL database connection configuration
+const dbConfig = {
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT || 3306,
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'pitchlense',
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  socketPath: process.env.INSTANCE_UNIX_SOCKET || null,
+};
+
+let db;
 
 async function cleanupOrphanedReports() {
   try {
     console.log('Starting cleanup of orphaned reports...');
     
+    // Remove socketPath if not set
+    if (!dbConfig.socketPath) {
+      delete dbConfig.socketPath;
+    }
+    
+    // Connect to MySQL database
+    db = await mysql.createConnection(dbConfig);
+    console.log('✅ Connected to MySQL database');
+    
     // Check if user_id column exists
-    const tableInfo = await dbAll(`PRAGMA table_info(reports)`);
-    const hasUserId = tableInfo.some(col => col.name === 'user_id');
+    const [tableInfo] = await db.execute(`DESCRIBE reports`);
+    const hasUserId = tableInfo.some(col => col.Field === 'user_id');
     
     if (!hasUserId) {
       console.log('user_id column does not exist in reports table. Please run the server first to add the column.');
@@ -30,7 +45,7 @@ async function cleanupOrphanedReports() {
     }
     
     // Find reports without user_id
-    const orphanedReports = await dbAll(`
+    const [orphanedReports] = await db.execute(`
       SELECT report_id, report_name, startup_name, created_at 
       FROM reports 
       WHERE user_id IS NULL OR user_id = ''
@@ -61,12 +76,12 @@ async function cleanupOrphanedReports() {
     
     if (answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes') {
       // Delete orphaned reports
-      const result = await dbRun(`
+      const [result] = await db.execute(`
         DELETE FROM reports 
         WHERE user_id IS NULL OR user_id = ''
       `);
       
-      console.log(`Deleted ${orphanedReports.length} orphaned reports.`);
+      console.log(`Deleted ${result.affectedRows} orphaned reports.`);
     } else {
       console.log('Cleanup cancelled.');
     }
@@ -74,7 +89,10 @@ async function cleanupOrphanedReports() {
   } catch (error) {
     console.error('Error during cleanup:', error);
   } finally {
-    db.close();
+    if (db) {
+      await db.end();
+      console.log('📊 Database connection closed');
+    }
   }
 }
 
