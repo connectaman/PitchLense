@@ -1,15 +1,13 @@
 const path = require('path');
 // Load environment variables from backend/.env and project/.env (if present)
 // Only load .env files in development mode, not in production
-if (process.env.NODE_ENV !== 'production') {
-  try {
-    const dotenv = require('dotenv');
-    const backendEnv = path.join(__dirname, '.env');
-    const rootEnv = path.join(__dirname, '..', '.env');
-    try { dotenv.config({ path: backendEnv }); } catch {}
-    try { dotenv.config({ path: rootEnv }); } catch {}
-  } catch {}
-}
+try {
+  const dotenv = require('dotenv');
+  const backendEnv = path.join(__dirname, '.env');
+  const rootEnv = path.join(__dirname, '..', '.env');
+  try { dotenv.config({ path: backendEnv }); } catch {}
+  try { dotenv.config({ path: rootEnv }); } catch {}
+} catch {}
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
@@ -63,7 +61,7 @@ const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT) || 3306,
   user: process.env.DB_USER || 'admin',
-  password: process.env.DB_PASSWORD || '',
+  password: process.env.DB_PASSWORD || 'Pitchlense@2025',
   database: process.env.DB_NAME || 'pitchlense',
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
   // Cloud SQL connection settings
