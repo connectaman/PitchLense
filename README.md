@@ -76,6 +76,19 @@ npm run start
 
 Open your browser and navigate to `http://localhost:5178`
 
+### Database Migration
+
+If you're upgrading from a previous version, the server will automatically:
+- Add the `user_id` column to the reports table
+- Create necessary indexes
+- Handle existing data gracefully
+
+For cleanup of orphaned reports (if any), you can run:
+```bash
+cd backend
+node cleanup-orphaned-reports.js
+```
+
 ### Development
 
 If you want to iterate on the frontend HTML/JS, edit files in `frontend/` and refresh your browser.
@@ -153,7 +166,14 @@ PitchLense/
 
 ## Recent Updates
 
-### Share Button Feature
+### 🔒 User Data Isolation Fix
+- **Fixed critical security issue**: Reports were being shared across all users
+- Added `user_id` column to reports table with proper foreign key constraints
+- Updated all report queries to filter by authenticated user
+- Added database migration to handle existing data
+- Users now only see their own reports and data
+
+### 🔗 Share Button Feature
 - Added share button to reports page (top right, left of documentation tab)
 - Dropdown menu with "Download (pptx)" and "Share Email" options
 - Currently disabled for future implementation

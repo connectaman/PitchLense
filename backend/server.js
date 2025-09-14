@@ -69,6 +69,21 @@ async function ensureTables() {
   // Enable FK constraints
   await dbRun(`PRAGMA foreign_keys = ON`);
 
+  // Check if user_id column exists in reports table and add it if missing
+  try {
+    const tableInfo = await dbAll(`PRAGMA table_info(reports)`);
+    const hasUserId = tableInfo.some(col => col.name === 'user_id');
+    
+    if (!hasUserId) {
+      console.log('Adding user_id column to reports table...');
+      await dbRun(`ALTER TABLE reports ADD COLUMN user_id TEXT`);
+      await dbRun(`CREATE INDEX IF NOT EXISTS idx_reports_user_id ON reports(user_id)`);
+      console.log('user_id column added to reports table');
+    }
+  } catch (e) {
+    console.error('Error checking/adding user_id column:', e);
+  }
+
   // Users (simplified for secure method only)
   await dbRun(`CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
@@ -81,6 +96,7 @@ async function ensureTables() {
   // Reports based on provided FastAPI model
   await dbRun(`CREATE TABLE IF NOT EXISTS reports (
     report_id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
     report_name TEXT NOT NULL,
     startup_name TEXT NOT NULL,
     founder_name TEXT NOT NULL,
@@ -90,9 +106,11 @@ async function ensureTables() {
     is_pinned INTEGER NOT NULL DEFAULT 0,
     report_path TEXT,
     total_files INTEGER,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    CONSTRAINT fk_reports_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   )`);
   await dbRun(`CREATE INDEX IF NOT EXISTS idx_reports_report_name ON reports(report_name)`);
+  await dbRun(`CREATE INDEX IF NOT EXISTS idx_reports_user_id ON reports(user_id)`);
 
   // Uploads based on provided FastAPI model
   await dbRun(`CREATE TABLE IF NOT EXISTS uploads (
@@ -304,7 +322,7 @@ app.post('/api/qna/ask', requireAuth, async (req, res) => {
     if (!report_id || !question) return res.status(400).json({ error: 'report_id and question required' });
 
     // Get report data
-    const report = await dbGet('SELECT * FROM reports WHERE report_id=? AND is_delete=0', [report_id]);
+    const report = await dbGet('SELECT * FROM reports WHERE report_id=? AND user_id=? AND is_delete=0', [report_id, req.user.id]);
     if (!report) return res.status(404).json({ error: 'Report not found' });
 
     // Check if report is ready
@@ -374,13 +392,13 @@ app.get('/api/qna/history/:report_id', requireAuth, async (req, res) => {
     const { report_id } = req.params;
     
     // Verify user has access to this report
-    const report = await dbGet('SELECT * FROM reports WHERE report_id=? AND is_delete=0', [report_id]);
+    const report = await dbGet('SELECT * FROM reports WHERE report_id=? AND user_id=? AND is_delete=0', [report_id, req.user.id]);
     if (!report) return res.status(404).json({ error: 'Report not found' });
 
     // Get chat history
     const chats = await dbAll(
-      'SELECT chat_id, user_message, ai_response, created_at FROM chats WHERE report_id=? ORDER BY created_at ASC',
-      [report_id]
+      'SELECT chat_id, user_message, ai_response, created_at FROM chats WHERE report_id=? AND user_id=? ORDER BY created_at ASC',
+      [report_id, req.user.id]
     );
 
     res.json({ 
@@ -464,9 +482,9 @@ app.post('/api/reports', requireAuth, upload.array('files'), async (req, res) =>
     const report_path = GCS_BUCKET ? `gs://${GCS_BUCKET}/runs/${report_id}.json` : null;
     console.log(`[api] creating report_id=${report_id} name=${report_name} total_files=${files.length} report_path=${report_path}`);
     await dbRun(
-      `INSERT INTO reports (report_id, report_name, startup_name, founder_name, launch_date, status, is_delete, is_pinned, report_path, total_files, created_at)
-       VALUES (?, ?, ?, ?, ?, 'pending', 0, 0, ?, ?, datetime('now'))`,
-      [report_id, report_name, startup_name, founder_name, launch_date, report_path, files.length]
+      `INSERT INTO reports (report_id, user_id, report_name, startup_name, founder_name, launch_date, status, is_delete, is_pinned, report_path, total_files, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, 0, ?, ?, datetime('now'))`,
+      [report_id, req.user.id, report_name, startup_name, founder_name, launch_date, report_path, files.length]
     );
 
     // Respond immediately
@@ -535,8 +553,8 @@ app.get('/api/reports', requireAuth, async (req, res) => {
     }
     skip = Number(skip || 0);
 
-    const where = ['is_delete = 0'];
-    const params = [];
+    const where = ['is_delete = 0', 'user_id = ?'];
+    const params = [req.user.id];
     if (pinned_only === 'true') where.push('is_pinned = 1');
     if (search) { where.push('(lower(report_name) LIKE ? OR lower(startup_name) LIKE ? OR lower(founder_name) LIKE ?)'); const like = `%${String(search).toLowerCase()}%`; params.push(like, like, like); }
     if (status) { where.push('status = ?'); params.push(String(status)); }
@@ -568,7 +586,7 @@ app.get('/api/reports', requireAuth, async (req, res) => {
 
 app.get('/api/reports/:id', requireAuth, async (req, res) => {
   try {
-    const r = await dbGet('SELECT * FROM reports WHERE report_id=?', [req.params.id]);
+    const r = await dbGet('SELECT * FROM reports WHERE report_id=? AND user_id=?', [req.params.id, req.user.id]);
     if (!r || r.is_delete) return res.status(404).json({ error: 'not_found' });
     // If not already success, check if output exists in GCS and mark success
     if (r.status !== 'success' && r.report_path) {
@@ -584,9 +602,9 @@ app.get('/api/reports/:id', requireAuth, async (req, res) => {
 app.delete('/api/reports/:id', requireAuth, async (req, res) => {
   try {
     const id = req.params.id;
-    const r = await dbGet('SELECT * FROM reports WHERE report_id=?', [id]);
+    const r = await dbGet('SELECT * FROM reports WHERE report_id=? AND user_id=?', [id, req.user.id]);
     if (!r || r.is_delete) return res.status(404).json({ error: 'not_found' });
-    await dbRun('UPDATE reports SET is_delete=1 WHERE report_id=?', [id]);
+    await dbRun('UPDATE reports SET is_delete=1 WHERE report_id=? AND user_id=?', [id, req.user.id]);
     res.json({ ok: true });
   } catch (e) { console.error(e); res.status(500).json({ error: 'delete_report_failed' }); }
 });
@@ -594,10 +612,10 @@ app.delete('/api/reports/:id', requireAuth, async (req, res) => {
 app.patch('/api/reports/:id/pin', requireAuth, async (req, res) => {
   try {
     const id = req.params.id;
-    const r = await dbGet('SELECT is_pinned FROM reports WHERE report_id=?', [id]);
+    const r = await dbGet('SELECT is_pinned FROM reports WHERE report_id=? AND user_id=?', [id, req.user.id]);
     if (!r) return res.status(404).json({ error: 'not_found' });
     const next = r.is_pinned ? 0 : 1;
-    await dbRun('UPDATE reports SET is_pinned=? WHERE report_id=?', [next, id]);
+    await dbRun('UPDATE reports SET is_pinned=? WHERE report_id=? AND user_id=?', [next, id, req.user.id]);
     res.json({ pinned: !!next });
   } catch (e) { console.error(e); res.status(500).json({ error: 'toggle_pin_failed' }); }
 });
@@ -605,7 +623,7 @@ app.patch('/api/reports/:id/pin', requireAuth, async (req, res) => {
 app.get('/api/reports/:id/data', requireAuth, async (req, res) => {
   try {
     const id = req.params.id;
-    const r = await dbGet('SELECT * FROM reports WHERE report_id=? AND is_delete=0', [id]);
+    const r = await dbGet('SELECT * FROM reports WHERE report_id=? AND user_id=? AND is_delete=0', [id, req.user.id]);
     if (!r) return res.status(404).json({ error: 'not_found' });
     
     // If report is not success, return the report metadata without data
