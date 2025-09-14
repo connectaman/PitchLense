@@ -403,7 +403,7 @@ app.post('/api/qna/ask', requireAuth, async (req, res) => {
     }
 
     // Create prompt for Gemini
-    const prompt = `${context}\n\nUser Question: ${question}\n\nIMPORTANT: You MUST answer ONLY from the given content in the context above. If the information is not found in the provided context, respond with "I don't know" or "This information is not available in the report data." Do not make up or infer information that is not explicitly provided in the context.\n\nPlease provide a helpful and detailed answer based on the report data above. Focus on insights, analysis, and actionable recommendations.`;
+    const prompt = `${context}\n\nUser Question: ${question}\n\nIMPORTANT INSTRUCTIONS:\n1. You MUST answer ONLY from the relevant content in the context above. You are NOT required to use information from all files - only use information that is directly relevant to answering the user's question.\n2. If the information is not found in the provided context, respond with "I don't know" or "This information is not available in the report data."\n3. Do not make up or infer information that is not explicitly provided in the context.\n4. At the end of your response, you MUST list all the specific files/sources you used to answer the question. Format this as "Sources used: [list the specific filenames and file types you referenced]"\n5. If you didn't use any files to answer the question, state "Sources used: None - information not available in the provided data."\n\nPlease provide a helpful and detailed answer based on the relevant report data above. Focus on insights, analysis, and actionable recommendations.`;
 
     // Get response from Gemini
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
