@@ -161,15 +161,54 @@ PitchLense/
 
 ## License
 
-MIT License - see LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### MIT License Summary
+
+- ✅ Commercial use allowed
+- ✅ Modification allowed
+- ✅ Distribution allowed
+- ✅ Private use allowed
+- ❌ No liability or warranty provided
+
+The MIT License is a permissive free software license that allows you to use, modify, and distribute the software with minimal restrictions.
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+We welcome contributions to PitchLense! Please see our [Contributing Guidelines](CONTRIBUTING.md) for detailed information on how to contribute.
+
+### Quick Start for Contributors
+
+1. **Fork the repository** on GitHub
+2. **Clone your fork** locally:
+   ```bash
+   git clone https://github.com/your-username/PitchLense.git
+   cd PitchLense
+   ```
+3. **Create a feature branch**:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+4. **Make your changes** and test thoroughly
+5. **Submit a pull request** with a clear description
+
+### Types of Contributions
+
+- 🐛 **Bug fixes** - Fix issues and improve stability
+- ✨ **New features** - Add new functionality
+- 📚 **Documentation** - Improve or add documentation
+- 🎨 **UI/UX improvements** - Enhance the user interface
+- ⚡ **Performance** - Optimize application performance
+- 🧪 **Testing** - Add or improve test coverage
+
+### Development Setup
+
+1. Install dependencies: `cd backend && npm install`
+2. Set up environment variables (see Quickstart section)
+3. Run the server: `npm run start`
+4. Open `http://localhost:5178` in your browser
+
+For more detailed information, please read our [Contributing Guidelines](CONTRIBUTING.md).
 
 ## Support
 

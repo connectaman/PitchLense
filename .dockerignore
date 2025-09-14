@@ -184,7 +184,6 @@ Thumbs.db
 
 # Git
 .git
-.gitignore
 README.md
 
 # Docker
