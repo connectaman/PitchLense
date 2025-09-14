@@ -597,22 +597,62 @@ app.get('/api/reports', requireAuth, async (req, res) => {
     skip = parseInt(skip || 0, 10);
 
     const where = ['is_delete = 0', 'user_id = ?'];
-    const params = [req.user.id];
+    const params = [String(req.user.id)]; // Ensure user_id is string
     if (pinned_only === 'true') where.push('is_pinned = 1');
-    if (search) { where.push('(lower(report_name) LIKE ? OR lower(startup_name) LIKE ? OR lower(founder_name) LIKE ?)'); const like = `%${String(search).toLowerCase()}%`; params.push(like, like, like); }
-    if (status) { where.push('status = ?'); params.push(String(status)); }
+    if (search) { 
+      where.push('(lower(report_name) LIKE ? OR lower(startup_name) LIKE ? OR lower(founder_name) LIKE ?)'); 
+      const like = `%${String(search).toLowerCase()}%`; 
+      params.push(like, like, like); 
+    }
+    if (status) { 
+      where.push('status = ?'); 
+      params.push(String(status)); 
+    }
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
     const totalRow = await dbGet(`SELECT COUNT(*) as c FROM ${tableName('reports')} ${whereSql}`, params);
     
-    // Ensure limit and skip are integers for MySQL
-    const queryParams = [...params, parseInt(limit, 10), parseInt(skip, 10)];
-    console.log('Reports query params:', { limit, skip, queryParams });
+    // Ensure all parameters are properly typed for MySQL
+    const limitInt = parseInt(limit, 10);
+    const skipInt = parseInt(skip, 10);
     
-    const rows = await dbAll(
-      `SELECT * FROM ${tableName('reports')} ${whereSql} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-      queryParams
-    );
+    // Validate parameters
+    if (isNaN(limitInt) || limitInt < 0) {
+      throw new Error(`Invalid limit parameter: ${limit}`);
+    }
+    if (isNaN(skipInt) || skipInt < 0) {
+      throw new Error(`Invalid skip parameter: ${skip}`);
+    }
+    
+    const queryParams = [
+      ...params, 
+      limitInt, 
+      skipInt
+    ];
+    console.log('Reports query params:', { 
+      limit, 
+      skip, 
+      limitInt,
+      skipInt,
+      queryParams, 
+      paramTypes: queryParams.map(p => typeof p)
+    });
+    
+    let rows;
+    try {
+      rows = await dbAll(
+        `SELECT * FROM ${tableName('reports')} ${whereSql} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+        queryParams
+      );
+    } catch (error) {
+      console.error('Error in reports query:', {
+        error: error.message,
+        sql: `SELECT * FROM ${tableName('reports')} ${whereSql} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+        params: queryParams,
+        paramTypes: queryParams.map(p => typeof p)
+      });
+      throw error;
+    }
 
     for (const r of rows) {
       // If not already success and has a report_path, check GCS for completion
