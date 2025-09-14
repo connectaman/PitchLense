@@ -614,6 +614,21 @@ body {
   }
 }
 
+/* Share Dropdown Styles */
+#shareDropdown {
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+#shareDropdown button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+#shareDropdown button:disabled:hover {
+  background-color: transparent;
+}
+
 /* Footer hover effect */
 footer:hover .footer-expanded {
   opacity: 1 !important;
