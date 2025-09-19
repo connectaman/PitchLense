@@ -109,6 +109,8 @@
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   </head>
   <body class="bg-background text-text font-sans antialiased overflow-hidden bg-solid h-screen">
     <!-- Page Level Loader -->
@@ -228,7 +230,17 @@
               <!-- Share Dropdown -->
               <div id="shareDropdown" class="absolute right-0 top-full mt-2 w-48 bg-[#2E3137] border border-white/10 rounded-lg shadow-lg opacity-0 invisible pointer-events-none transition-all duration-200 z-50">
                 <div class="py-2">
-                  <button class="w-full px-4 py-3 text-left text-sm text-white/60 hover:bg-white/5 flex items-center gap-3 cursor-not-allowed" disabled>
+                  <button id="downloadPdfBtn" class="w-full px-4 py-3 text-left text-sm text-white hover:bg-white/5 flex items-center gap-3 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14,2 14,8 20,8"/>
+                      <path d="M16 13H8"/>
+                      <path d="M16 17H8"/>
+                      <path d="M10 9H8"/>
+                    </svg>
+                    Download (PDF)
+                  </button>
+                  <button id="downloadPptxBtn" class="w-full px-4 py-3 text-left text-sm text-white/60 hover:bg-white/5 flex items-center gap-3 cursor-not-allowed" disabled>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                       <polyline points="14,2 14,8 20,8"/>
@@ -1048,6 +1060,312 @@
         }
       }
 
+      // PDF Export Functionality
+      async function exportToPDF() {
+        // Check if jsPDF is available
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+          throw new Error('jsPDF library not loaded. Please refresh the page and try again.');
+        }
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        
+        // Set up fonts and colors
+        doc.setFont('helvetica');
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 20;
+        let yPosition = margin;
+        
+        // Helper function to add text with word wrapping
+        function addText(text, x, y, maxWidth, fontSize = 10, color = '#000000') {
+          doc.setFontSize(fontSize);
+          doc.setTextColor(color);
+          const lines = doc.splitTextToSize(text, maxWidth);
+          doc.text(lines, x, y);
+          return y + (lines.length * fontSize * 0.35);
+        }
+        
+        // Helper function to add a new page if needed
+        function checkNewPage(requiredSpace) {
+          if (yPosition + requiredSpace > pageHeight - margin) {
+            doc.addPage();
+            yPosition = margin;
+            return true;
+          }
+          return false;
+        }
+        
+        
+        // Title
+        doc.setFontSize(24);
+        doc.setTextColor('#1E1E21');
+        doc.text('PitchLense Analysis Report', margin, yPosition);
+        yPosition += 15;
+        
+        // Report metadata
+        if (window.reportData) {
+          const reportData = window.reportData;
+          doc.setFontSize(12);
+          doc.setTextColor('#666666');
+          doc.text(`Generated on: ${new Date().toLocaleDateString()}`, margin, yPosition);
+          yPosition += 8;
+          
+          if (reportData.company_name) {
+            doc.text(`Company: ${reportData.company_name}`, margin, yPosition);
+            yPosition += 8;
+          }
+          
+          if (reportData.industry) {
+            doc.text(`Industry: ${reportData.industry}`, margin, yPosition);
+            yPosition += 8;
+          }
+        }
+        
+        yPosition += 10;
+        
+        // Overall Analysis Section
+        if (window.analyses) {
+          doc.setFontSize(18);
+          doc.setTextColor('#1E1E21');
+          doc.text('Overall Analysis', margin, yPosition);
+          yPosition += 12;
+          
+          // Overall score
+          if (window.overallScore !== undefined) {
+            doc.setFontSize(14);
+            doc.setTextColor('#f1d85b');
+            doc.text(`Overall Risk Score: ${window.overallScore}/10`, margin, yPosition);
+            yPosition += 10;
+          }
+          
+          // Risk level
+          if (window.overallRiskLevel) {
+            doc.setFontSize(12);
+            doc.setTextColor('#666666');
+            doc.text(`Risk Level: ${window.overallRiskLevel.toUpperCase()}`, margin, yPosition);
+            yPosition += 8;
+          }
+          
+          yPosition += 10;
+          
+          // Analysis categories with scores
+          const analysisArray = Object.entries(window.analyses)
+            .map(([key, analysis]) => ({
+              name: key,
+              ...analysis
+            }))
+            .filter(analysis => analysis.category_score !== undefined && analysis.category_score !== null)
+            .sort((a, b) => b.category_score - a.category_score);
+          
+          doc.setFontSize(14);
+          doc.setTextColor('#1E1E21');
+          doc.text('Analysis Categories', margin, yPosition);
+          yPosition += 10;
+          
+          analysisArray.forEach((analysis, index) => {
+            checkNewPage(15);
+            
+            // Category name and score
+            doc.setFontSize(12);
+            doc.setTextColor('#1E1E21');
+            doc.text(`${index + 1}. ${analysis.category_name || 'Unknown Category'}`, margin, yPosition);
+            
+            // Score on the right
+            const scoreText = `${analysis.category_score}/10`;
+            const scoreWidth = doc.getTextWidth(scoreText);
+            doc.text(scoreText, pageWidth - margin - scoreWidth, yPosition);
+            
+            // Risk level
+            if (analysis.overall_risk_level) {
+              doc.setFontSize(10);
+              doc.setTextColor('#666666');
+              doc.text(`Risk: ${analysis.overall_risk_level.toUpperCase()}`, margin + 10, yPosition + 6);
+            }
+            
+            yPosition += 12;
+          });
+          
+          yPosition += 15;
+        }
+        
+        
+        
+        // Detailed Analysis Section - NEW PAGE
+        if (window.analyses) {
+          doc.addPage(); // New page for detailed analysis
+          yPosition = margin;
+          
+          doc.setFontSize(18);
+          doc.setTextColor('#1E1E21');
+          doc.text('Detailed Analysis', margin, yPosition);
+          yPosition += 12;
+          
+          const analysisArray = Object.entries(window.analyses)
+            .map(([key, analysis]) => ({
+              name: key,
+              ...analysis
+            }))
+            .sort((a, b) => {
+              // Put LV-Analysis first
+              const aIsLV = a.category_name && a.category_name.toLowerCase().includes('lv-analysis');
+              const bIsLV = b.category_name && b.category_name.toLowerCase().includes('lv-analysis');
+              if (aIsLV && !bIsLV) return -1;
+              if (!aIsLV && bIsLV) return 1;
+              return 0;
+            });
+          
+          analysisArray.forEach((analysis, index) => {
+            checkNewPage(30);
+            
+            // Category header
+            doc.setFontSize(14);
+            doc.setTextColor('#1E1E21');
+            doc.text(`${analysis.category_name || 'Analysis'}`, margin, yPosition);
+            yPosition += 8;
+            
+            // Score and risk level
+            if (analysis.category_score !== undefined) {
+              doc.setFontSize(10);
+              doc.setTextColor('#666666');
+              doc.text(`Score: ${analysis.category_score}/10`, margin, yPosition);
+              if (analysis.overall_risk_level) {
+                doc.text(`Risk Level: ${analysis.overall_risk_level.toUpperCase()}`, margin + 50, yPosition);
+              }
+              yPosition += 6;
+            }
+            
+            // Summary
+            if (analysis.summary) {
+              doc.setFontSize(10);
+              doc.setTextColor('#333333');
+              yPosition = addText(`Summary: ${analysis.summary}`, margin, yPosition, pageWidth - 2 * margin, 10, '#333333');
+              yPosition += 5;
+            }
+            
+            // Detailed analysis result (for LV-Analysis and detailed business notes)
+            const isLVAnalysis = analysis.category_name && analysis.category_name.toLowerCase().includes('lv-analysis');
+            const isDetailedBusinessNote = analysis.analysis_type === 'detailed_business_note';
+            
+            if ((isLVAnalysis || isDetailedBusinessNote) && analysis.result && analysis.result.analysis_result) {
+              doc.setFontSize(10);
+              doc.setTextColor('#1E1E21');
+              doc.text('Detailed Analysis:', margin, yPosition);
+              yPosition += 6;
+              
+              // Convert markdown to plain text for PDF
+              const plainText = analysis.result.analysis_result
+                .replace(/#{1,6}\s+/g, '') // Remove markdown headers
+                .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold formatting
+                .replace(/\*(.*?)\*/g, '$1') // Remove italic formatting
+                .replace(/`(.*?)`/g, '$1') // Remove code formatting
+                .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Convert links to plain text
+                .replace(/\n\n/g, '\n') // Reduce multiple newlines
+                .trim();
+              
+              yPosition = addText(plainText, margin, yPosition, pageWidth - 2 * margin, 9, '#333333');
+              yPosition += 10;
+            }
+            
+            // Risk indicators
+            if (analysis.indicators && analysis.indicators.length > 0) {
+              doc.setFontSize(10);
+              doc.setTextColor('#1E1E21');
+              doc.text('Risk Indicators:', margin, yPosition);
+              yPosition += 6;
+              
+              analysis.indicators.forEach((indicator, idx) => {
+                checkNewPage(20);
+                
+                doc.setFontSize(9);
+                doc.setTextColor('#333333');
+                
+                // Indicator name
+                doc.text(`• ${indicator.indicator || 'Unknown Indicator'}`, margin + 5, yPosition);
+                yPosition += 5;
+                
+                // Description
+                if (indicator.description) {
+                  yPosition = addText(`  ${indicator.description}`, margin + 5, yPosition, pageWidth - 2 * margin - 10, 8, '#666666');
+                  yPosition += 3;
+                }
+                
+                // Recommendation
+                if (indicator.recommendation) {
+                  doc.setTextColor('#1E1E21');
+                  yPosition = addText(`  Recommendation: ${indicator.recommendation}`, margin + 5, yPosition, pageWidth - 2 * margin - 10, 8, '#1E1E21');
+                  yPosition += 5;
+                }
+                
+                yPosition += 3;
+              });
+            }
+            
+            yPosition += 15;
+          });
+        }
+        
+        // Footer
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+          doc.setPage(i);
+          doc.setFontSize(8);
+          doc.setTextColor('#999999');
+          doc.text(`Page ${i} of ${totalPages}`, pageWidth - 30, pageHeight - 10);
+          doc.text('Generated by PitchLense', margin, pageHeight - 10);
+        }
+        
+        // Save the PDF
+        const fileName = `PitchLense_Analysis_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+      }
+      
+      // Initialize PDF download button
+      function initializePDFDownload() {
+        const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+        console.log('PDF button found:', downloadPdfBtn); // Debug log
+        console.log('jsPDF library available:', !!window.jspdf); // Debug log
+        
+        if (downloadPdfBtn) {
+          downloadPdfBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Close dropdown
+            const shareDropdown = document.getElementById('shareDropdown');
+            if (shareDropdown) {
+              shareDropdown.classList.add('opacity-0', 'invisible', 'pointer-events-none');
+            }
+            
+            // Show loading state
+            const originalText = downloadPdfBtn.innerHTML;
+            downloadPdfBtn.innerHTML = `
+              <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Generating PDF...
+            `;
+            downloadPdfBtn.disabled = true;
+            
+            // Generate PDF
+            setTimeout(async () => {
+              try {
+                await exportToPDF();
+              } catch (error) {
+                console.error('Error generating PDF:', error);
+                const errorMessage = error.message || 'Unknown error occurred';
+                alert(`Error generating PDF: ${errorMessage}`);
+              } finally {
+                // Restore button state
+                downloadPdfBtn.innerHTML = originalText;
+                downloadPdfBtn.disabled = false;
+              }
+            }, 100);
+          });
+        }
+      }
+
       // Initialize share dropdown
       function initializeShareDropdown() {
         const shareButton = document.getElementById('shareButton');
@@ -1331,6 +1649,14 @@
             }
           }
         });
+      }
+
+      // Helper function to determine risk level from score
+      function getOverallRiskLevel(score) {
+        if (score >= 8) return 'low';
+        if (score >= 6) return 'medium';
+        if (score >= 4) return 'high';
+        return 'critical';
       }
 
       // Calculate growth potential score from startup analysis data
@@ -1777,6 +2103,9 @@
           const result = await response.json();
           reportData = result;
           
+          // Store report data globally for PDF export
+          window.reportData = result;
+          
           // Populate news if available
           if (result.data && result.data.news) {
             populateNews(result.data.news);
@@ -1831,6 +2160,10 @@
             const growthPotential = calculateGrowthPotential(result.data.startup_analysis.analyses);
             createGrowthPotentialChart(growthPotential.score);
             updateGrowthPotentialTooltip(growthPotential.breakdown);
+            
+            // Store overall score and risk level globally for PDF export
+            window.overallScore = growthPotential.score;
+            window.overallRiskLevel = getOverallRiskLevel(growthPotential.score);
           }
 
           // Populate uploaded files data
@@ -1855,6 +2188,9 @@
 
       // Function to populate startup analysis data
       function populateStartupAnalysis(analyses) {
+        // Store analyses data globally for PDF export
+        window.analyses = analyses;
+        
         const analysisList = document.getElementById('startupAnalysisList');
         if (!analysisList || !analyses) {
           return;
@@ -2417,6 +2753,7 @@
         initializeGrowthPotentialInfo();
         initializeDocumentationModal();
         initializeShareDropdown();
+        initializePDFDownload();
         initializeChat();
         
         // Initialize news/documents tab switching
