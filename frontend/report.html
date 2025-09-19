@@ -64,6 +64,41 @@
         margin-bottom: 0.75rem;
         color: #cfd4dd;
       }
+      .markdown-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1rem;
+        background-color: rgba(255, 255, 255, 0.02);
+        border-radius: 0.5rem;
+        overflow: hidden;
+      }
+      .markdown-content th, .markdown-content td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .markdown-content th {
+        background-color: rgba(255, 255, 255, 0.05);
+        font-weight: 600;
+        color: #f1d85b;
+      }
+      .markdown-content tr:hover {
+        background-color: rgba(255, 255, 255, 0.02);
+      }
+      .markdown-content hr {
+        border: none;
+        height: 1px;
+        background-color: rgba(255, 255, 255, 0.1);
+        margin: 1.5rem 0;
+      }
+      .markdown-content a {
+        color: #f1d85b;
+        text-decoration: underline;
+      }
+      .markdown-content a:hover {
+        color: #f1d85b;
+        opacity: 0.8;
+      }
       
       /* Ensure send button is visible */
       #sendButton {
@@ -1921,11 +1956,19 @@
         // Clear existing content
         analysisTypesList.innerHTML = '';
 
-        // Convert analyses object to array
+        // Convert analyses object to array and prioritize LV-Analysis
         const analysisArray = Object.entries(analyses).map(([key, analysis]) => ({
           name: key,
           ...analysis
-        }));
+        })).sort((a, b) => {
+          // Put LV-Analysis first
+          const aIsLV = a.category_name && a.category_name.toLowerCase().includes('lv-analysis');
+          const bIsLV = b.category_name && b.category_name.toLowerCase().includes('lv-analysis');
+          
+          if (aIsLV && !bIsLV) return -1;
+          if (!aIsLV && bIsLV) return 1;
+          return 0; // Keep original order for non-LV analyses
+        });
 
         // Create analysis type buttons
         analysisArray.forEach((analysis, index) => {
@@ -1964,24 +2007,105 @@
         contentArea.style.transform = 'translateX(20px)';
         
         setTimeout(() => {
+          // Debug: Log the analysis object to see its structure
+          console.log('Analysis object:', analysis);
+          console.log('Analysis type:', analysis.analysis_type);
+          console.log('Analysis result:', analysis.result);
+          
+          // Check if this is a detailed business note with analysis_result
+          let analysisResultContent = '';
+          
+          // Check for LV-Analysis specifically or detailed business note
+          const isLVAnalysis = analysis.category_name && analysis.category_name.toLowerCase().includes('lv-analysis');
+          const hasAnalysisResult = analysis.result && analysis.result.analysis_result;
+          const isDetailedBusinessNote = analysis.analysis_type === 'detailed_business_note';
+          
+          if ((isLVAnalysis || isDetailedBusinessNote) && hasAnalysisResult) {
+            try {
+              // Render the analysis_result as markdown
+              const markdownContent = marked.parse(analysis.result.analysis_result);
+              analysisResultContent = `
+                <div class="mb-6">
+                  <h3 class="text-lg font-medium text-white mb-4">Detailed Analysis</h3>
+                  <div class="markdown-content text-white/80 leading-relaxed">
+                    ${markdownContent}
+                  </div>
+                </div>
+              `;
+            } catch (error) {
+              console.error('Error parsing markdown:', error);
+              // Fallback to plain text if markdown parsing fails
+              analysisResultContent = `
+                <div class="mb-6">
+                  <h3 class="text-lg font-medium text-white mb-4">Detailed Analysis</h3>
+                  <div class="text-white/80 leading-relaxed whitespace-pre-wrap">
+                    ${analysis.result.analysis_result}
+                  </div>
+                </div>
+              `;
+            }
+          } else if (isLVAnalysis) {
+            // Additional fallback for LV-Analysis - check other possible data structures
+            console.log('LV-Analysis detected but no analysis_result found. Checking other fields...');
+            
+            // Check if the analysis result is directly in the result object
+            if (analysis.result && typeof analysis.result === 'string') {
+              try {
+                const markdownContent = marked.parse(analysis.result);
+                analysisResultContent = `
+                  <div class="mb-6">
+                    <h3 class="text-lg font-medium text-white mb-4">Detailed Analysis</h3>
+                    <div class="markdown-content text-white/80 leading-relaxed">
+                      ${markdownContent}
+                    </div>
+                  </div>
+                `;
+              } catch (error) {
+                analysisResultContent = `
+                  <div class="mb-6">
+                    <h3 class="text-lg font-medium text-white mb-4">Detailed Analysis</h3>
+                    <div class="text-white/80 leading-relaxed whitespace-pre-wrap">
+                      ${analysis.result}
+                    </div>
+                  </div>
+                `;
+              }
+            }
+            // Check if there's a summary or other content we can display
+            else if (analysis.summary) {
+              analysisResultContent = `
+                <div class="mb-6">
+                  <h3 class="text-lg font-medium text-white mb-4">Analysis Summary</h3>
+                  <div class="text-white/80 leading-relaxed">
+                    ${analysis.summary}
+                  </div>
+                </div>
+              `;
+            }
+          }
+
           contentArea.innerHTML = `
             <div class="analysis-content">
               <div class="flex items-center justify-between mb-6">
                 <div>
-                  <h2 class="text-xl font-semibold text-white mb-2">${analysis.category_name}</h2>
+                  <h2 class="text-xl font-semibold text-white mb-2">${analysis.category_name || 'Analysis'}</h2>
                   <div class="flex items-center gap-4">
-                    <span class="px-3 py-1 rounded-full text-xs font-medium ${getRiskLevelClass(analysis.overall_risk_level)}">
-                      ${analysis.overall_risk_level.toUpperCase()} RISK
-                    </span>
-                    <span class="text-sm text-white/70">Score: ${analysis.category_score}/10</span>
+                    ${analysis.overall_risk_level ? `
+                      <span class="px-3 py-1 rounded-full text-xs font-medium ${getRiskLevelClass(analysis.overall_risk_level)}">
+                        ${analysis.overall_risk_level.toUpperCase()} RISK
+                      </span>
+                    ` : ''}
+                    <span class="text-sm text-white/70">Score: ${analysis.category_score || 'N/A'}/10</span>
                   </div>
                 </div>
               </div>
               
               <div class="mb-6">
                 <h3 class="text-lg font-medium text-white mb-3">Summary</h3>
-                <p class="text-white/80 leading-relaxed">${analysis.summary}</p>
+                <p class="text-white/80 leading-relaxed">${analysis.summary || 'No summary available'}</p>
               </div>
+              
+              ${analysisResultContent}
               
               <div class="mb-6">
                 <h3 class="text-lg font-medium text-white mb-4">Risk Indicators</h3>
@@ -1989,17 +2113,19 @@
                   ${analysis.indicators ? analysis.indicators.map(indicator => `
                     <div class="indicator-card p-4 rounded-lg border border-white/10">
                       <div class="flex items-start justify-between mb-3">
-                        <h4 class="font-medium text-white">${indicator.indicator}</h4>
+                        <h4 class="font-medium text-white">${indicator.indicator || 'Unknown Indicator'}</h4>
                         <div class="flex items-center gap-2">
-                          <span class="px-2 py-1 rounded text-xs font-medium ${getRiskLevelClass(indicator.risk_level)}">
-                            ${indicator.risk_level.toUpperCase()}
-                          </span>
-                          <span class="text-sm text-white/70">${indicator.score}/10</span>
+                          ${indicator.risk_level ? `
+                            <span class="px-2 py-1 rounded text-xs font-medium ${getRiskLevelClass(indicator.risk_level)}">
+                              ${indicator.risk_level.toUpperCase()}
+                            </span>
+                          ` : ''}
+                          <span class="text-sm text-white/70">${indicator.score || 'N/A'}/10</span>
                         </div>
                       </div>
-                      <p class="text-white/70 text-sm mb-3">${indicator.description}</p>
+                      <p class="text-white/70 text-sm mb-3">${indicator.description || 'No description available'}</p>
                       <div class="recommendation p-3 bg-white/5 rounded border-l-4 border-accent">
-                        <p class="text-sm text-white/80"><strong>Recommendation:</strong> ${indicator.recommendation}</p>
+                        <p class="text-sm text-white/80"><strong>Recommendation:</strong> ${indicator.recommendation || 'No recommendation available'}</p>
                       </div>
                     </div>
                   `).join('') : '<p class="text-white/70">No indicators available</p>'}
