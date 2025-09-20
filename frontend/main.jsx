@@ -169,7 +169,7 @@ const YouTubeVideo = () => {
             <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
               <iframe
                 className="absolute top-0 left-0 w-full h-full rounded-xl shadow-card border border-white/10"
-                src="https://www.youtube.com/embed/pAhPH3thXTo?si=c_BmRh3jfv2Hc2Ie&vq=hd720"
+                src="https://www.youtube.com/embed/XUuLeXaEIdI?si=c_BmRh3jfv2Hc2Ie&vq=hd720"
                 title="PitchLense Demo Video"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
