@@ -1,0 +1,27 @@
+{
+  "name": "pitchlense-chrome-extension",
+  "version": "1.0.0",
+  "description": "Chrome extension for PitchLense - AI-powered pitch analysis",
+  "main": "background.js",
+  "scripts": {
+    "build": "echo 'No build process needed for Chrome extension'",
+    "test": "echo 'No tests configured yet'",
+    "lint": "echo 'No linter configured yet'"
+  },
+  "keywords": [
+    "chrome-extension",
+    "pitch-analysis",
+    "ai",
+    "feedback",
+    "pitchlense"
+  ],
+  "author": "PitchLense Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-repo/pitchlense.git",
+    "directory": "extension"
+  },
+  "devDependencies": {},
+  "dependencies": {}
+}

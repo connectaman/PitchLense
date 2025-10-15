@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PitchLense</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="popup-container">
+        <header class="popup-header">
+            <div class="logo">
+                <span class="logo-icon">🎯</span>
+                <h1>PitchLense</h1>
+            </div>
+        </header>
+
+        <main class="popup-main">
+            <div class="quick-actions">
+                <button id="analyzeCurrentPage" class="action-btn primary">
+                    <span class="btn-icon">📊</span>
+                    Analyze Current Page
+                </button>
+                
+                <button id="openWebApp" class="action-btn secondary">
+                    <span class="btn-icon">🌐</span>
+                    Open Web App
+                </button>
+            </div>
+
+            <div class="recent-analysis" id="recentAnalysis" style="display: none;">
+                <h3>Recent Analysis</h3>
+                <div class="analysis-item">
+                    <div class="analysis-score">
+                        <span class="score-number" id="recentScore">-</span>
+                        <span class="score-label">/10</span>
+                    </div>
+                    <div class="analysis-details">
+                        <div class="analysis-url" id="recentUrl">-</div>
+                        <div class="analysis-time" id="recentTime">-</div>
+                    </div>
+                </div>
+                <button id="viewFullReport" class="action-btn small">View Full Report</button>
+            </div>
+
+            <div class="settings-section">
+                <h3>Settings</h3>
+                <div class="setting-item">
+                    <label for="autoAnalyze">
+                        <input type="checkbox" id="autoAnalyze">
+                        Auto-analyze on page load
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <label for="notifications">
+                        <input type="checkbox" id="notifications">
+                        Show notifications
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <label for="apiEndpoint">API Endpoint:</label>
+                    <input type="text" id="apiEndpoint" placeholder="https://pitchlense.com">
+                </div>
+            </div>
+
+            <div class="status-section">
+                <div class="status-item">
+                    <span class="status-label">Status:</span>
+                    <span class="status-value" id="connectionStatus">Checking...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">API:</span>
+                    <span class="status-value" id="apiStatus">Unknown</span>
+                </div>
+            </div>
+        </main>
+
+        <footer class="popup-footer">
+            <div class="footer-links">
+                <a href="#" id="helpLink">Help</a>
+                <a href="#" id="aboutLink">About</a>
+            </div>
+            <div class="version">v1.0.0</div>
+        </footer>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

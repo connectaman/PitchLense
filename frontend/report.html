@@ -10,6 +10,7 @@
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -106,9 +107,43 @@
         visibility: visible !important;
         opacity: 1 !important;
       }
+      
+      /* Custom scrollbar for tooltip */
+      .knowledge-graph-tooltip ::-webkit-scrollbar {
+        width: 6px;
+      }
+      .knowledge-graph-tooltip ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+      }
+      .knowledge-graph-tooltip ::-webkit-scrollbar-thumb {
+        background: #f1d85b;
+        border-radius: 3px;
+      }
+      .knowledge-graph-tooltip ::-webkit-scrollbar-thumb:hover {
+        background: #e6c547;
+      }
+      
+      /* File view toggle button styles */
+      #fileViewToggle {
+        transition: background-color 0.3s ease;
+      }
+      
+      #fileViewToggle.bg-accent {
+        background-color: #f1d85b;
+      }
+      
+      #toggleThumb {
+        transition: transform 0.3s ease;
+      }
+      
+      .file-viewer {
+        display: flex;
+        flex-direction: column;
+      }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   </head>
@@ -180,6 +215,20 @@
               <line x1="17" y1="17" x2="17" y2="13"/>
             </svg>
           </a>
+          <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/extension.html" title="Extension">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            <!-- Tooltip -->
+            <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+              Extension
+              <!-- Tooltip arrow -->
+              <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+            </div>
+          </a>
           <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="https://youtu.be/XUuLeXaEIdI" target="_blank" title="How to use PitchLense">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
               <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
@@ -213,6 +262,9 @@
             </button>
             <button id="qnaTab" class="tab-button px-4 py-2 text-sm font-medium rounded-lg transition-colors ml-2" data-tab="qna">
               QnA
+            </button>
+            <button id="dependencyTab" class="tab-button px-4 py-2 text-sm font-medium rounded-lg transition-colors ml-2" data-tab="dependency">
+              Ecosystem Graph
             </button>
             <button id="uploadedFilesTab" class="tab-button px-4 py-2 text-sm font-medium rounded-lg transition-colors ml-2" data-tab="files">
               Uploaded Files
@@ -289,15 +341,15 @@
               </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
-              <div class="card p-4">
+              <div class="card p-4 flex flex-col" style="height: 360px;">
                 <div class="text-sm mb-3">Startup Analysis</div>
-                <div class="max-h-80 overflow-y-auto">
+                <div class="flex-1 overflow-y-auto">
                   <ul id="startupAnalysisList" class="divide-y divide-white/10">
                     <!-- Startup analysis items will be populated here -->
                 </ul>
                     </div>
               </div>
-              <div class="card p-4">
+              <div class="card p-4 flex flex-col" style="height: 360px;">
                 <div class="flex items-center justify-between">
                   <div class="text-sm">Growth Potential</div>
                   <div class="relative">
@@ -311,7 +363,7 @@
                     </div>
               </div>
                 </div>
-                <div class="mt-2" style="height:220px"><canvas id="growthPotentialChart" style="width:100%;height:100%;display:block"></canvas></div>
+                <div class="flex-1 mt-2"><canvas id="growthPotentialChart" style="width:100%;height:100%;display:block"></canvas></div>
                 <div class="mt-3 flex items-center justify-center text-xs">
                   <span class="flex items-center gap-2"><i class="inline-block w-2.5 h-2.5 rounded-full" id="growthPotentialLegend" style="background:#FFF27A"></i> Growth Potential: <span id="growthPotentialScore" class="font-semibold">6.4/10</span></span>
                 </div>
@@ -327,13 +379,13 @@
                 <div class="mt-2 text-xs">Exp 09/24</div>
               </div>
             </div> -->
-            <div class="card p-4">
+            <div class="card p-4" style="height: 320px;">
               <div class="text-sm mb-2">Market Share</div>
-              <div id="marketShareContainer">
+              <div id="marketShareContainer" class="h-full overflow-y-auto">
                 <!-- Market share data will be populated here -->
                     </div>
                   </div>
-            <div class="card p-4 flex flex-col max-h-[500px]">
+            <div class="card p-4 flex flex-col" style="height: 360px;">
               <!-- Tab Navigation -->
               <div class="flex items-center gap-2 mb-4">
                 <button id="industryNewsTab" class="tab-button active px-3 py-2 text-sm font-medium rounded-lg transition-colors" data-tab="news">
@@ -344,7 +396,7 @@
                 </button>
               </div>
               
-              <div class="flex-1 overflow-y-auto max-h-[300px]">
+              <div class="flex-1 overflow-y-auto">
                 <!-- Industry News Content -->
                 <div id="industryNewsContent" class="news-tab-content">
                   <!-- Loading State -->
@@ -487,6 +539,16 @@
                 <!-- Right Content Area (80%) -->
                 <div class="w-4/5 h-full">
                   <div class="card p-6 h-full flex flex-col">
+                    <div class="flex items-center justify-between mb-4 flex-shrink-0">
+                      <h3 class="text-lg font-semibold text-white">File Content</h3>
+                      <div class="flex items-center gap-2">
+                        <span id="viewModeText" class="text-sm text-white/60">Content View</span>
+                        <button id="fileViewToggle" class="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-gray-800" role="switch">
+                          <span id="toggleThumb" class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1"></span>
+                        </button>
+                        <span class="text-sm text-white/60">File View</span>
+                      </div>
+                    </div>
                     <div id="uploadedFileContentArea" class="flex-1 overflow-y-auto">
                       <!-- File content will be populated here -->
             </div>
@@ -496,6 +558,59 @@
         </section>
           </div>
         </div>
+
+          <!-- Dependency Tab -->
+          <div id="dependencyContent" class="tab-content hidden h-full overflow-hidden">
+            <section class="p-2 h-full">
+              <div class="card p-6 h-full flex flex-col">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-lg font-semibold text-white">Knowledge Graph</h3>
+                  <div class="flex gap-2">
+                    <button id="graphInfoBtn" class="px-3 py-1 bg-[#2E3137] text-white rounded text-sm hover:bg-[#3E4147]">What is this Graph?</button>
+                    <button id="zoomIn" class="px-3 py-1 bg-[#2E3137] text-white rounded text-sm hover:bg-[#3E4147]">Zoom In</button>
+                    <button id="zoomOut" class="px-3 py-1 bg-[#2E3137] text-white rounded text-sm hover:bg-[#3E4147]">Zoom Out</button>
+                    <button id="resetView" class="px-3 py-1 bg-[#2E3137] text-white rounded text-sm hover:bg-[#3E4147]">Reset</button>
+                  </div>
+                </div>
+                <div class="flex-1 overflow-hidden relative">
+                  <div id="knowledgeGraph" class="w-full h-full bg-[#1E1E21] rounded-lg border border-white/10">
+                    <!-- D3.js Knowledge Graph will be rendered here -->
+                  </div>
+                  
+                  <!-- Legend Card -->
+                  <div class="absolute top-3 left-3 bg-[#2E3137] border border-white/10 rounded-lg p-3 shadow-lg z-10">
+                    <div class="text-xs text-white/60 mb-2 font-semibold">Legend</div>
+                    <div class="space-y-2">
+                      <div class="flex items-center gap-2 cursor-pointer group relative" data-tooltip="Your startup or company name positioned at the center of the graph, representing the focal point of all business relationships.">
+                        <div class="w-3 h-3 rounded-full" style="background-color: #f1d85b;"></div>
+                        <span class="text-white/80 text-xs">Company</span>
+                        <!-- Tooltip -->
+                        <div class="absolute top-full left-0 mt-2 w-64 bg-[#1E1E21] border border-white/20 rounded-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-lg">
+                          <div class="text-xs text-white/90">Your startup or company name positioned at the center of the graph, representing the focal point of all business relationships.</div>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-2 cursor-pointer group relative" data-tooltip="Companies, sectors, and industries that your business depends on. These are entities that provide essential services, infrastructure, or resources that your company needs to operate.">
+                        <div class="w-3 h-3 rounded-full" style="background-color: #3B82F6;"></div>
+                        <span class="text-white/80 text-xs">Dependencies</span>
+                        <!-- Tooltip -->
+                        <div class="absolute top-full left-0 mt-2 w-64 bg-[#1E1E21] border border-white/20 rounded-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-lg">
+                          <div class="text-xs text-white/90">Companies, sectors, and industries that your business depends on. These are entities that provide essential services, infrastructure, or resources that your company needs to operate.</div>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-2 cursor-pointer group relative" data-tooltip="Companies, sectors, and industries that your business serves or sells its products to. These represent your customer base, target markets, or the entities that purchase your services.">
+                        <div class="w-3 h-3 rounded-full" style="background-color: #10B981;"></div>
+                        <span class="text-white/80 text-xs">Customers</span>
+                        <!-- Tooltip -->
+                        <div class="absolute top-full left-0 mt-2 w-64 bg-[#1E1E21] border border-white/20 rounded-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-lg">
+                          <div class="text-xs text-white/90">Companies, sectors, and industries that your business serves or sells its products to. These represent your customer base, target markets, or the entities that purchase your services.</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
       </main>
     </div>
 
@@ -932,6 +1047,111 @@
         </div>
       </div>
     </div>
+
+    <!-- Graph Info Modal -->
+    <div id="graphInfoModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden">
+      <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-[#2E3137] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+          <!-- Modal Header -->
+          <div class="flex items-center justify-between p-6 border-b border-white/10">
+            <h2 class="text-xl font-semibold text-white flex items-center gap-2">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              What is this Graph?
+            </h2>
+            <button id="closeGraphInfo" class="text-white/60 hover:text-white transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Modal Content -->
+          <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+            <div class="space-y-6">
+              <!-- Overview Section -->
+              <div>
+                <h3 class="text-lg font-semibold text-white mb-3">Business Logic Overview</h3>
+                <p class="text-white/80 text-sm leading-relaxed mb-4">
+                  This Ecosystem Graph visualizes the business relationships and dependencies of your company within its market ecosystem. The graph helps you understand how your business connects with other entities in your industry.
+                </p>
+              </div>
+
+              <!-- Graph Structure -->
+              <div>
+                <h3 class="text-lg font-semibold text-white mb-3">Graph Structure</h3>
+                <div class="space-y-4">
+                  <!-- Center Node -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <div class="flex items-center gap-3 mb-2">
+                      <div class="w-4 h-4 rounded-full" style="background-color: #f1d85b;"></div>
+                      <h4 class="text-white font-medium">Center (Yellow)</h4>
+                    </div>
+                    <p class="text-white/70 text-sm">
+                      Your startup or company name is positioned at the center of the graph, representing the focal point of all business relationships.
+                    </p>
+                  </div>
+
+                  <!-- Left Side -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <div class="flex items-center gap-3 mb-2">
+                      <div class="w-4 h-4 rounded-full" style="background-color: #3B82F6;"></div>
+                      <h4 class="text-white font-medium">Left Side (Blue) - Dependencies</h4>
+                    </div>
+                    <p class="text-white/70 text-sm">
+                      Companies, sectors, and industries that your business depends on. These are entities that provide essential services, infrastructure, or resources that your company needs to operate. Examples include suppliers, service providers, technology partners, or industry platforms.
+                    </p>
+                  </div>
+
+                  <!-- Right Side -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <div class="flex items-center gap-3 mb-2">
+                      <div class="w-4 h-4 rounded-full" style="background-color: #10B981;"></div>
+                      <h4 class="text-white font-medium">Right Side (Green) - Customers</h4>
+                    </div>
+                    <p class="text-white/70 text-sm">
+                      Companies, sectors, and industries that your business serves or sells its products to. These represent your customer base, target markets, or the entities that purchase your services. Examples include enterprise clients, end consumers, or other businesses in your value chain.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- How to Use -->
+              <div>
+                <h3 class="text-lg font-semibold text-white mb-3">How to Use</h3>
+                <ul class="text-white/70 text-sm space-y-2">
+                  <li>• <strong>Hover</strong> over any node to see detailed information about that entity</li>
+                  <li>• <strong>Drag</strong> nodes to rearrange the layout (center node cannot be moved)</li>
+                  <li>• <strong>Zoom</strong> in/out to focus on specific areas of the graph</li>
+                  <li>• <strong>Reset</strong> view to return to the default layout</li>
+                </ul>
+              </div>
+
+              <!-- Legend -->
+              <div>
+                <h3 class="text-lg font-semibold text-white mb-3">Legend</h3>
+                <div class="grid grid-cols-1 gap-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-4 h-4 rounded-full" style="background-color: #f1d85b;"></div>
+                    <span class="text-white/70 text-sm">Company - Your business at the center</span>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <div class="w-4 h-4 rounded-full" style="background-color: #3B82F6;"></div>
+                    <span class="text-white/70 text-sm">Dependencies - Entities your business relies on</span>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <div class="w-4 h-4 rounded-full" style="background-color: #10B981;"></div>
+                    <span class="text-white/70 text-sm">Customers - Entities your business serves</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
       <!-- Circular Footer with Heart Icon -->
       <footer class="fixed bottom-4 right-4 z-50">
         <!-- Expanded Footer Content (Hidden by default) -->
@@ -1001,6 +1221,8 @@
               targetContent = document.getElementById('uploadedFilesContent');
             } else if (targetTab === 'qna') {
               targetContent = document.getElementById('qnaContent');
+            } else if (targetTab === 'dependency') {
+              targetContent = document.getElementById('dependencyContent');
             } else {
               targetContent = document.getElementById(`${targetTab}AnalysisContent`);
             }
@@ -2488,6 +2710,161 @@
         }
       }
 
+      // Global variables for file viewing
+      let isFileViewMode = false;
+      let currentFileData = null;
+      let fileUrls = null;
+
+      // Initialize file view toggle
+      function initializeFileViewToggle() {
+        const toggleButton = document.getElementById('fileViewToggle');
+        const toggleThumb = document.getElementById('toggleThumb');
+        const viewModeText = document.getElementById('viewModeText');
+
+        if (toggleButton && toggleThumb && viewModeText) {
+          toggleButton.addEventListener('click', async () => {
+            isFileViewMode = !isFileViewMode;
+            
+            // Update toggle appearance
+            if (isFileViewMode) {
+              toggleButton.classList.remove('bg-gray-600');
+              toggleButton.classList.add('bg-accent');
+              toggleThumb.classList.remove('translate-x-1');
+              toggleThumb.classList.add('translate-x-6');
+              viewModeText.textContent = 'File View';
+            } else {
+              toggleButton.classList.remove('bg-accent');
+              toggleButton.classList.add('bg-gray-600');
+              toggleThumb.classList.remove('translate-x-6');
+              toggleThumb.classList.add('translate-x-1');
+              viewModeText.textContent = 'Content View';
+            }
+
+            // Refresh current file display
+            if (currentFileData) {
+              await showUploadedFileContent(currentFileData);
+            }
+          });
+        }
+      }
+
+      // Function to fetch file URLs for current report
+      async function fetchFileUrls() {
+        try {
+          const reportId = window.location.search.match(/report_id=([^&]+)/)?.[1];
+          if (!reportId) return null;
+
+          const response = await fetch(`/api/reports/${reportId}/uploads`, {
+            credentials: 'include'
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch file URLs');
+          }
+
+          const data = await response.json();
+          return data.files;
+        } catch (error) {
+          console.error('Error fetching file URLs:', error);
+          return null;
+        }
+      }
+
+      // Function to render file viewer based on file type
+      function renderFileViewer(file) {
+        const extension = file.filename.split('.').pop()?.toLowerCase();
+        
+        if (!file.public_url) {
+          return `
+            <div class="flex items-center justify-center h-full">
+              <div class="text-center">
+                <p class="text-red-400 mb-2">Unable to load file</p>
+                <p class="text-white/60 text-sm">${file.error || 'File URL not available'}</p>
+              </div>
+            </div>
+          `;
+        }
+
+        switch (extension) {
+          case 'pdf':
+            return `
+              <div class="h-full">
+                <iframe 
+                  src="${file.public_url}" 
+                  class="w-full h-full border-0 rounded-lg"
+                  title="${file.filename}">
+                </iframe>
+              </div>
+            `;
+          
+          case 'png':
+          case 'jpg':
+          case 'jpeg':
+          case 'gif':
+          case 'webp':
+            return `
+              <div class="flex items-center justify-center h-full">
+                <img 
+                  src="${file.public_url}" 
+                  alt="${file.filename}"
+                  class="max-w-full max-h-full object-contain rounded-lg"
+                />
+              </div>
+            `;
+          
+          case 'pptx':
+          case 'docx':
+          case 'doc':
+          case 'ppt':
+            return `
+              <div class="flex items-center justify-center h-full">
+                <div class="text-center">
+                  <div class="mb-4">
+                    <svg class="w-16 h-16 mx-auto text-accent mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                  </div>
+                  <h3 class="text-lg font-semibold text-white mb-2">${file.filename}</h3>
+                  <p class="text-white/60 mb-4">This file type cannot be previewed directly in the browser.</p>
+                  <a 
+                    href="${file.public_url}" 
+                    target="_blank" 
+                    class="inline-flex items-center px-4 py-2 bg-accent text-black rounded-lg font-medium hover:bg-accent/90 transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Download & Open
+                  </a>
+                </div>
+              </div>
+            `;
+          
+          default:
+            return `
+              <div class="flex items-center justify-center h-full">
+                <div class="text-center">
+                  <div class="mb-4">
+                    <svg class="w-16 h-16 mx-auto text-accent mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                  </div>
+                  <h3 class="text-lg font-semibold text-white mb-2">${file.filename}</h3>
+                  <p class="text-white/60 mb-4">File preview not available for this file type.</p>
+                  <a 
+                    href="${file.public_url}" 
+                    target="_blank" 
+                    class="inline-flex items-center px-4 py-2 bg-accent text-black rounded-lg font-medium hover:bg-accent/90 transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Download File
+                  </a>
+                </div>
+              </div>
+            `;
+        }
+      }
+
       // Function to populate uploaded files list
       function populateUploadedFiles(files) {
         const uploadedFilesList = document.getElementById('uploadedFilesList');
@@ -2511,13 +2888,13 @@
           button.textContent = file.filename;
           button.setAttribute('data-file-index', index);
           
-          button.addEventListener('click', () => {
+          button.addEventListener('click', async () => {
             // Remove active class from all buttons
             document.querySelectorAll('.file-btn').forEach(btn => btn.classList.remove('active'));
             // Add active class to clicked button
             button.classList.add('active');
             // Show file content
-            showUploadedFileContent(file);
+            await showUploadedFileContent(file);
           });
           
           uploadedFilesList.appendChild(button);
@@ -2525,7 +2902,7 @@
 
         // Show first file by default
         if (files.length > 0) {
-          showUploadedFileContent(files[0]);
+          showUploadedFileContent(files[0]).catch(console.error);
         } else {
           // Show empty state message
           const contentArea = document.getElementById('uploadedFileContentArea');
@@ -2543,41 +2920,91 @@
       }
 
       // Function to show uploaded file content
-      function showUploadedFileContent(file) {
+      async function showUploadedFileContent(file) {
         const contentArea = document.getElementById('uploadedFileContentArea');
         if (!contentArea) {
           return;
         }
 
+        // Store current file data
+        currentFileData = file;
+
         // Create content with animation
         contentArea.style.opacity = '0';
         contentArea.style.transform = 'translateX(20px)';
         
-        setTimeout(() => {
-          contentArea.innerHTML = `
-            <div class="file-content">
-              <div class="flex items-center justify-between mb-6">
-                <div>
-                  <h2 class="text-xl font-semibold text-white mb-2">${file.filename}</h2>
-                  <div class="flex items-center gap-4">
-                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                      ${file.filetype.toUpperCase()}
-                    </span>
-                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-400 border border-gray-500/30">
-                      ${file.file_extension.toUpperCase()}
-                    </span>
+        setTimeout(async () => {
+          let contentHtml = '';
+
+          if (isFileViewMode) {
+            // File view mode - show actual file
+            if (!fileUrls) {
+              fileUrls = await fetchFileUrls();
+            }
+
+            // Find the matching file URL data
+            const fileUrlData = fileUrls?.find(f => f.filename === file.filename);
+            
+            if (fileUrlData) {
+              contentHtml = `
+                <div class="file-viewer h-full">
+                  <div class="flex items-center justify-between mb-4 flex-shrink-0">
+                    <div>
+                      <h2 class="text-xl font-semibold text-white mb-2">${file.filename}</h2>
+                      <div class="flex items-center gap-4">
+                        <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                          ${file.filetype.toUpperCase()}
+                        </span>
+                        <span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-400 border border-gray-500/30">
+                          ${file.file_extension.toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex-1 overflow-hidden">
+                    ${renderFileViewer({ ...file, public_url: fileUrlData.public_url, error: fileUrlData.error })}
+                  </div>
+                </div>
+              `;
+            } else {
+              contentHtml = `
+                <div class="flex items-center justify-center h-full">
+                  <div class="text-center">
+                    <p class="text-red-400 mb-2">File not found</p>
+                    <p class="text-white/60 text-sm">Unable to retrieve file URL</p>
+                  </div>
+                </div>
+              `;
+            }
+          } else {
+            // Content view mode - show file content as before
+            contentHtml = `
+              <div class="file-content">
+                <div class="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 class="text-xl font-semibold text-white mb-2">${file.filename}</h2>
+                    <div class="flex items-center gap-4">
+                      <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                        ${file.filetype.toUpperCase()}
+                      </span>
+                      <span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-400 border border-gray-500/30">
+                        ${file.file_extension.toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="mb-6">
+                  <h3 class="text-lg font-medium text-white mb-3">File Content</h3>
+                  <div class="bg-white/5 rounded-lg p-4 border border-white/10">
+                    <div class="text-white/80 leading-relaxed whitespace-pre-wrap">${file.content}</div>
                   </div>
                 </div>
               </div>
-              
-              <div class="mb-6">
-                <h3 class="text-lg font-medium text-white mb-3">File Content</h3>
-                <div class="bg-white/5 rounded-lg p-4 border border-white/10">
-                  <div class="text-white/80 leading-relaxed whitespace-pre-wrap">${file.content}</div>
-                </div>
-              </div>
-            </div>
-          `;
+            `;
+          }
+
+          contentArea.innerHTML = contentHtml;
           
           // Animate in
           contentArea.style.transition = 'all 0.3s ease-out';
@@ -2745,6 +3172,634 @@
         if (qnaTab) {
           qnaTab.addEventListener('click', loadChatHistory);
         }
+
+        // Initialize knowledge graph when Dependency tab is opened
+        const dependencyTab = document.getElementById('dependencyTab');
+        if (dependencyTab) {
+          dependencyTab.addEventListener('click', () => {
+            // Wait a bit for any pending data loading, then initialize
+            setTimeout(() => {
+              console.log('Initializing knowledge graph - checking data availability');
+              console.log('window.reportData:', window.reportData);
+              initializeKnowledgeGraph();
+            }, 200);
+          });
+        }
+      }
+
+      // Knowledge Graph Visualization
+      function initializeKnowledgeGraph() {
+        const container = document.getElementById('knowledgeGraph');
+        if (!container) return;
+
+        // Clear any existing content
+        container.innerHTML = '';
+
+        // Set up SVG dimensions - use full container width
+        const width = container.clientWidth || 800;
+        const height = container.clientHeight || 600;
+
+        // Create SVG that fills the container
+        const svg = d3.select('#knowledgeGraph')
+          .append('svg')
+          .attr('width', '100%')
+          .attr('height', '100%')
+          .attr('viewBox', `0 0 ${width} ${height}`)
+          .attr('preserveAspectRatio', 'xMidYMid meet')
+          .style('display', 'block');
+
+        // Create tooltip div
+        const tooltip = d3.select('body')
+          .append('div')
+          .attr('class', 'knowledge-graph-tooltip')
+          .style('position', 'fixed') // Changed to fixed for better positioning
+          .style('background-color', '#2E3137')
+          .style('color', '#ffffff')
+          .style('padding', '12px')
+          .style('border-radius', '8px')
+          .style('border', '1px solid #f1d85b')
+          .style('font-size', '12px')
+          .style('pointer-events', 'auto') // Allow interaction with tooltip
+          .style('opacity', 0)
+          .style('z-index', 1000)
+          .style('max-width', '600px') // Limit width (2x increase)
+          .style('word-wrap', 'break-word') // Handle long text
+          .style('box-shadow', '0 4px 12px rgba(0, 0, 0, 0.3)'); // Add shadow for better visibility
+
+        // Tooltip state management
+        let tooltipTimeout;
+        let tooltipVisible = false;
+
+        // Zoom behavior
+        const zoom = d3.zoom()
+          .scaleExtent([0.1, 4])
+          .on('zoom', function(event) {
+            g.attr('transform', event.transform);
+          });
+
+        svg.call(zoom);
+
+        // Main group for all elements
+        const g = svg.append('g');
+
+        // Use actual API data or fallback to sample data
+        let apiKnowledgeGraph = window.reportData?.data?.knowledge_graph;
+
+        console.log('=== KNOWLEDGE GRAPH DEBUG INFO ===');
+        console.log('window.reportData:', window.reportData);
+        console.log('window.reportData exists:', !!window.reportData);
+        console.log('window.reportData structure:', window.reportData ? Object.keys(window.reportData) : 'No reportData');
+        console.log('window.reportData.startup_analysis exists:', !!window.reportData?.startup_analysis);
+        console.log('window.reportData.data.knowledge_graph exists:', !!window.reportData?.data?.knowledge_graph);
+        console.log('Raw API knowledge graph data:', apiKnowledgeGraph);
+        console.log('API data type:', typeof apiKnowledgeGraph);
+        console.log('API data keys:', apiKnowledgeGraph ? Object.keys(apiKnowledgeGraph) : 'No API data');
+
+        if (apiKnowledgeGraph) {
+          console.log('API data structure check:');
+          console.log('  - root exists:', !!apiKnowledgeGraph.root);
+          console.log('  - root id:', apiKnowledgeGraph.root?.id);
+          console.log('  - nodes exists:', !!apiKnowledgeGraph.nodes);
+          console.log('  - nodes length:', apiKnowledgeGraph.nodes?.length || 0);
+          console.log('  - edges exists:', !!apiKnowledgeGraph.edges);
+          console.log('  - edges length:', apiKnowledgeGraph.edges?.length || 0);
+
+          // Check first few nodes to ensure they have proper structure
+          if (apiKnowledgeGraph.nodes && apiKnowledgeGraph.nodes.length > 0) {
+            console.log('First node structure:', apiKnowledgeGraph.nodes[0]);
+            console.log('First node id:', apiKnowledgeGraph.nodes[0]?.id);
+            console.log('First node name:', apiKnowledgeGraph.nodes[0]?.name);
+          }
+        }
+
+        // If no data available, try again in a moment (data might be loading)
+        if (!apiKnowledgeGraph && window.reportData) {
+          console.log('No knowledge graph data yet, but report data exists - data might be loading');
+        }
+
+        // Transform API data to proper format for D3.js
+        let knowledgeGraph;
+
+        // Check if we have valid data right away
+        if (apiKnowledgeGraph && apiKnowledgeGraph.nodes && apiKnowledgeGraph.nodes.length > 0) {
+          console.log('Processing API data immediately - nodes found:', apiKnowledgeGraph.nodes.length);
+          processApiData();
+        } else if (apiKnowledgeGraph && apiKnowledgeGraph.root) {
+          console.log('Processing API data immediately - root found');
+          processApiData();
+        } else {
+          console.log('No valid knowledge graph data found, starting wait process...');
+
+          // Wait for data if it's not available yet
+          function waitForData(attempt = 0) {
+            const maxAttempts = 5;
+            const delayMs = 300;
+
+            // Re-fetch the data in case it loaded while we were waiting
+            apiKnowledgeGraph = window.reportData?.data?.knowledge_graph;
+
+            console.log(`Wait attempt ${attempt + 1}: checking data availability`);
+
+            if (apiKnowledgeGraph && apiKnowledgeGraph.nodes && apiKnowledgeGraph.nodes.length > 0) {
+              console.log(`Processing API data - found ${apiKnowledgeGraph.nodes.length} nodes (attempt ${attempt + 1})`);
+              processApiData();
+            } else if (apiKnowledgeGraph && apiKnowledgeGraph.root) {
+              console.log(`Processing API data - found root node (attempt ${attempt + 1})`);
+              processApiData();
+            } else if (attempt < maxAttempts && window.reportData) {
+              console.log(`Waiting for knowledge graph data, attempt ${attempt + 1}/${maxAttempts}`);
+              setTimeout(() => waitForData(attempt + 1), delayMs);
+            } else {
+              console.log('No knowledge graph data available after waiting');
+              console.log('Final check - window.reportData exists:', !!window.reportData);
+              console.log('Final check - knowledge_graph exists:', !!window.reportData?.data?.knowledge_graph);
+
+              // Force show the data if it exists but condition failed
+              const finalCheckGraph = window.reportData?.data?.knowledge_graph;
+              if (finalCheckGraph) {
+                console.log('FORCED PROCESSING - Data exists but condition failed');
+                console.log('Final check graph keys:', Object.keys(finalCheckGraph));
+                apiKnowledgeGraph = finalCheckGraph;
+                processApiData();
+                return;
+              }
+
+              showFallback();
+            }
+          }
+
+          waitForData();
+        }
+
+        // Variables no longer needed since we removed position logic
+
+        function processApiData() {
+          // Transform API data structure to D3.js format with proper positioning
+
+          knowledgeGraph = {
+            nodes: [
+              // Add root node if it exists
+              ...(apiKnowledgeGraph.root ? [{
+                id: apiKnowledgeGraph.root.id,
+                name: apiKnowledgeGraph.root.name,
+                type: apiKnowledgeGraph.root.type,
+                description: apiKnowledgeGraph.root.description,
+                category: apiKnowledgeGraph.root.type,
+                position: apiKnowledgeGraph.root.position || { x: 0, y: 0 }
+              }] : []),
+              // Add all nodes from API - don't set x,y here, let the simulation handle it
+              ...apiKnowledgeGraph.nodes.map(node => {
+                console.log('Processing node:', node);
+                const pos = node.position || { x: 0, y: 0 };
+                return {
+                  id: node.id,
+                  name: node.name,
+                  type: node.type,
+                  category: node.category || node.type,
+                  description: node.description,
+                  position: pos,
+                  relationship: node.relationship,
+                  news: node.news,
+                  market_data: node.market_data,
+                  hover_info: node.hover_info
+                };
+              })
+            ],
+            edges: apiKnowledgeGraph.edges ? apiKnowledgeGraph.edges.map(edge => ({
+              source: edge.from,
+              target: edge.to,
+              relationship: edge.relationship,
+              strength: edge.strength || 0.5
+            })) : []
+          };
+
+          console.log('Transformed knowledge graph:', knowledgeGraph);
+
+          // Now that we have the data, continue with visualization
+          continueWithVisualization();
+        }
+
+        function showFallback() {
+          // Show fallback message if no data
+          const container = document.getElementById('knowledgeGraph');
+          if (container) {
+            container.innerHTML = `
+              <div class="flex flex-col items-center justify-center h-full text-center p-8">
+                <div class="w-24 h-24 mx-auto mb-6 bg-[#2E3137] rounded-full flex items-center justify-center">
+                  <svg class="w-12 h-12 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                  </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-white mb-2">No Knowledge Graph Data</h3>
+                <p class="text-white/60 max-w-md">
+                  Knowledge graph data will be available once the system processes dependency relationships and generates the visualization.
+                </p>
+              </div>
+            `;
+          }
+          return;
+        }
+
+        function continueWithVisualization() {
+          // Get container dimensions for centering
+          const container = document.getElementById('knowledgeGraph');
+          const containerWidth = container ? container.clientWidth : width;
+          const containerHeight = container ? container.clientHeight : height;
+          const centerX = containerWidth / 2;
+          const centerY = containerHeight / 2;
+
+          // Safety checks
+          if (!knowledgeGraph || !knowledgeGraph.nodes || !knowledgeGraph.edges) {
+            console.error('Knowledge graph data is missing or malformed:', knowledgeGraph);
+            showFallback();
+            return;
+          }
+
+          // Color function based on position: root=yellow, left=blue, right=green
+          function getNodeColor(node) {
+            const rootNode = knowledgeGraph.nodes.find(n => n.name === 'Sia' || n.type === 'company');
+            
+            if (node === rootNode) {
+              return '#f1d85b'; // Yellow for root node
+            }
+            
+            const pos = node.position || { x: 0, y: 0 };
+            if (pos.x < 0) {
+              return '#3B82F6'; // Blue for left side
+            } else if (pos.x > 0) {
+              return '#10B981'; // Green for right side
+            } else {
+              return '#8B5CF6'; // Purple for center/neutral
+            }
+          }
+
+          // Declare simulation variable first so drag handlers can access it
+          let simulation;
+
+          // Drag functions - define before using them
+          function dragstarted(event, d) {
+            if (!d) {
+              console.error('Drag started with undefined node');
+              return;
+            }
+            // Prevent dragging of root node
+            const rootNode = knowledgeGraph.nodes.find(n => n.name === 'Sia' || n.type === 'company');
+            if (d === rootNode) {
+              return;
+            }
+            if (simulation && !event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+          }
+
+          function dragged(event, d) {
+            if (!d) {
+              console.error('Drag with undefined node');
+              return;
+            }
+            // Prevent dragging of root node
+            const rootNode = knowledgeGraph.nodes.find(n => n.name === 'Sia' || n.type === 'company');
+            if (d === rootNode) {
+              return;
+            }
+            d.fx = event.x;
+            d.fy = event.y;
+          }
+
+          function dragended(event, d) {
+            if (!d) {
+              console.error('Drag ended with undefined node');
+              return;
+            }
+            // Prevent dragging of root node
+            const rootNode = knowledgeGraph.nodes.find(n => n.name === 'Sia' || n.type === 'company');
+            if (d === rootNode) {
+              return;
+            }
+            if (simulation && !event.active) simulation.alphaTarget(0);
+            // Don't completely free the node, allow some movement but maintain general position
+            d.fx = null;
+            d.fy = null;
+          }
+
+          // Draw edges
+          const link = g.selectAll('.link')
+            .data(knowledgeGraph.edges)
+            .enter()
+            .append('line')
+            .attr('class', 'link')
+            .attr('stroke', '#ffffff')
+            .attr('stroke-width', d => (d.strength || 0.5) * 3)
+            .attr('stroke-opacity', 0.6)
+            .style('pointer-events', 'none'); // Prevent hover events on edges
+
+          // Draw nodes
+          const node = g.selectAll('.node')
+            .data(knowledgeGraph.nodes)
+            .enter()
+            .append('g')
+            .attr('class', 'node')
+            .style('cursor', 'pointer')
+            .call(d3.drag()
+              .on('start', dragstarted)
+              .on('drag', dragged)
+              .on('end', dragended));
+
+          // Node circles
+          const nodeCircles = node.append('circle')
+            .attr('r', 20)
+            .attr('fill', d => getNodeColor(d))
+            .attr('stroke', '#ffffff')
+            .attr('stroke-width', 2);
+
+          // Node labels
+          node.append('text')
+            .attr('dx', 0)
+            .attr('dy', 35)
+            .attr('text-anchor', 'middle')
+            .attr('fill', '#ffffff')
+            .attr('font-size', '10px')
+            .attr('font-weight', 'bold')
+            .text(d => d.name);
+
+          // Position nodes based on coordinate signs - left/right of root
+          const rootNode = knowledgeGraph.nodes.find(n => n.name === 'Sia' || n.type === 'company');
+          
+          // Set initial positions based on x coordinate sign
+          knowledgeGraph.nodes.forEach(node => {
+            const pos = node.position || { x: 0, y: 0 };
+            
+            if (node === rootNode) {
+              // Keep root node at center
+              node.fx = centerX;
+              node.fy = centerY;
+            } else {
+              // Position based on x coordinate sign
+              const offsetX = Math.abs(pos.x) > 0.5 ? 250 : 200; // Increased distance from center
+              const offsetY = pos.y * 80; // Vertical offset based on y coordinate
+              
+              if (pos.x < 0) {
+                // Negative x = left side
+                node.x = centerX - offsetX;
+                node.fx = centerX - offsetX;
+              } else if (pos.x > 0) {
+                // Positive x = right side  
+                node.x = centerX + offsetX;
+                node.fx = centerX + offsetX;
+              } else {
+                // x = 0 = center
+                node.x = centerX;
+                node.fx = centerX;
+              }
+              
+              node.y = centerY + offsetY;
+            }
+          });
+
+          // Create a gentler force simulation that respects fixed positioning
+          simulation = d3.forceSimulation(knowledgeGraph.nodes)
+            .force('link', d3.forceLink(knowledgeGraph.edges)
+              .id(d => d.id)
+              .distance(200) // Increased edge length for better spacing
+              .strength(0.3) // Link strength for connections
+            )
+            .force('charge', d3.forceManyBody().strength(-100)) // Light repulsion to prevent overlap
+            .force('collision', d3.forceCollide().radius(40)) // Prevent overlap
+            .alpha(0.5) // Start with medium energy
+            .alphaDecay(0.02) // Slower decay to maintain layout
+
+          if (simulation) {
+            simulation.on('tick', () => {
+              link
+                .attr('x1', d => d.source.x)
+                .attr('y1', d => d.source.y)
+                .attr('x2', d => d.target.x)
+                .attr('y2', d => d.target.y);
+
+              node.attr('transform', d => `translate(${d.x},${d.y})`);
+            });
+          }
+
+          // Mouse events - only on circles, not edges or empty space
+          nodeCircles.on('mouseover', function(event, d) {
+            if (!d) {
+              console.error('Mouseover with undefined node');
+              return;
+            }
+            
+            // Clear any existing timeout
+            if (tooltipTimeout) {
+              clearTimeout(tooltipTimeout);
+              tooltipTimeout = null;
+            }
+            
+            // Highlight the circle
+            d3.select(this)
+              .attr('stroke-width', 4)
+              .attr('stroke', '#f1d85b');
+
+            // Show tooltip with metadata
+            let tooltipContent = `
+              <div style="max-width: 560px; word-wrap: break-word; line-height: 1.4;">
+                <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #ffffff;">${d.name}</div>
+                <div style="font-size: 12px; margin-bottom: 8px; color: #e5e5e5;">${d.hover_info || d.description || 'No description available'}</div>
+                ${d.relationship ? `<div style="font-size: 12px; color: #f1d85b; margin-bottom: 8px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 8px;"><strong>Relationship:</strong><br/>${d.relationship}</div>` : ''}
+                ${d.news && d.news.length > 0 ? `
+                  <div style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 8px; margin-top: 8px;">
+                    <div style="font-weight: bold; color: #f1d85b; margin-bottom: 4px; font-size: 12px;">Recent News:</div>
+                    ${d.news.slice(0, 3).map(news => `
+                      <div style="font-size: 11px; margin-bottom: 4px;">
+                        <a href="${news.link}" target="_blank" style="color: #60a5fa; text-decoration: underline;">${news.title}</a>
+                        <div style="color: #9ca3af; font-size: 10px;">${news.source} - ${news.date}</div>
+                      </div>
+                    `).join('')}
+                  </div>
+                ` : ''}
+                ${d.market_data ? `
+                  <div style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 8px; margin-top: 8px;">
+                    <div style="font-weight: bold; color: #f1d85b; margin-bottom: 4px; font-size: 12px;">Market Data:</div>
+                    ${d.market_data.stock_ticker ? `<div style="font-size: 12px; margin-bottom: 2px;">Ticker: ${d.market_data.stock_ticker}</div>` : ''}
+                    ${d.market_data.stock_price ? `<div style="font-size: 12px; margin-bottom: 2px;">Price: ${d.market_data.stock_price}</div>` : ''}
+                    ${d.market_data.market_info ? `
+                      <div style="max-height: 150px; overflow-y: auto; margin-top: 4px; padding-right: 8px;">
+                        <div class="markdown-content" style="font-size: 11px; line-height: 1.3;">${typeof marked !== 'undefined' ? marked.parse(d.market_data.market_info) : d.market_data.market_info}</div>
+                      </div>
+                    ` : ''}
+                  </div>
+                ` : ''}
+              </div>
+            `;
+
+            // Set content first, then position
+            tooltip.html(tooltipContent);
+            
+            // Use setTimeout to ensure content is rendered before measuring
+            setTimeout(() => {
+              const tooltipRect = tooltip.node().getBoundingClientRect();
+              const viewportWidth = window.innerWidth;
+              const viewportHeight = window.innerHeight;
+              
+              // Calculate initial position (prefer top-left of cursor)
+              let left = event.clientX + 15;
+              let top = event.clientY - 15;
+              
+              // Adjust if tooltip would go off the right edge
+              if (left + tooltipRect.width > viewportWidth - 20) {
+                left = event.clientX - tooltipRect.width - 15;
+              }
+              
+              // Adjust if tooltip would go off the bottom edge
+              if (top + tooltipRect.height > viewportHeight - 20) {
+                top = event.clientY - tooltipRect.height - 15;
+              }
+              
+              // Ensure tooltip doesn't go off the top or left edges
+              left = Math.max(10, left);
+              top = Math.max(10, top);
+              
+              // Apply positioning and show tooltip
+              tooltip
+                .style('left', left + 'px')
+                .style('top', top + 'px')
+                .style('opacity', 1);
+                
+              tooltipVisible = true;
+            }, 0);
+          })
+          .on('mouseout', function() {
+            // Remove highlight from circle
+            d3.select(this)
+              .attr('stroke-width', 2)
+              .attr('stroke', '#ffffff');
+
+            // Set timeout to hide tooltip with delay
+            tooltipTimeout = setTimeout(() => {
+              if (tooltipVisible) {
+                tooltip.style('opacity', 0);
+                tooltipVisible = false;
+              }
+            }, 200); // 200ms delay before hiding
+          });
+
+          // Tooltip event handlers for hover interaction
+          tooltip.on('mouseenter', function() {
+            // Clear any pending timeout when hovering over tooltip
+            if (tooltipTimeout) {
+              clearTimeout(tooltipTimeout);
+              tooltipTimeout = null;
+            }
+            tooltip.style('opacity', 1);
+            tooltipVisible = true;
+          });
+
+          tooltip.on('mouseleave', function() {
+            // Hide tooltip when mouse leaves tooltip
+            tooltip.style('opacity', 0);
+            tooltipVisible = false;
+            if (tooltipTimeout) {
+              clearTimeout(tooltipTimeout);
+              tooltipTimeout = null;
+            }
+          });
+
+          // Zoom controls
+          document.getElementById('zoomIn')?.addEventListener('click', () => {
+            svg.transition().duration(300).call(zoom.scaleBy, 1.5);
+          });
+
+          document.getElementById('zoomOut')?.addEventListener('click', () => {
+            svg.transition().duration(300).call(zoom.scaleBy, 0.67);
+          });
+
+          document.getElementById('resetView')?.addEventListener('click', () => {
+            svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
+            
+            // Reset to left/right positioning based on coordinates
+            const rootNode = knowledgeGraph.nodes.find(n => n.name === 'Sia' || n.type === 'company');
+            
+            knowledgeGraph.nodes.forEach(node => {
+              const pos = node.position || { x: 0, y: 0 };
+              
+              if (node === rootNode) {
+                // Keep root node at center
+                node.fx = centerX;
+                node.fy = centerY;
+              } else {
+                // Reposition based on x coordinate sign
+                const offsetX = Math.abs(pos.x) > 0.5 ? 250 : 200;
+                const offsetY = pos.y * 80;
+                
+                if (pos.x < 0) {
+                  // Negative x = left side
+                  node.fx = centerX - offsetX;
+                } else if (pos.x > 0) {
+                  // Positive x = right side  
+                  node.fx = centerX + offsetX;
+                } else {
+                  // x = 0 = center
+                  node.fx = centerX;
+                }
+                
+                node.fy = null; // Allow vertical movement
+                node.y = centerY + offsetY;
+              }
+            });
+            
+            if (simulation) {
+              simulation.alpha(0.5).restart();
+            }
+          });
+
+          // Graph Info button
+          document.getElementById('graphInfoBtn')?.addEventListener('click', () => {
+            openGraphInfoModal();
+          });
+        }
+      }
+
+      // Open graph info modal
+      function openGraphInfoModal() {
+        const modal = document.getElementById('graphInfoModal');
+        if (modal) {
+          modal.classList.remove('hidden');
+          document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+      }
+
+      // Close graph info modal
+      function closeGraphInfoModal() {
+        const modal = document.getElementById('graphInfoModal');
+        if (modal) {
+          modal.classList.add('hidden');
+          document.body.style.overflow = ''; // Restore scrolling
+        }
+      }
+
+      // Initialize graph info modal
+      function initializeGraphInfoModal() {
+        const graphInfoBtn = document.getElementById('graphInfoBtn');
+        const closeBtn = document.getElementById('closeGraphInfo');
+        const modal = document.getElementById('graphInfoModal');
+        
+        if (closeBtn) {
+          closeBtn.addEventListener('click', closeGraphInfoModal);
+        }
+        
+        if (modal) {
+          // Close modal when clicking outside
+          modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+              closeGraphInfoModal();
+            }
+          });
+          
+          // Close modal with Escape key
+          document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+              closeGraphInfoModal();
+            }
+          });
+        }
       }
 
       document.addEventListener('DOMContentLoaded', () => {
@@ -2752,9 +3807,11 @@
         initializeTabs();
         initializeGrowthPotentialInfo();
         initializeDocumentationModal();
+        initializeGraphInfoModal();
         initializeShareDropdown();
         initializePDFDownload();
         initializeChat();
+        initializeFileViewToggle();
         
         // Initialize news/documents tab switching
         const industryNewsTab = document.getElementById('industryNewsTab');

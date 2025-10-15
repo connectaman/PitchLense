@@ -70,6 +70,20 @@
                 <line x1="17" y1="17" x2="17" y2="13"/>
               </svg>
             </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/extension.html" title="Extension">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+              </svg>
+              <!-- Tooltip -->
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                Extension
+                <!-- Tooltip arrow -->
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
             <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="https://youtu.be/XUuLeXaEIdI" target="_blank" title="How to use PitchLense">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
                 <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
@@ -159,6 +173,78 @@
             </div>
           </footer> -->
         </main>
+      </div>
+    </div>
+
+    <!-- Hangman Game Modal -->
+    <div id="hangmanModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-[#2E3137] border border-white/10 rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-bold text-white">🎮 Hangman Game</h3>
+          <button id="closeHangman" class="text-white/60 hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Game Content -->
+        <div id="hangmanGameContent" class="text-center">
+          <!-- Hangman Drawing -->
+          <div id="hangmanDrawing" class="mb-6 relative w-48 h-48 mx-auto">
+            <svg viewBox="0 0 200 200" class="w-full h-full">
+              <!-- Gallows -->
+              <line id="base" x1="20" y1="180" x2="120" y2="180" stroke="#666" stroke-width="4" opacity="0"/>
+              <line id="post" x1="40" y1="180" x2="40" y2="20" stroke="#666" stroke-width="4" opacity="0"/>
+              <line id="top" x1="40" y1="20" x2="100" y2="20" stroke="#666" stroke-width="4" opacity="0"/>
+              <line id="noose" x1="100" y1="20" x2="100" y2="50" stroke="#666" stroke-width="4" opacity="0"/>
+              
+              <!-- Hangman parts -->
+              <circle id="head" cx="100" cy="60" r="12" stroke="#fff" stroke-width="3" fill="none" opacity="0"/>
+              <line id="body" x1="100" y1="72" x2="100" y2="130" stroke="#fff" stroke-width="3" opacity="0"/>
+              <line id="leftArm" x1="100" y1="100" x2="80" y2="120" stroke="#fff" stroke-width="3" opacity="0"/>
+              <line id="rightArm" x1="100" y1="100" x2="120" y2="120" stroke="#fff" stroke-width="3" opacity="0"/>
+              <line id="leftLeg" x1="100" y1="130" x2="80" y2="150" stroke="#fff" stroke-width="3" opacity="0"/>
+              <line id="rightLeg" x1="100" y1="130" x2="120" y2="150" stroke="#fff" stroke-width="3" opacity="0"/>
+            </svg>
+          </div>
+          
+          <!-- Game Info -->
+          <div id="gameInfo" class="mb-4">
+            <div class="text-white/60 mb-2">
+              <span id="difficulty" class="text-sm"></span> • 
+              <span id="remainingGuesses" class="text-sm">Guesses left: 6</span>
+            </div>
+          </div>
+          
+          <!-- Word Display -->
+          <div id="wordDisplay" class="mb-6 text-3xl font-bold text-white tracking-wider"></div>
+          
+          <!-- Hint -->
+          <div id="hintDisplay" class="mb-6 p-3 bg-[#1E1E21] rounded-lg border border-white/10">
+            <div class="text-white/80 text-sm">💡 Hint: <span id="hintText" class="text-accent"></span></div>
+          </div>
+          
+          <!-- Used Letters -->
+          <div id="usedLetters" class="mb-6">
+            <div class="text-white/60 text-sm mb-2">Used letters:</div>
+            <div id="letterDisplay" class="flex flex-wrap gap-2 justify-center text-white"></div>
+          </div>
+          
+          <!-- Keyboard -->
+          <div id="keyboard" class="grid grid-cols-7 gap-2 mb-6">
+            <!-- Letters will be generated by JavaScript -->
+          </div>
+          
+          <!-- Game Status -->
+          <div id="gameStatus" class="mb-4 hidden">
+            <div id="gameMessage" class="text-lg font-semibold mb-4"></div>
+            <button id="playAgainBtn" class="px-6 py-3 bg-yellow-400 text-[#1E1E21] font-semibold rounded-lg hover:bg-yellow-300 transition-colors border-2 border-yellow-500">
+              Play Again
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -292,8 +378,8 @@
           const createdFmt = formatCreated(r.created_at);
           card.innerHTML = `
             <div class=\"flex items-start justify-between gap-2\">
-              <div class=\"min-w-0\">
-                <div class=\"text-xl font-semibold break-words\">${r.report_name}</div>
+              <div class=\"min-w-0 flex-1\">
+                <div class=\"text-xl font-semibold truncate\" title=\"${r.report_name}\">${r.report_name}</div>
               </div>
               <div class=\"flex items-center gap-2\">
                 <button data-action=\"pin\" class=\"w-8 h-8 grid place-items-center rounded-full border border-white/10 bg-[#1E1E21] text-white/80 hover:bg-white/10\" title=\"Favorite\">
@@ -309,8 +395,10 @@
               <span class=\"text-white truncate inline-block align-bottom max-w-full\" title=\"${r.startup_name}\">${r.startup_name}</span>
             </div>
             <div class=\"mt-2 text-sm\">
-              <span class=\"text-white/60\">Founder:</span>
-              <span class=\"text-white truncate inline-block align-bottom max-w-full\" title=\"${r.founder_name}\">${r.founder_name}</span>
+              <div class=\"flex items-center gap-2\">
+                <span class=\"text-white/60 flex-shrink-0\">Founder:</span>
+                <span class=\"text-white truncate min-w-0\" title=\"${r.founder_name}\">${r.founder_name}</span>
+              </div>
             </div>
             <div class=\"mt-2 text-sm\">
               <span class=\"text-white/60\">Files Uploaded:</span>
@@ -321,11 +409,15 @@
               <span class=\"text-white truncate inline-block align-bottom max-w-full\" title=\"${r.created_at}\">${createdFmt}</span>
             </div>
             <div class=\"mt-2 text-sm\">
-              <span class=\"text-white/60\">Status:</span>
-              <span class=\"status-chip text-xs px-2 py-1 rounded-full border whitespace-nowrap inline-block\" style=\"${statusStyle}\">${r.status}</span>
+              <div class=\"flex items-center gap-2\">
+                <span class=\"text-white/60\">Status:</span>
+                <span class=\"status-chip text-xs px-2 py-1 rounded-full border whitespace-nowrap inline-block\" style=\"${statusStyle}\">${r.status}</span>
+                ${status === 'pending' ? '<span class=\"text-xs text-white/80 eta-timer\" data-created=\"' + r.created_at + '\">ETA: <span class=\"countdown\">10m 0s</span></span>' : ''}
+              </div>
             </div>
-            <div class=\"mt-7 flex justify-center\">
+            <div class=\"mt-7 flex justify-center gap-2\">
               <a data-role=\"view\" href=\"/report.html?report_id=${encodeURIComponent(r.report_id)}\" class=\"inline-block px-5 py-2 rounded-full bg-[#FFF27A] text-black font-semibold border border-white/15 btn-shine\">View Report</a>
+              ${status === 'pending' ? '<button class=\"text-xs px-3 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors hangman-trigger\" data-report-id=\"' + r.report_id + '\">🎮 Play Game</button>' : ''}
             </div>
           `;
 
@@ -381,6 +473,46 @@
           });
 
           grid.appendChild(card);
+          
+          // Add hangman game trigger event listener
+          const hangmanTrigger = card.querySelector('.hangman-trigger');
+          if (hangmanTrigger) {
+            hangmanTrigger.addEventListener('click', () => {
+              openHangmanGame();
+            });
+          }
+
+          // Add countdown timer for pending status
+          const etaTimer = card.querySelector('.eta-timer');
+          if (etaTimer && status === 'pending') {
+            const countdownElement = etaTimer.querySelector('.countdown');
+            const createdTime = new Date(r.created_at).getTime();
+            const now = new Date().getTime();
+            const timeElapsed = now - createdTime;
+            const totalTime = 10 * 60 * 1000; // 10 minutes in milliseconds
+            let timeLeft = Math.max(0, totalTime - timeElapsed);
+            
+            let timerId;
+            function updateCountdown() {
+              if (timeLeft <= 0) {
+                countdownElement.textContent = '0m 0s';
+                if (timerId) clearInterval(timerId);
+                return;
+              }
+              
+              const minutes = Math.floor(timeLeft / (1000 * 60));
+              const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+              countdownElement.textContent = `${minutes}m ${seconds}s`;
+              timeLeft -= 1000; // Decrease by 1 second
+            }
+            
+            // Update immediately and then every second
+            updateCountdown();
+            timerId = setInterval(updateCountdown, 1000);
+            
+            // Store timer ID to clean up later if needed
+            etaTimer.setAttribute('data-timer-id', timerId);
+          }
         });
         } catch (error) {
           // Hide loading state on error
@@ -392,6 +524,354 @@
         }
       }
       loadReports().catch(()=>{});
+
+      // Hangman Game Implementation
+      const hangmanWords = [
+        // Easy words
+        { word: "CAT", hint: "A friendly pet", difficulty: "Easy" },
+        { word: "DOG", hint: "Man's best friend", difficulty: "Easy" },
+        { word: "SUN", hint: "Bright star in our sky", difficulty: "Easy" },
+        { word: "MOON", hint: "Earth's natural satellite", difficulty: "Easy" },
+        { word: "STAR", hint: "Twinkles in the night sky", difficulty: "Easy" },
+        { word: "RAIN", hint: "Water falling from clouds", difficulty: "Easy" },
+        { word: "SNOW", hint: "White winter precipitation", difficulty: "Easy" },
+        { word: "TREE", hint: "Tall plant with branches", difficulty: "Easy" },
+        { word: "FLOWER", hint: "Colorful plant part", difficulty: "Easy" },
+        { word: "HAPPY", hint: "Feeling joyful", difficulty: "Easy" },
+        { word: "SMILE", hint: "Happy facial expression", difficulty: "Easy" },
+        { word: "LOVE", hint: "Deep affection", difficulty: "Easy" },
+        { word: "PEACE", hint: "Absence of war", difficulty: "Easy" },
+        { word: "BIRD", hint: "Flying animal with feathers", difficulty: "Easy" },
+        { word: "FISH", hint: "Water-dwelling animal", difficulty: "Easy" },
+        { word: "BOOK", hint: "Collection of pages to read", difficulty: "Easy" },
+        { word: "MUSIC", hint: "Organized sound and rhythm", difficulty: "Easy" },
+        { word: "DANCE", hint: "Moving to music rhythmically", difficulty: "Easy" },
+        { word: "GAME", hint: "Activity for entertainment", difficulty: "Easy" },
+        { word: "HOUSE", hint: "Building where people live", difficulty: "Easy" },
+        { word: "CANDY", hint: "Sweet treat", difficulty: "Easy" },
+        { word: "APPLE", hint: "Red or green fruit", difficulty: "Easy" },
+        { word: "PIZZA", hint: "Italian flatbread with toppings", difficulty: "Easy" },
+        { word: "COFFEE", hint: "Popular morning beverage", difficulty: "Easy" },
+        { word: "FRIEND", hint: "Person you like and trust", difficulty: "Easy" },
+
+        // Medium words
+        { word: "ADVENTURE", hint: "Exciting experience or journey", difficulty: "Medium" },
+        { word: "COMPUTER", hint: "Electronic device for processing data", difficulty: "Medium" },
+        { word: "BEAUTIFUL", hint: "Pleasing to the eye", difficulty: "Medium" },
+        { word: "MOUNTAIN", hint: "Large natural elevation of land", difficulty: "Medium" },
+        { word: "DINOSAUR", hint: "Extinct reptile from ancient times", difficulty: "Medium" },
+        { word: "ELEPHANT", hint: "Large mammal with a trunk", difficulty: "Medium" },
+        { word: "BUTTERFLY", hint: "Colorful flying insect", difficulty: "Medium" },
+        { word: "CHOCOLATE", hint: "Sweet cocoa-based treat", difficulty: "Medium" },
+        { word: "ELEVATOR", hint: "Machine that moves between floors", difficulty: "Medium" },
+        { word: "JOURNEY", hint: "Trip from one place to another", difficulty: "Medium" },
+        { word: "RAINBOW", hint: "Colorful arc in the sky after rain", difficulty: "Medium" },
+        { word: "VACATION", hint: "Period of rest from work", difficulty: "Medium" },
+        { word: "WONDERFUL", hint: "Inspiring delight or pleasure", difficulty: "Medium" },
+        { word: "FIREWORKS", hint: "Explosive display in the sky", difficulty: "Medium" },
+        { word: "TREASURE", hint: "Valuable hidden wealth", difficulty: "Medium" },
+        { word: "LIBRARY", hint: "Building with many books", difficulty: "Medium" },
+        { word: "WIZARD", hint: "Magical person with powers", difficulty: "Medium" },
+        { word: "CINEMA", hint: "Place to watch movies", difficulty: "Medium" },
+        { word: "DIAMOND", hint: "Precious sparkling gemstone", difficulty: "Medium" },
+        { word: "VAMPIRE", hint: "Mythical blood-drinking creature", difficulty: "Medium" },
+        { word: "SPACESHIP", hint: "Vehicle for space travel", difficulty: "Medium" },
+        { word: "KANGAROO", hint: "Australian hopping marsupial", difficulty: "Medium" },
+        { word: "SANDWICH", hint: "Food between slices of bread", difficulty: "Medium" },
+        { word: "UMBRELLA", hint: "Protection from rain", difficulty: "Medium" },
+        { word: "TELEPHONE", hint: "Device for making calls", difficulty: "Medium" },
+
+        // Hard words
+        { word: "PHILOSOPHY", hint: "Study of fundamental questions", difficulty: "Hard" },
+        { word: "MAGNIFICENT", hint: "Extremely beautiful or impressive", difficulty: "Hard" },
+        { word: "ARCHAEOLOGY", hint: "Study of ancient civilizations", difficulty: "Hard" },
+        { word: "CATASTROPHE", hint: "Sudden disaster or misfortune", difficulty: "Hard" },
+        { word: "EXTRAORDINARY", hint: "Remarkably unusual or special", difficulty: "Hard" },
+        { word: "PSYCHOLOGY", hint: "Study of mind and behavior", difficulty: "Hard" },
+        { word: "RENAISSANCE", hint: "Revival period in art and culture", difficulty: "Hard" },
+        { word: "TECHNOLOGY", hint: "Application of scientific knowledge", difficulty: "Hard" },
+        { word: "MYSTERIOUS", hint: "Difficult to understand or explain", difficulty: "Hard" },
+        { word: "SOPHISTICATED", hint: "Complex and refined", difficulty: "Hard" },
+        { word: "ENVIRONMENT", hint: "Surroundings and conditions", difficulty: "Hard" },
+        { word: "INCREDIBLE", hint: "Impossible to believe", difficulty: "Hard" },
+        { word: "ACHIEVEMENT", hint: "Something accomplished successfully", difficulty: "Hard" },
+        { word: "IMAGINATION", hint: "Ability to form mental images", difficulty: "Hard" },
+        { word: "DEVELOPMENT", hint: "Process of growing or improving", difficulty: "Hard" },
+        { word: "RESPONSIBILITY", hint: "State of being answerable", difficulty: "Hard" },
+        { word: "UNDERSTANDING", hint: "Ability to comprehend", difficulty: "Hard" },
+        { word: "OPPORTUNITY", hint: "Favorable set of circumstances", difficulty: "Hard" },
+        { word: "COMMUNICATION", hint: "Exchange of information", difficulty: "Hard" },
+        { word: "ENTREPRENEUR", hint: "Person who starts a business", difficulty: "Hard" },
+        { word: "PHOTOGRAPHY", hint: "Art of taking pictures", difficulty: "Hard" },
+        { word: "ARCHITECTURE", hint: "Art and science of building design", difficulty: "Hard" },
+        { word: "TRANSPORTATION", hint: "Movement of people or goods", difficulty: "Hard" },
+        { word: "ENTERTAINMENT", hint: "Activity providing enjoyment", difficulty: "Hard" },
+        { word: "DECORATION", hint: "Process of making something attractive", difficulty: "Hard" },
+
+        // Additional words for variety
+        { word: "BALLOON", hint: "Inflatable party decoration", difficulty: "Medium" },
+        { word: "PUPPET", hint: "Doll moved by strings", difficulty: "Medium" },
+        { word: "SPONGE", hint: "Porous cleaning tool", difficulty: "Easy" },
+        { word: "KITTEN", hint: "Young cat", difficulty: "Easy" },
+        { word: "RABBIT", hint: "Hopping long-eared animal", difficulty: "Easy" },
+        { word: "TURTLE", hint: "Shell-wearing reptile", difficulty: "Easy" },
+        { word: "PENGUIN", hint: "Antarctic black and white bird", difficulty: "Medium" },
+        { word: "OCEAN", hint: "Large body of salt water", difficulty: "Easy" },
+        { word: "FOREST", hint: "Large area covered with trees", difficulty: "Easy" },
+        { word: "DESERT", hint: "Dry, sandy landscape", difficulty: "Easy" },
+        { word: "CASTLE", hint: "Large fortified building", difficulty: "Medium" },
+        { word: "PIRATE", hint: "Sea robber", difficulty: "Medium" },
+        { word: "PRINCESS", hint: "Female royal", difficulty: "Medium" },
+        { word: "DRAGON", hint: "Mythical fire-breathing creature", difficulty: "Medium" },
+        { word: "FAIRY", hint: "Small magical being", difficulty: "Easy" },
+        { word: "GIANT", hint: "Very large person or thing", difficulty: "Medium" },
+        { word: "WIZARD", hint: "Magical spell-caster", difficulty: "Medium" },
+        { word: "POTION", hint: "Magical liquid mixture", difficulty: "Medium" },
+        { word: "CRYSTAL", hint: "Clear mineral formation", difficulty: "Medium" },
+        { word: "PIRATE", hint: "Sea-going robber", difficulty: "Medium" },
+        { word: "COMPASS", hint: "Navigation tool", difficulty: "Medium" },
+        { word: "MAGNET", hint: "Object that attracts metal", difficulty: "Medium" },
+        { word: "ROCKET", hint: "Space vehicle", difficulty: "Easy" },
+        { word: "PLANET", hint: "Celestial body orbiting a star", difficulty: "Medium" },
+        { word: "GALAXY", hint: "Large group of stars", difficulty: "Medium" },
+        { word: "EINSTEIN", hint: "Famous physicist", difficulty: "Hard" },
+        { word: "SHAKESPEARE", hint: "Famous English playwright", difficulty: "Hard" },
+        { word: "MICHELANGELO", hint: "Famous Italian artist", difficulty: "Hard" },
+        { word: "DARWIN", hint: "Evolution theorist", difficulty: "Medium" },
+        { word: "MOZART", hint: "Famous Austrian composer", difficulty: "Medium" },
+        { word: "FRIDA", hint: "Famous Mexican painter", difficulty: "Medium" },
+        { word: "PICASSO", hint: "Famous Spanish artist", difficulty: "Medium" },
+        { word: "BEETHOVEN", hint: "Famous German composer", difficulty: "Hard" },
+        { word: "CLEOPATRA", hint: "Famous Egyptian queen", difficulty: "Hard" },
+        { word: "COLUMBUS", hint: "Famous explorer", difficulty: "Medium" },
+        { word: "NEWTON", hint: "Famous physicist and mathematician", difficulty: "Medium" },
+        { word: "GALILEO", hint: "Famous astronomer", difficulty: "Medium" },
+        { word: "VINCI", hint: "Famous Italian polymath", difficulty: "Hard" },
+        { word: "NAPOLEON", hint: "Famous French emperor", difficulty: "Hard" },
+        { word: "GANDHI", hint: "Famous Indian leader", difficulty: "Medium" }
+      ];
+
+      let currentGame = {
+        word: '',
+        hint: '',
+        difficulty: '',
+        guessedLetters: new Set(),
+        wrongGuesses: 0,
+        maxGuesses: 6
+      };
+
+      const hangmanParts = ['base', 'post', 'top', 'noose', 'head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
+
+      function openHangmanGame() {
+        const modal = document.getElementById('hangmanModal');
+        modal.classList.remove('hidden');
+        startNewGame();
+      }
+
+      function closeHangmanGame() {
+        const modal = document.getElementById('hangmanModal');
+        modal.classList.add('hidden');
+      }
+
+      function startNewGame() {
+        // Reset game state
+        currentGame = {
+          word: '',
+          hint: '',
+          difficulty: '',
+          guessedLetters: new Set(),
+          wrongGuesses: 0,
+          maxGuesses: 6
+        };
+
+        // Reset hangman drawing - hide all body parts
+        hangmanParts.forEach(part => {
+          const element = document.getElementById(part);
+          if (element) {
+            if (['base', 'post', 'top', 'noose'].includes(part)) {
+              element.style.opacity = '1'; // Show gallows
+            } else {
+              element.style.opacity = '0'; // Hide body parts
+            }
+          }
+        });
+
+        // Select random word
+        const randomWord = hangmanWords[Math.floor(Math.random() * hangmanWords.length)];
+        currentGame.word = randomWord.word;
+        currentGame.hint = randomWord.hint;
+        currentGame.difficulty = randomWord.difficulty;
+
+        // Update UI
+        updateGameDisplay();
+        createKeyboard();
+        
+        // Hide game status and show game content
+        document.getElementById('gameStatus').classList.add('hidden');
+        document.getElementById('hangmanGameContent').classList.remove('hidden');
+      }
+
+      function updateGameDisplay() {
+        // Update word display
+        const wordDisplay = document.getElementById('wordDisplay');
+        wordDisplay.textContent = currentGame.word
+          .split('')
+          .map(letter => currentGame.guessedLetters.has(letter) ? letter : '_')
+          .join(' ');
+
+        // Update hint
+        document.getElementById('hintText').textContent = currentGame.hint;
+        document.getElementById('difficulty').textContent = currentGame.difficulty;
+
+        // Update remaining guesses
+        document.getElementById('remainingGuesses').textContent = `Guesses left: ${currentGame.maxGuesses - currentGame.wrongGuesses}`;
+
+        // Update used letters
+        const letterDisplay = document.getElementById('letterDisplay');
+        letterDisplay.innerHTML = Array.from(currentGame.guessedLetters)
+          .map(letter => `<span class="px-2 py-1 bg-[#1E1E21] rounded text-sm">${letter}</span>`)
+          .join('');
+
+        // Check win condition
+        const hasWon = currentGame.word.split('').every(letter => currentGame.guessedLetters.has(letter));
+        if (hasWon) {
+          endGame(true);
+          return;
+        }
+
+        // Check lose condition
+        if (currentGame.wrongGuesses >= currentGame.maxGuesses) {
+          endGame(false);
+          return;
+        }
+      }
+
+      function createKeyboard() {
+        const keyboard = document.getElementById('keyboard');
+        keyboard.innerHTML = '';
+
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        
+        for (let i = 0; i < alphabet.length; i++) {
+          const letter = alphabet[i];
+          const button = document.createElement('button');
+          button.textContent = letter;
+          button.className = 'px-3 py-2 bg-[#1E1E21] text-white rounded border border-white/10 hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
+          button.disabled = currentGame.guessedLetters.has(letter);
+          
+          button.addEventListener('click', () => makeGuess(letter));
+          keyboard.appendChild(button);
+        }
+      }
+
+      function makeGuess(letter) {
+        if (currentGame.guessedLetters.has(letter)) {
+          return;
+        }
+
+        currentGame.guessedLetters.add(letter);
+
+        if (currentGame.word.includes(letter)) {
+          // Correct guess
+          updateGameDisplay();
+          createKeyboard(); // Update keyboard to disable used letters
+        } else {
+          // Wrong guess
+          currentGame.wrongGuesses++;
+          
+          // Add hangman part (skip first 4 which are gallows)
+          const hangmanBodyParts = hangmanParts.slice(4); // head, body, leftArm, rightArm, leftLeg, rightLeg
+          if (currentGame.wrongGuesses <= hangmanBodyParts.length) {
+            const partIndex = currentGame.wrongGuesses - 1;
+            const element = document.getElementById(hangmanBodyParts[partIndex]);
+            if (element) {
+              element.style.opacity = '1';
+              element.style.transition = 'opacity 0.5s ease-in-out';
+            }
+          }
+          
+          updateGameDisplay();
+          createKeyboard(); // Update keyboard to disable used letters
+        }
+      }
+
+      function endGame(won) {
+        const gameStatus = document.getElementById('gameStatus');
+        const gameMessage = document.getElementById('gameMessage');
+        
+        gameStatus.classList.remove('hidden');
+        
+        if (won) {
+          // Show win celebration
+          gameMessage.innerHTML = `
+            <div class="text-green-400 mb-4">
+              🎉 Congratulations! You won! 🎉
+            </div>
+            <div class="text-white/80 text-sm">
+              The word was: <strong>${currentGame.word}</strong>
+            </div>
+          `;
+          
+          // Add celebration effects
+          setTimeout(() => {
+            createCelebration();
+          }, 500);
+          
+        } else {
+          // Show lose message
+          gameMessage.innerHTML = `
+            <div class="text-red-400 mb-4">
+              💀 Game Over! You lost! 💀
+            </div>
+            <div class="text-white/80 text-sm">
+              The word was: <strong>${currentGame.word}</strong>
+            </div>
+          `;
+        }
+      }
+
+      function createCelebration() {
+        const modal = document.getElementById('hangmanModal');
+        
+        // Create sparkle elements
+        for (let i = 0; i < 20; i++) {
+          const sparkle = document.createElement('div');
+          sparkle.className = 'absolute w-2 h-2 bg-yellow-400 rounded-full animate-ping';
+          sparkle.style.left = Math.random() * 100 + '%';
+          sparkle.style.top = Math.random() * 100 + '%';
+          sparkle.style.animationDelay = Math.random() * 2 + 's';
+          sparkle.style.animationDuration = Math.random() * 2 + 1 + 's';
+          modal.appendChild(sparkle);
+          
+          // Remove sparkle after animation
+          setTimeout(() => {
+            if (sparkle.parentNode) {
+              sparkle.parentNode.removeChild(sparkle);
+            }
+          }, 4000);
+        }
+      }
+
+      // Event listeners for modal
+      document.getElementById('closeHangman')?.addEventListener('click', closeHangmanGame);
+      document.getElementById('playAgainBtn')?.addEventListener('click', startNewGame);
+      
+      // Close modal when clicking outside
+      document.getElementById('hangmanModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'hangmanModal') {
+          closeHangmanGame();
+        }
+      });
+
+      // Keyboard support
+      document.addEventListener('keydown', (e) => {
+        if (!document.getElementById('hangmanModal').classList.contains('hidden')) {
+          const key = e.key.toUpperCase();
+          if (key >= 'A' && key <= 'Z' && !currentGame.guessedLetters.has(key)) {
+            makeGuess(key);
+          }
+        }
+      });
     </script>
     
     <!-- Circular Footer with Heart Icon -->
