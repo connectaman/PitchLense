@@ -184,12 +184,12 @@ app.use((req, res, next) => {
   // Content Security Policy - Allow YouTube embeds
   const csp = 
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://unpkg.com; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://unpkg.com https://d3js.org; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.gstatic.com; " +
     "img-src 'self' data: https: blob:; " +
     "connect-src 'self' https:; " +
-    "frame-src 'self' https://www.youtube.com https://youtube.com https://*.youtube.com https://*.ytimg.com; " +
+    "frame-src 'self' https://www.youtube.com https://youtube.com https://*.youtube.com https://*.ytimg.com https://storage.googleapis.com; " +
     "media-src 'self' https://www.youtube.com https://youtube.com; " +
     "object-src 'none'; " +
     "base-uri 'self';";
@@ -231,6 +231,10 @@ app.use(cookieParser());
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'pitchlense-web', ts: new Date().toISOString() });
+});
+
+app.get('/api/health', (_req, res) => {
+  res.json({ ok: true, service: 'pitchlense-api', ts: new Date().toISOString() });
 });
 
 // Auth helpers
@@ -406,7 +410,7 @@ app.post('/api/qna/ask', requireAuth, async (req, res) => {
     const prompt = `${context}\n\nUser Question: ${question}\n\nIMPORTANT INSTRUCTIONS:\n1. You MUST answer ONLY from the relevant content in the context above. You are NOT required to use information from all files - only use information that is directly relevant to answering the user's question.\n2. If the information is not found in the provided context, respond with "I don't know" or "This information is not available in the report data."\n3. Do not make up or infer information that is not explicitly provided in the context.\n4. At the end of your response, you MUST list all the specific files/sources you used to answer the question. Format this as "Sources used: [list the specific filenames and file types you referenced]"\n5. If you didn't use any files to answer the question, state "Sources used: None - information not available in the provided data."\n\nPlease provide a helpful and detailed answer based on the relevant report data above. Focus on insights, analysis, and actionable recommendations.`;
 
     // Get response from Gemini
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const aiResponse = response.text();
@@ -453,6 +457,248 @@ app.get('/api/qna/history/:report_id', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Chat history API error:', error);
     res.status(500).json({ error: 'Failed to fetch chat history' });
+  }
+});
+
+// General Pitch Analysis API (for content script)
+app.post('/api/analyze', async (req, res) => {
+  try {
+    const { text, url, title } = req.body || {};
+    
+    if (!text || text.trim().length < 10) {
+      return res.status(400).json({ error: 'Text content is required and must be at least 10 characters' });
+    }
+
+    console.log(`[api] Pitch analysis request: url=${url} title=${title} contentLength=${text.length}`);
+
+    // Check if API key is available
+    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your-gemini-api-key-here') {
+      throw new Error('GEMINI_API_KEY is not set. Please configure your Gemini API key.');
+    }
+
+    // Initialize Gemini AI model
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+
+    // Create a specialized prompt for general pitch analysis
+    const prompt = `
+You are an expert business analyst specializing in evaluating pitches, proposals, and business content. Analyze the following content and provide a comprehensive assessment focusing on:
+
+1. Overall effectiveness as a business pitch or proposal
+2. Clarity and structure
+3. Persuasiveness and value proposition
+4. Professional communication quality
+5. Specific recommendations for improvement
+
+Content:
+${text}
+
+Please provide your analysis in the following JSON format:
+{
+  "overallScore": <number from 1-10>,
+  "clarity": "<rating from Poor/Fair/Good/Excellent>",
+  "persuasiveness": "<rating from Poor/Fair/Good/Excellent>", 
+  "structure": "<rating from Poor/Fair/Good/Excellent>",
+  "feedback": "<detailed feedback about the content's strengths and weaknesses>",
+  "recommendations": ["<specific recommendation 1>", "<specific recommendation 2>", "<specific recommendation 3>"],
+  "keyStrengths": ["<strength 1>", "<strength 2>"],
+  "areasForImprovement": ["<area 1>", "<area 2>"]
+}
+
+Focus on:
+- How well the content communicates the value proposition
+- Whether the call-to-action is clear and compelling
+- The professional tone and structure
+- Specific, actionable suggestions for improvement
+- Recognition of effective elements that should be maintained
+
+Respond ONLY with the JSON object, no additional text.
+`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let analysisText = response.text();
+
+    // Clean up the response to ensure it's valid JSON
+    analysisText = analysisText.trim();
+    if (analysisText.startsWith('```json')) {
+      analysisText = analysisText.replace(/```json\n?/, '').replace(/\n?```$/, '');
+    }
+    if (analysisText.startsWith('```')) {
+      analysisText = analysisText.replace(/```\n?/, '').replace(/\n?```$/, '');
+    }
+
+    let analysis;
+    try {
+      analysis = JSON.parse(analysisText);
+    } catch (parseError) {
+      console.error('Failed to parse Gemini response:', analysisText);
+      // Fallback analysis if JSON parsing fails
+      analysis = {
+        overallScore: 5,
+        clarity: "Fair",
+        persuasiveness: "Fair", 
+        structure: "Fair",
+        feedback: "The content was analyzed but the response format was not as expected. Please review for clarity, professional tone, and clear value proposition.",
+        recommendations: [
+          "Ensure the content has a clear structure",
+          "Include a compelling value proposition early",
+          "End with a clear call-to-action"
+        ],
+        keyStrengths: ["Content was provided for analysis"],
+        areasForImprovement: ["Review overall structure and clarity"]
+      };
+    }
+
+    // Validate and set defaults for required fields
+    analysis.overallScore = Math.max(1, Math.min(10, analysis.overallScore || 5));
+    analysis.clarity = analysis.clarity || "Fair";
+    analysis.persuasiveness = analysis.persuasiveness || "Fair";
+    analysis.structure = analysis.structure || "Fair";
+    analysis.feedback = analysis.feedback || "Content analysis completed.";
+    analysis.recommendations = Array.isArray(analysis.recommendations) ? analysis.recommendations : [];
+    analysis.keyStrengths = Array.isArray(analysis.keyStrengths) ? analysis.keyStrengths : [];
+    analysis.areasForImprovement = Array.isArray(analysis.areasForImprovement) ? analysis.areasForImprovement : [];
+
+    // Add metadata
+    analysis.url = url;
+    analysis.title = title;
+    analysis.analyzedAt = new Date().toISOString();
+    analysis.contentLength = text.length;
+
+    console.log(`[api] Pitch analysis completed: score=${analysis.overallScore} url=${url}`);
+
+    res.json({
+      success: true,
+      ...analysis
+    });
+
+  } catch (error) {
+    console.error('Pitch analysis API error:', error);
+    res.status(500).json({ 
+      error: 'Failed to analyze content',
+      details: error.message 
+    });
+  }
+});
+
+// Email Analysis API
+app.post('/api/analyze-email', async (req, res) => {
+  try {
+    const { content, emailId, url, source } = req.body || {};
+    
+    if (!content || content.trim().length < 10) {
+      return res.status(400).json({ error: 'Email content is required and must be at least 10 characters' });
+    }
+
+    console.log(`[api] Email analysis request: emailId=${emailId} source=${source} contentLength=${content.length}`);
+
+    // Check if API key is available
+    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your-gemini-api-key-here') {
+      throw new Error('GEMINI_API_KEY is not set. Please configure your Gemini API key.');
+    }
+
+    // Initialize Gemini AI model
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+
+    // Create a specialized prompt for email proposal analysis
+    const prompt = `
+You are an expert business analyst specializing in evaluating email proposals and pitches. Analyze the following email content and provide a comprehensive assessment focusing on:
+
+1. Overall effectiveness as a business proposal
+2. Clarity and structure
+3. Persuasiveness and value proposition
+4. Professional communication quality
+5. Specific recommendations for improvement
+
+Email Content:
+${content}
+
+Please provide your analysis in the following JSON format:
+{
+  "overallScore": <number from 1-10>,
+  "clarity": "<rating from Poor/Fair/Good/Excellent>",
+  "persuasiveness": "<rating from Poor/Fair/Good/Excellent>", 
+  "structure": "<rating from Poor/Fair/Good/Excellent>",
+  "feedback": "<detailed feedback about the email's strengths and weaknesses>",
+  "recommendations": ["<specific recommendation 1>", "<specific recommendation 2>", "<specific recommendation 3>"],
+  "keyStrengths": ["<strength 1>", "<strength 2>"],
+  "areasForImprovement": ["<area 1>", "<area 2>"]
+}
+
+Focus on:
+- How well the email communicates the value proposition
+- Whether the call-to-action is clear and compelling
+- The professional tone and structure
+- Specific, actionable suggestions for improvement
+- Recognition of effective elements that should be maintained
+
+Respond ONLY with the JSON object, no additional text.
+`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let analysisText = response.text();
+
+    // Clean up the response to ensure it's valid JSON
+    analysisText = analysisText.trim();
+    if (analysisText.startsWith('```json')) {
+      analysisText = analysisText.replace(/```json\n?/, '').replace(/\n?```$/, '');
+    }
+    if (analysisText.startsWith('```')) {
+      analysisText = analysisText.replace(/```\n?/, '').replace(/\n?```$/, '');
+    }
+
+    let analysis;
+    try {
+      analysis = JSON.parse(analysisText);
+    } catch (parseError) {
+      console.error('Failed to parse Gemini response:', analysisText);
+      // Fallback analysis if JSON parsing fails
+      analysis = {
+        overallScore: 5,
+        clarity: "Fair",
+        persuasiveness: "Fair", 
+        structure: "Fair",
+        feedback: "The email content was analyzed but the response format was not as expected. Please review the email for clarity, professional tone, and clear value proposition.",
+        recommendations: [
+          "Ensure the email has a clear subject line",
+          "Include a compelling value proposition early in the email",
+          "End with a clear call-to-action"
+        ],
+        keyStrengths: ["Email content was provided for analysis"],
+        areasForImprovement: ["Review overall structure and clarity"]
+      };
+    }
+
+    // Validate and set defaults for required fields
+    analysis.overallScore = Math.max(1, Math.min(10, analysis.overallScore || 5));
+    analysis.clarity = analysis.clarity || "Fair";
+    analysis.persuasiveness = analysis.persuasiveness || "Fair";
+    analysis.structure = analysis.structure || "Fair";
+    analysis.feedback = analysis.feedback || "Email analysis completed.";
+    analysis.recommendations = Array.isArray(analysis.recommendations) ? analysis.recommendations : [];
+    analysis.keyStrengths = Array.isArray(analysis.keyStrengths) ? analysis.keyStrengths : [];
+    analysis.areasForImprovement = Array.isArray(analysis.areasForImprovement) ? analysis.areasForImprovement : [];
+
+    // Add metadata
+    analysis.emailId = emailId;
+    analysis.source = source || 'gmail';
+    analysis.analyzedAt = new Date().toISOString();
+    analysis.contentLength = content.length;
+
+    console.log(`[api] Email analysis completed: score=${analysis.overallScore} emailId=${emailId}`);
+
+    res.json({
+      success: true,
+      ...analysis
+    });
+
+  } catch (error) {
+    console.error('Email analysis API error:', error);
+    res.status(500).json({ 
+      error: 'Failed to analyze email',
+      details: error.message 
+    });
   }
 });
 
@@ -520,9 +766,8 @@ app.post('/api/reports', requireAuth, upload.array('files'), async (req, res) =>
       if (!allowedKinds.includes(t)) return res.status(400).json({ error: `Invalid file type: ${t}` });
     }
 
-    const tsName = new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 15);
     const report_id = crypto.randomUUID();
-    const report_name = `${startup_name}_${tsName}`;
+    const report_name = startup_name;
     const report_path = GCS_BUCKET ? `gs://${GCS_BUCKET}/runs/${report_id}.json` : null;
     console.log(`[api] creating report_id=${report_id} name=${report_name} total_files=${files.length} report_path=${report_path}`);
     await dbRun(
@@ -564,9 +809,13 @@ app.post('/api/reports', requireAuth, upload.array('files'), async (req, res) =>
         if (CLOUD_RUN_URL) {
           const startup_text = `Startup Name: ${startup_name}\nFounder: ${founder_name}\nLaunch Date: ${launch_date}\nReport ID: ${report_id}\n`;
           const destination_gcs = `gs://${GCS_BUCKET}/runs/${report_id}.json`;
-          const payload = { uploads: createdUploads, destination_gcs};
+          const payload = { 
+            company_name: startup_name,
+            uploads: createdUploads, 
+            destination_gcs
+          };
           // Fire-and-forget: do not await Cloud Run job completion/response
-          console.log(`[bg] trigger cloud-run url=${CLOUD_RUN_URL} uploads=${createdUploads.length} dest=${destination_gcs}`);
+          console.log(`[bg] trigger cloud-run url=${CLOUD_RUN_URL} company=${startup_name} uploads=${createdUploads.length} dest=${destination_gcs}`);
           axios.post(CLOUD_RUN_URL, payload, { timeout: 5000 })
             .then((resp) => {
               console.log(`[bg] cloud-run request sent status=${resp.status}`);
@@ -792,6 +1041,167 @@ app.get('/api/reports/:id/data', requireAuth, async (req, res) => {
   } catch (e) { 
     console.error(e); 
     res.status(500).json({ error: 'get_report_data_failed' }); 
+  }
+});
+
+// Get uploaded files for a report with public URLs
+app.get('/api/reports/:id/uploads', requireAuth, async (req, res) => {
+  try {
+    const reportId = req.params.id;
+    
+    // Verify user owns this report
+    const report = await dbGet(`SELECT report_id FROM ${tableName('reports')} WHERE report_id=? AND user_id=? AND is_delete=0`, [reportId, req.user.id]);
+    if (!report) {
+      return res.status(404).json({ error: 'report_not_found' });
+    }
+
+    // Get all uploads for this report
+    const uploads = await dbAll(
+      `SELECT filename, upload_path, file_format FROM ${tableName('uploads')} WHERE report_id=? ORDER BY created_at ASC`,
+      [reportId]
+    );
+
+    // Generate public URLs for each file
+    const filesWithUrls = await Promise.all(
+      uploads.map(async (upload) => {
+        try {
+          const parsed = parseGsUri(upload.upload_path);
+          if (!parsed) {
+            console.warn(`[api] Invalid upload path: ${upload.upload_path}`);
+            return {
+              filename: upload.filename,
+              filepath: upload.upload_path,
+              file_format: upload.file_format,
+              public_url: null,
+              error: 'Invalid file path'
+            };
+          }
+
+          const client = getGcsClient();
+          const file = client.bucket(parsed.bucket).file(parsed.object);
+          
+          // Generate signed URL valid for 1 hour
+          const [url] = await file.getSignedUrl({
+            action: 'read',
+            expires: Date.now() + 60 * 60 * 1000, // 1 hour
+          });
+
+          return {
+            filename: upload.filename,
+            filepath: upload.upload_path,
+            file_format: upload.file_format,
+            public_url: url
+          };
+        } catch (error) {
+          console.error(`[api] Failed to generate public URL for ${upload.filename}:`, error?.message || error);
+          return {
+            filename: upload.filename,
+            filepath: upload.upload_path,
+            file_format: upload.file_format,
+            public_url: null,
+            error: error?.message || 'Failed to generate URL'
+          };
+        }
+      })
+    );
+
+    res.json({ files: filesWithUrls });
+  } catch (error) {
+    console.error(`[api] Failed to get uploads for report ${req.params.id}:`, error?.message || error);
+    res.status(500).json({ error: 'failed_to_get_uploads' });
+  }
+});
+
+// Download extension as zip
+app.get('/api/extension/download-zip', requireAuth, async (req, res) => {
+  try {
+    const extensionDir = path.join(__dirname, '..', 'extension');
+    
+    // Check if extension directory exists
+    if (!fs.existsSync(extensionDir)) {
+      return res.status(404).json({ error: 'Extension directory not found' });
+    }
+
+    // Set headers for zip download
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="PitchLense-Extension.zip"');
+
+    // Create a simple zip using tar-like approach or just return the files
+    // Since we don't have archiver, let's use a different approach
+    const { exec } = require('child_process');
+    const execAsync = promisify(exec);
+
+    try {
+      // Try to create zip using system zip command (works on most systems)
+      const zipPath = path.join(__dirname, '..', 'temp_extension.zip');
+      
+      // Remove existing zip if it exists
+      try {
+        fs.unlinkSync(zipPath);
+      } catch (e) {
+        // Ignore if file doesn't exist
+      }
+
+      // Create zip using system command (handles both Unix and Windows)
+      const isWindows = process.platform === 'win32';
+      const zipCommand = isWindows 
+        ? `powershell -Command "Compress-Archive -Path 'extension\\*' -DestinationPath 'temp_extension.zip' -Force"`
+        : `zip -r temp_extension.zip extension/ -x "*.DS_Store" "*/node_modules/*"`;
+      
+      await execAsync(`cd "${path.join(__dirname, '..')}" && ${zipCommand}`);
+      
+      // Send the zip file
+      const zipBuffer = fs.readFileSync(zipPath);
+      res.send(zipBuffer);
+      
+      // Clean up temp file
+      try {
+        fs.unlinkSync(zipPath);
+      } catch (e) {
+        // Ignore cleanup errors
+      }
+
+    } catch (zipError) {
+      console.log('System zip not available, falling back to manual approach:', zipError.message);
+      
+      // Fallback: Return JSON with file contents that can be zipped on frontend
+      const files = [];
+      
+      function readDirectory(dir, relativePath = '') {
+        const items = fs.readdirSync(dir);
+        
+        for (const item of items) {
+          const fullPath = path.join(dir, item);
+          const relativeItemPath = path.join(relativePath, item);
+          const stat = fs.statSync(fullPath);
+          
+          if (stat.isDirectory()) {
+            readDirectory(fullPath, relativeItemPath);
+          } else {
+            const fileContent = fs.readFileSync(fullPath);
+            files.push({
+              name: relativeItemPath.replace(/\\/g, '/'), // Normalize path separators
+              content: fileContent.toString('base64')
+            });
+          }
+        }
+      }
+      
+      readDirectory(extensionDir);
+      
+      // Set proper headers for JSON response
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', 'attachment; filename="extension-files.json"');
+      res.json({ 
+        files,
+        message: 'Extension files exported. Use frontend zip creation.',
+        filename: 'PitchLense-Extension.zip'
+      });
+    }
+
+  } catch (error) {
+    console.error('[api] Failed to create extension zip:', error?.message || error);
+    res.status(500).json({ error: 'failed_to_create_zip' });
   }
 });
 
