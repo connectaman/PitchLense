@@ -215,6 +215,18 @@
               <line x1="17" y1="17" x2="17" y2="13"/>
             </svg>
           </a>
+          <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/market.html" title="Market">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3v18h18"/>
+              <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+            </svg>
+            <!-- Tooltip -->
+            <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+              Market Data
+              <!-- Tooltip arrow -->
+              <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+            </div>
+          </a>
           <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/extension.html" title="Extension">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="3" width="7" height="7"/>
@@ -1192,6 +1204,27 @@
     <script>
       // Global variables
       let reportData = null;
+      let globalTooltipTimeout = null; // Global reference to tooltip timeout
+
+      // Function to hide knowledge graph tooltip
+      function hideKnowledgeGraphTooltip() {
+        // Clear any existing timeout
+        if (globalTooltipTimeout) {
+          clearTimeout(globalTooltipTimeout);
+          globalTooltipTimeout = null;
+        }
+        
+        const existingTooltip = d3.select('.knowledge-graph-tooltip');
+        if (!existingTooltip.empty()) {
+          existingTooltip.style('opacity', 0);
+          
+          // Remove the tooltip completely after fade out
+          globalTooltipTimeout = setTimeout(() => {
+            existingTooltip.remove();
+            globalTooltipTimeout = null;
+          }, 200);
+        }
+      }
 
       // Tab functionality
       function initializeTabs() {
@@ -1207,6 +1240,9 @@
               openDocumentationModal();
               return;
             }
+            
+            // Hide any visible knowledge graph tooltip when switching tabs
+            hideKnowledgeGraphTooltip();
             
             // Remove active class from all main navigation buttons and contents
             tabButtons.forEach(btn => btn.classList.remove('active'));
@@ -3195,6 +3231,9 @@
         // Clear any existing content
         container.innerHTML = '';
 
+        // Remove any existing knowledge graph tooltips to prevent duplicates
+        hideKnowledgeGraphTooltip();
+
         // Set up SVG dimensions - use full container width
         const width = container.clientWidth || 800;
         const height = container.clientHeight || 600;
@@ -3208,27 +3247,51 @@
           .attr('preserveAspectRatio', 'xMidYMid meet')
           .style('display', 'block');
 
-        // Create tooltip div
-        const tooltip = d3.select('body')
-          .append('div')
-          .attr('class', 'knowledge-graph-tooltip')
-          .style('position', 'fixed') // Changed to fixed for better positioning
-          .style('background-color', '#2E3137')
-          .style('color', '#ffffff')
-          .style('padding', '12px')
-          .style('border-radius', '8px')
-          .style('border', '1px solid #f1d85b')
-          .style('font-size', '12px')
-          .style('pointer-events', 'auto') // Allow interaction with tooltip
-          .style('opacity', 0)
-          .style('z-index', 1000)
-          .style('max-width', '600px') // Limit width (2x increase)
-          .style('word-wrap', 'break-word') // Handle long text
-          .style('box-shadow', '0 4px 12px rgba(0, 0, 0, 0.3)'); // Add shadow for better visibility
+        // Create tooltip div - ensure only one exists
+        let tooltip = d3.select('.knowledge-graph-tooltip');
+        if (tooltip.empty()) {
+          tooltip = d3.select('body')
+            .append('div')
+            .attr('class', 'knowledge-graph-tooltip')
+            .style('position', 'fixed') // Changed to fixed for better positioning
+            .style('background-color', '#2E3137')
+            .style('color', '#ffffff')
+            .style('padding', '12px')
+            .style('border-radius', '8px')
+            .style('border', '1px solid #f1d85b')
+            .style('font-size', '12px')
+            .style('pointer-events', 'auto') // Allow interaction with tooltip
+            .style('opacity', 0)
+            .style('z-index', 1000)
+            .style('max-width', '600px') // Limit width (2x increase)
+            .style('word-wrap', 'break-word') // Handle long text
+            .style('box-shadow', '0 4px 12px rgba(0, 0, 0, 0.3)'); // Add shadow for better visibility
+        } else {
+          // Reset existing tooltip state
+          tooltip.style('opacity', 0);
+        }
 
         // Tooltip state management
         let tooltipTimeout;
         let tooltipVisible = false;
+
+        // Add mouse leave handler to the container to hide tooltip when leaving graph area
+        d3.select('#knowledgeGraph').on('mouseleave', function() {
+          // Hide tooltip when mouse leaves the knowledge graph container
+          if (tooltipVisible) {
+            tooltip.style('opacity', 0);
+            tooltipVisible = false;
+          }
+          // Clear any pending timeouts
+          if (tooltipTimeout) {
+            clearTimeout(tooltipTimeout);
+            tooltipTimeout = null;
+          }
+          if (globalTooltipTimeout) {
+            clearTimeout(globalTooltipTimeout);
+            globalTooltipTimeout = null;
+          }
+        });
 
         // Zoom behavior
         const zoom = d3.zoom()
@@ -3592,6 +3655,10 @@
               clearTimeout(tooltipTimeout);
               tooltipTimeout = null;
             }
+            if (globalTooltipTimeout) {
+              clearTimeout(globalTooltipTimeout);
+              globalTooltipTimeout = null;
+            }
             
             // Highlight the circle
             d3.select(this)
@@ -3672,6 +3739,16 @@
               .attr('stroke-width', 2)
               .attr('stroke', '#ffffff');
 
+            // Clear any existing timeout
+            if (tooltipTimeout) {
+              clearTimeout(tooltipTimeout);
+              tooltipTimeout = null;
+            }
+            if (globalTooltipTimeout) {
+              clearTimeout(globalTooltipTimeout);
+              globalTooltipTimeout = null;
+            }
+
             // Set timeout to hide tooltip with delay
             tooltipTimeout = setTimeout(() => {
               if (tooltipVisible) {
@@ -3688,6 +3765,10 @@
               clearTimeout(tooltipTimeout);
               tooltipTimeout = null;
             }
+            if (globalTooltipTimeout) {
+              clearTimeout(globalTooltipTimeout);
+              globalTooltipTimeout = null;
+            }
             tooltip.style('opacity', 1);
             tooltipVisible = true;
           });
@@ -3699,6 +3780,10 @@
             if (tooltipTimeout) {
               clearTimeout(tooltipTimeout);
               tooltipTimeout = null;
+            }
+            if (globalTooltipTimeout) {
+              clearTimeout(globalTooltipTimeout);
+              globalTooltipTimeout = null;
             }
           });
 
