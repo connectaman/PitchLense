@@ -1061,54 +1061,84 @@ app.get('/api/reports/:id/uploads', requireAuth, async (req, res) => {
       [reportId]
     );
 
-    // Generate public URLs for each file
-    const filesWithUrls = await Promise.all(
-      uploads.map(async (upload) => {
-        try {
-          const parsed = parseGsUri(upload.upload_path);
-          if (!parsed) {
-            console.warn(`[api] Invalid upload path: ${upload.upload_path}`);
-            return {
-              filename: upload.filename,
-              filepath: upload.upload_path,
-              file_format: upload.file_format,
-              public_url: null,
-              error: 'Invalid file path'
-            };
-          }
-
-          const client = getGcsClient();
-          const file = client.bucket(parsed.bucket).file(parsed.object);
-          
-          // Generate signed URL valid for 1 hour
-          const [url] = await file.getSignedUrl({
-            action: 'read',
-            expires: Date.now() + 60 * 60 * 1000, // 1 hour
-          });
-
-          return {
-            filename: upload.filename,
-            filepath: upload.upload_path,
-            file_format: upload.file_format,
-            public_url: url
-          };
-        } catch (error) {
-          console.error(`[api] Failed to generate public URL for ${upload.filename}:`, error?.message || error);
-          return {
-            filename: upload.filename,
-            filepath: upload.upload_path,
-            file_format: upload.file_format,
-            public_url: null,
-            error: error?.message || 'Failed to generate URL'
-          };
-        }
-      })
-    );
+    // Instead of generating signed URLs, return proxy URLs
+    const filesWithUrls = uploads.map((upload, index) => {
+      return {
+        filename: upload.filename,
+        filepath: upload.upload_path,
+        file_format: upload.file_format,
+        // Use our proxy endpoint instead of signed URL
+        public_url: `/api/reports/${reportId}/uploads/${index}/download`
+      };
+    });
 
     res.json({ files: filesWithUrls });
   } catch (error) {
     console.error(`[api] Failed to get uploads for report ${req.params.id}:`, error?.message || error);
     res.status(500).json({ error: 'failed_to_get_uploads' });
+  }
+});
+
+// Proxy endpoint to download a specific file from GCS
+app.get('/api/reports/:reportId/uploads/:uploadIndex/download', requireAuth, async (req, res) => {
+  try {
+    const { reportId, uploadIndex } = req.params;
+    
+    // Verify user owns this report
+    const report = await dbGet(`SELECT report_id FROM ${tableName('reports')} WHERE report_id=? AND user_id=? AND is_delete=0`, [reportId, req.user.id]);
+    if (!report) {
+      return res.status(404).json({ error: 'report_not_found' });
+    }
+
+    // Get the specific upload
+    const uploads = await dbAll(
+      `SELECT filename, upload_path, file_format FROM ${tableName('uploads')} WHERE report_id=? ORDER BY created_at ASC`,
+      [reportId]
+    );
+
+    const index = parseInt(uploadIndex, 10);
+    if (isNaN(index) || index < 0 || index >= uploads.length) {
+      return res.status(404).json({ error: 'file_not_found' });
+    }
+
+    const upload = uploads[index];
+    const parsed = parseGsUri(upload.upload_path);
+    if (!parsed) {
+      return res.status(400).json({ error: 'invalid_file_path' });
+    }
+
+    // Stream file from GCS
+    const client = getGcsClient();
+    const file = client.bucket(parsed.bucket).file(parsed.object);
+    
+    // Check if file exists
+    const [exists] = await file.exists();
+    if (!exists) {
+      return res.status(404).json({ error: 'file_not_found_in_storage' });
+    }
+
+    // Get file metadata for content type
+    const [metadata] = await file.getMetadata();
+    
+    // Set appropriate headers
+    res.setHeader('Content-Type', metadata.contentType || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(upload.filename)}"`);
+    
+    // Stream the file
+    file.createReadStream()
+      .on('error', (error) => {
+        console.error(`[api] Error streaming file ${upload.filename}:`, error);
+        if (!res.headersSent) {
+          res.status(500).json({ error: 'failed_to_stream_file' });
+        }
+      })
+      .pipe(res);
+      
+  } catch (error) {
+    console.error(`[api] Failed to download file:`, error?.message || error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'download_failed' });
+    }
   }
 });
 
@@ -1202,6 +1232,676 @@ app.get('/api/extension/download-zip', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('[api] Failed to create extension zip:', error?.message || error);
     res.status(500).json({ error: 'failed_to_create_zip' });
+  }
+});
+
+// ===== EMAIL ENDPOINTS =====
+const nodemailer = require('nodemailer');
+const Imap = require('imap');
+const { simpleParser } = require('mailparser');
+
+// Store attachments in memory temporarily (keyed by uid-filename)
+const emailAttachments = new Map();
+
+// IMAP connection management - prevent multiple simultaneous connections
+let activeImapConnection = null;
+let lastImapFetch = 0;
+const IMAP_COOLDOWN = 2000; // 2 seconds between fetches
+
+// Centralized email configuration for hackathon demo
+// All emails are sent/received through contact@amanulla.in
+function getEmailConfig() {
+  return {
+    imap: {
+      user: process.env.EMAIL_USERNAME || 'contact@amanulla.in',
+      password: process.env.EMAIL_PASSWORD,
+      host: process.env.IMAP_HOST || 'imap.hostinger.com',
+      port: parseInt(process.env.IMAP_PORT) || 993,
+      tls: true,
+      tlsOptions: { rejectUnauthorized: false }
+    },
+    smtp: {
+      host: process.env.SMTP_HOST || 'smtp.hostinger.com',
+      port: parseInt(process.env.SMTP_PORT) || 465,
+      secure: true,
+      auth: {
+        user: process.env.EMAIL_USERNAME || 'contact@amanulla.in',
+        pass: process.env.EMAIL_PASSWORD
+      }
+    }
+  };
+}
+
+// Fetch emails from IMAP server
+app.get('/api/emails', requireAuth, async (req, res) => {
+  let imap;
+  let timeoutId;
+  
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    
+    // Check if email password is configured in environment
+    if (!process.env.EMAIL_PASSWORD) {
+      return res.status(400).json({ error: 'Email server not configured. Please set EMAIL_PASSWORD in .env file.' });
+    }
+    
+    // Prevent simultaneous IMAP connections
+    const now = Date.now();
+    if (activeImapConnection) {
+      console.log('[api] IMAP connection already active, rejecting request');
+      return res.status(429).json({ error: 'Email fetch in progress, please wait' });
+    }
+    
+    // Enforce cooldown between requests
+    if (now - lastImapFetch < IMAP_COOLDOWN) {
+      const waitTime = Math.ceil((IMAP_COOLDOWN - (now - lastImapFetch)) / 1000);
+      console.log(`[api] IMAP cooldown active, wait ${waitTime}s`);
+      return res.status(429).json({ error: `Please wait ${waitTime} seconds before refreshing` });
+    }
+    
+    activeImapConnection = true;
+    lastImapFetch = now;
+    
+    const config = getEmailConfig();
+    
+    // Add connection timeout
+    config.imap.connTimeout = 30000; // 30 seconds
+    config.imap.authTimeout = 30000; // 30 seconds
+    config.imap.keepalive = false; // Disable keepalive to prevent hanging
+    
+    imap = new Imap(config.imap);
+    const emails = [];
+    
+    console.log('[api] Starting IMAP connection...');
+    
+    // Set overall timeout for the entire operation
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => {
+        console.log('[api] IMAP operation timeout - forcing disconnect');
+        if (imap) {
+          try { imap.end(); } catch (e) {}
+        }
+        activeImapConnection = null;
+        reject(new Error('Email fetch timeout - please try again'));
+      }, 45000); // 45 seconds total timeout
+    });
+    
+    imap.once('ready', () => {
+      imap.openBox('INBOX', true, (err, box) => {
+        if (err) {
+          console.error('Error opening inbox:', err);
+          imap.end();
+          return res.status(500).json({ error: 'Failed to open inbox' });
+        }
+        
+        const totalMessages = box.messages.total;
+        if (totalMessages === 0) {
+          imap.end();
+          return res.json([]);
+        }
+        
+        const start = Math.max(1, totalMessages - limit + 1);
+        const fetchRange = `${start}:${totalMessages}`;
+        
+        const fetch = imap.seq.fetch(fetchRange, {
+          bodies: '',
+          struct: true
+        });
+        
+        let processedCount = 0;
+        const totalToFetch = totalMessages - start + 1;
+        console.log(`[api] Fetching ${totalToFetch} emails from ${start} to ${totalMessages}`);
+        
+        fetch.on('message', (msg, seqno) => {
+          let emailData = { id: seqno, attachments: [], buffers: [] };
+          
+          msg.on('body', (stream, info) => {
+            let buffer = '';
+            stream.on('data', (chunk) => {
+              buffer += chunk.toString('utf8');
+            });
+            
+            stream.once('end', () => {
+              emailData.buffers.push(buffer);
+            });
+          });
+          
+          msg.once('attributes', (attrs) => {
+            emailData.uid = attrs.uid;
+            emailData.flags = attrs.flags;
+            emailData.isRead = attrs.flags.includes('\\Seen');
+            
+            // Extract attachments info
+            if (attrs.struct) {
+              const attachments = [];
+              const extractAttachments = (struct) => {
+                if (Array.isArray(struct)) {
+                  struct.forEach(extractAttachments);
+                } else if (struct.disposition && struct.disposition.type === 'attachment') {
+                  attachments.push({
+                    filename: struct.disposition.params.filename || 'attachment',
+                    type: struct.type,
+                    size: struct.size
+                  });
+                } else if (struct.subtype === 'MIXED' && struct.params) {
+                  if (struct[0]) extractAttachments(struct[0]);
+                }
+              };
+              extractAttachments(attrs.struct);
+              emailData.attachments = attachments;
+            }
+          });
+          
+          msg.once('end', async () => {
+            // Parse the complete email using mailparser
+            try {
+              const fullBuffer = emailData.buffers.join('');
+              const parsed = await simpleParser(fullBuffer);
+              
+              emailData.from = parsed.from?.text || '';
+              emailData.to = parsed.to?.text || '';
+              emailData.subject = parsed.subject || '';
+              emailData.date = parsed.date || new Date();
+              emailData.body = parsed.html || parsed.textAsHtml || parsed.text || '';
+              emailData.textBody = parsed.text || '';
+              
+              // Get attachments from parsed email with content
+              if (parsed.attachments && parsed.attachments.length > 0) {
+                emailData.attachments = parsed.attachments.map((att, idx) => {
+                  const filename = att.filename || `attachment_${idx}`;
+                  const attachmentKey = `${emailData.uid}-${filename}`;
+                  
+                  // Store attachment content in memory
+                  emailAttachments.set(attachmentKey, {
+                    content: att.content,
+                    contentType: att.contentType,
+                    filename: filename
+                  });
+                  
+                  return {
+                    filename: filename,
+                    type: att.contentType,
+                    size: att.size,
+                    downloadUrl: `/api/emails/attachment/${emailData.uid}/${encodeURIComponent(filename)}`
+                  };
+                });
+              }
+            } catch (parseError) {
+              console.error('Error parsing email:', parseError);
+              // Fallback to basic parsing
+              if (emailData.buffers.length > 0) {
+                const header = Imap.parseHeader(emailData.buffers[0]);
+                emailData.from = header.from ? header.from[0] : '';
+                emailData.to = header.to ? header.to[0] : '';
+                emailData.subject = header.subject ? header.subject[0] : '';
+                emailData.date = header.date ? header.date[0] : '';
+                emailData.body = emailData.buffers.join('');
+              }
+            }
+            
+            emails.push(emailData);
+            processedCount++;
+            console.log(`[api] Processed email ${processedCount}/${totalToFetch} - ${emailData.subject || 'No subject'}`);
+          });
+        });
+        
+        fetch.once('error', (err) => {
+          console.error('Fetch error:', err);
+          activeImapConnection = null;
+          if (timeoutId) clearTimeout(timeoutId);
+          imap.end();
+          if (!res.headersSent) {
+            res.status(500).json({ error: 'Failed to fetch emails' });
+          }
+        });
+        
+        fetch.once('end', () => {
+          console.log(`[api] Fetch complete, waiting for email parsing...`);
+          
+          // Wait a moment for async parsing to complete
+          setTimeout(() => {
+            console.log(`[api] Parsing complete. Total emails processed: ${emails.length}`);
+            
+            // Format and send response immediately, then close connection
+            if (!res.headersSent) {
+              try {
+                const formattedEmails = emails.map(email => {
+                  let preview = '';
+                  if (email.textBody) {
+                    preview = email.textBody.substring(0, 200).replace(/\s+/g, ' ').trim();
+                  } else if (email.body) {
+                    preview = email.body.replace(/<[^>]*>/g, '').substring(0, 200).replace(/\s+/g, ' ').trim();
+                  }
+                  
+                  return {
+                    id: email.id,
+                    uid: email.uid,
+                    from: email.from,
+                    to: email.to,
+                    subject: email.subject,
+                    preview: preview,
+                    body: email.body,
+                    textBody: email.textBody,
+                    date: email.date,
+                    attachments: (email.attachments || []).map(a => ({
+                      filename: a.filename || a,
+                      type: a.type,
+                      size: a.size,
+                      downloadUrl: a.downloadUrl || `/api/emails/attachment/${email.uid}/${encodeURIComponent(a.filename || a)}`
+                    })),
+                    isRead: email.isRead
+                  };
+                });
+                
+                console.log(`[api] Sending response with ${formattedEmails.length} emails`);
+                res.json(formattedEmails.reverse());
+                console.log(`[api] Response sent successfully`);
+                
+                // Clear timeout and connection flag
+                if (timeoutId) clearTimeout(timeoutId);
+                activeImapConnection = null;
+              } catch (err) {
+                console.error('[api] Error formatting/sending response:', err);
+              }
+            }
+            
+            // Close IMAP connection
+            imap.end();
+          }, 1000); // 1 second delay to ensure parsing completes
+        });
+      });
+    });
+    
+    imap.once('error', (err) => {
+      console.error('IMAP connection error:', err);
+      activeImapConnection = null;
+      if (timeoutId) clearTimeout(timeoutId);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Failed to connect to email server', details: err.message });
+      }
+    });
+    
+    imap.once('end', () => {
+      // Just cleanup - response already sent in fetch.once('end')
+      console.log(`[api] IMAP connection fully closed`);
+      if (timeoutId) clearTimeout(timeoutId);
+      activeImapConnection = null;
+    });
+    
+    // Race between timeout and actual connection
+    Promise.race([
+      new Promise((resolve) => {
+        imap.once('end', resolve);
+        imap.connect();
+      }),
+      timeoutPromise
+    ]).catch((err) => {
+      console.error('Email fetch timeout or error:', err);
+      activeImapConnection = null;
+      if (imap) {
+        try { imap.end(); } catch (e) {}
+      }
+      if (!res.headersSent) {
+        res.status(504).json({ error: 'Email server timeout - please try again' });
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error fetching emails:', error);
+    activeImapConnection = null;
+    if (timeoutId) clearTimeout(timeoutId);
+    if (imap) {
+      try { imap.end(); } catch (e) {}
+    }
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Failed to fetch emails', details: error.message });
+    }
+  }
+});
+
+// Send email via SMTP
+app.post('/api/emails/send', requireAuth, async (req, res) => {
+  try {
+    const { to, subject, body, replyTo, attachments } = req.body;
+    const userEmail = req.user.email; // Get user's PitchLense account email
+    
+    if (!to || !subject || !body) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    // Check if email password is configured
+    if (!process.env.EMAIL_PASSWORD) {
+      return res.status(400).json({ error: 'Email server not configured. Please set EMAIL_PASSWORD in .env file.' });
+    }
+    
+    const config = getEmailConfig();
+    const transporter = nodemailer.createTransport(config.smtp);
+    
+    const mailOptions = {
+      from: `"${userEmail} via PitchLense" <${config.smtp.auth.user}>`,
+      to: to,
+      subject: subject,
+      text: `[Sent by: ${userEmail}]\n\n${body}`,
+      html: `<p style="color: #666; font-size: 12px; border-bottom: 1px solid #ddd; padding-bottom: 8px; margin-bottom: 12px;"><strong>Sent by:</strong> ${userEmail} via PitchLense</p>${body.replace(/\n/g, '<br>')}`
+    };
+    
+    if (replyTo) {
+      mailOptions.inReplyTo = replyTo;
+      mailOptions.references = replyTo;
+    }
+    
+    const info = await transporter.sendMail(mailOptions);
+    
+    res.json({ 
+      success: true, 
+      messageId: info.messageId,
+      message: 'Email sent successfully' 
+    });
+    
+  } catch (error) {
+    console.error('Error sending email:', error);
+    res.status(500).json({ error: 'Failed to send email', details: error.message });
+  }
+});
+
+// Update email settings (not used in hackathon version)
+app.post('/api/emails/settings', requireAuth, async (req, res) => {
+  try {
+    // For hackathon demo, settings are read-only from .env
+    res.json({ 
+      success: true, 
+      message: 'Email settings are managed in server configuration (read-only for demo)' 
+    });
+  } catch (error) {
+    console.error('Error updating email settings:', error);
+    res.status(500).json({ error: 'Failed to update settings' });
+  }
+});
+
+// Get email settings
+app.get('/api/emails/settings', requireAuth, async (req, res) => {
+  try {
+    // Return centralized email configuration status
+    const emailAddress = process.env.EMAIL_USERNAME || 'contact@amanulla.in';
+    const configured = !!process.env.EMAIL_PASSWORD;
+    
+    res.json({ 
+      email_address: emailAddress,
+      configured: configured,
+      mode: 'centralized',
+      message: 'Using shared email server (contact@amanulla.in) for all users'
+    });
+    
+  } catch (error) {
+    console.error('Error fetching email settings:', error);
+    res.status(500).json({ error: 'Failed to fetch settings' });
+  }
+});
+
+// Analyze email with PitchLense AI
+app.post('/api/emails/analyze', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { emailId, emailContent, attachments } = req.body;
+    
+    if (!emailContent) {
+      return res.status(400).json({ error: 'Email content required' });
+    }
+    
+    console.log(`[api] POST /api/emails/analyze user=${userId} emailId=${emailId}`);
+    
+    // Extract text content (strip HTML if present)
+    const textContent = emailContent.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    
+    // Use Gemini AI to extract startup information
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    
+    const prompt = `Analyze the following email and extract startup/company information:
+
+Email Content:
+${textContent}
+
+Extract the following information in JSON format:
+{
+  "startup_name": "company or startup name mentioned",
+  "founder_name": "founder or CEO name mentioned",
+  "launch_date": "founding date or launch date in YYYY-MM-DD format",
+  "confidence": "high/medium/low based on how clear the information is"
+}
+
+If any field is not found or unclear, use "Not Found" for that field.
+Return ONLY valid JSON, no markdown or explanation.`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    
+    // Parse JSON from response
+    let extractedData;
+    try {
+      // Remove markdown code blocks if present
+      const jsonText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      extractedData = JSON.parse(jsonText);
+    } catch (parseError) {
+      console.error('Error parsing Gemini response:', parseError);
+      return res.status(500).json({ 
+        error: 'Failed to parse AI response',
+        rawResponse: text 
+      });
+    }
+    
+    // Default to today's date if launch date not found or invalid
+    if (!extractedData.launch_date || 
+        extractedData.launch_date === 'Not Found' || 
+        extractedData.launch_date === 'Unknown' ||
+        extractedData.launch_date === 'N/A') {
+      const today = new Date();
+      extractedData.launch_date = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+      console.log(`[api] No launch date found, using today's date: ${extractedData.launch_date}`);
+    }
+    
+    // Default values for other fields if not found
+    if (!extractedData.startup_name || extractedData.startup_name === 'Not Found') {
+      extractedData.startup_name = 'Unknown Startup';
+    }
+    if (!extractedData.founder_name || extractedData.founder_name === 'Not Found') {
+      extractedData.founder_name = 'Unknown Founder';
+    }
+    
+    res.json({
+      success: true,
+      extracted: extractedData,
+      hasAttachments: attachments && attachments.length > 0,
+      message: 'Email analyzed successfully'
+    });
+    
+  } catch (error) {
+    console.error('Error analyzing email:', error);
+    res.status(500).json({ error: 'Failed to analyze email', details: error.message });
+  }
+});
+
+// Create report from email analysis
+app.post('/api/emails/create-report', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { startup_name, founder_name, launch_date, emailId, attachmentUrls } = req.body;
+    
+    if (!startup_name || !founder_name || !launch_date) {
+      return res.status(400).json({ error: 'Startup name, founder name, and launch date are required' });
+    }
+    
+    console.log(`[api] Creating report from email analysis: ${startup_name}`);
+    console.log(`[api] Received attachmentUrls:`, attachmentUrls);
+    
+    const report_id = crypto.randomUUID();
+    const report_name = `${startup_name} - Email`;
+    const report_path = GCS_BUCKET ? `gs://${GCS_BUCKET}/runs/${report_id}.json` : null;
+    
+    // Create the report in database
+    await dbRun(
+      `INSERT INTO ${tableName('reports')} (report_id, user_id, report_name, startup_name, founder_name, launch_date, status, is_delete, is_pinned, report_path, total_files, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, 0, ?, ?, NOW())`,
+      [report_id, userId, report_name, startup_name, founder_name, launch_date, report_path, attachmentUrls?.length || 0]
+    );
+    
+    // Background processing: upload attachments and trigger Cloud Run
+    // Capture variables in closure
+    const _report_id = report_id;
+    const _startup_name = startup_name;
+    const _userId = userId;
+    const _attachmentUrls = attachmentUrls;
+    
+    setImmediate(async () => {
+      try {
+        const createdUploads = [];
+        
+        console.log(`[bg] start email report processing: report_id=${_report_id} startup=${_startup_name} attachments=${_attachmentUrls?.length || 0}`);
+        
+        // Process attachments if available
+        if (_attachmentUrls && _attachmentUrls.length > 0) {
+          console.log(`[bg] processing ${_attachmentUrls.length} attachments, GCS_BUCKET=${!!GCS_BUCKET}`);
+          
+          if (!GCS_BUCKET) {
+            console.warn(`[bg] GCS_BUCKET not set, cannot upload attachments`);
+          } else {
+            for (let i = 0; i < _attachmentUrls.length; i++) {
+              const attUrl = _attachmentUrls[i];
+              console.log(`[bg] processing attachment URL: ${attUrl}`);
+              
+              // Download attachment content from memory
+              const parts = attUrl.split('/');
+              const uid = parts[parts.length - 2];
+              const filename = decodeURIComponent(parts[parts.length - 1]);
+              const attachmentKey = `${uid}-${filename}`;
+              
+              console.log(`[bg] looking for attachment key: ${attachmentKey} (total in memory: ${emailAttachments.size})`);
+              
+              const attachment = emailAttachments.get(attachmentKey);
+              if (attachment) {
+                const objectPath = `uploads/${_report_id}/${attachment.filename}`;
+                console.log(`[bg] uploading attachment ${i+1}/${_attachmentUrls.length} -> ${objectPath}`);
+                
+                const gcsPath = await gcsSaveBytes(
+                  GCS_BUCKET, 
+                  objectPath, 
+                  attachment.content, 
+                  attachment.contentType || 'application/octet-stream'
+                );
+                
+              await dbRun(
+                `INSERT INTO ${tableName('uploads')} (file_id, user_id, report_id, filename, file_format, upload_path, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, NOW())`,
+                [crypto.randomUUID(), _userId, _report_id, attachment.filename, 'pitch deck', gcsPath]
+              );
+              
+              console.log(`[bg] successfully uploaded attachment: ${attachment.filename} -> ${gcsPath}`);
+              
+              createdUploads.push({
+                filetype: 'pitch deck',
+                filename: attachment.filename,
+                file_extension: (attachment.filename.split('.').pop() || '').toLowerCase(),
+                filepath: gcsPath
+              });
+              } else {
+                console.error(`[bg] attachment not found in memory: ${attachmentKey}`);
+              }
+            }
+          }
+        } else {
+          console.log(`[bg] no attachments to process`);
+        }
+        
+        // Trigger Cloud Run job (ALWAYS trigger if configured, even without attachments)
+        if (CLOUD_RUN_URL) {
+          if (!GCS_BUCKET) {
+            console.warn(`[bg] GCS_BUCKET not set, skipping Cloud Run trigger`);
+          } else {
+            const destination_gcs = `gs://${GCS_BUCKET}/runs/${_report_id}.json`;
+            const payload = { 
+              company_name: _startup_name,
+              uploads: createdUploads, 
+              destination_gcs
+            };
+            
+            console.log(`[bg] triggering cloud-run for email report: company=${_startup_name} uploads=${createdUploads.length} url=${CLOUD_RUN_URL}`);
+            console.log(`[bg] cloud-run payload:`, JSON.stringify(payload, null, 2));
+            
+            axios.post(CLOUD_RUN_URL, payload, { 
+              timeout: 10000,
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            })
+              .then((resp) => {
+                console.log(`[bg] cloud-run request successful: status=${resp.status} report_id=${_report_id}`);
+              })
+              .catch((err) => {
+                console.error(`[bg] cloud-run request error for report_id=${_report_id}:`, err?.response ? `${err.response.status} ${JSON.stringify(err.response.data)}` : (err?.message || err));
+              });
+          }
+        } else {
+          console.log(`[bg] Cloud Run not configured (CLOUD_RUN_URL not set)`);
+        }
+      } catch (err) {
+        console.error(`[bg] email report processing failed for report_id=${_report_id}:`, err);
+        try { await dbRun(`UPDATE ${tableName('reports')} SET status='failed' WHERE report_id=?`, [_report_id]); } catch {}
+      }
+    });
+    
+    const report = await dbGet(`SELECT * FROM ${tableName('reports')} WHERE report_id=?`, [report_id]);
+    res.json({ success: true, report });
+    
+  } catch (error) {
+    console.error('Error creating report from email:', error);
+    res.status(500).json({ error: 'Failed to create report', details: error.message });
+  }
+});
+
+// Download email attachment
+app.get('/api/emails/attachment/:uid/:filename', requireAuth, async (req, res) => {
+  try {
+    const { uid, filename } = req.params;
+    const attachmentKey = `${uid}-${decodeURIComponent(filename)}`;
+    
+    const attachment = emailAttachments.get(attachmentKey);
+    
+    if (!attachment) {
+      return res.status(404).json({ error: 'Attachment not found' });
+    }
+    
+    // Set headers for download
+    res.setHeader('Content-Type', attachment.contentType || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${attachment.filename}"`);
+    
+    // Send the file content
+    res.send(attachment.content);
+    
+  } catch (error) {
+    console.error('Error downloading attachment:', error);
+    res.status(500).json({ error: 'Failed to download attachment' });
+  }
+});
+
+// Test email connection
+app.post('/api/emails/test-connection', requireAuth, async (req, res) => {
+  try {
+    // Check if email password is configured
+    if (!process.env.EMAIL_PASSWORD) {
+      return res.status(400).json({ error: 'Email server not configured. Please set EMAIL_PASSWORD in .env file.' });
+    }
+    
+    const config = getEmailConfig();
+    
+    // Test SMTP connection
+    const transporter = nodemailer.createTransport(config.smtp);
+    await transporter.verify();
+    
+    res.json({ success: true, message: 'Connection successful' });
+    
+  } catch (error) {
+    console.error('Connection test failed:', error);
+    res.status(500).json({ error: 'Connection failed', details: error.message });
   }
 });
 

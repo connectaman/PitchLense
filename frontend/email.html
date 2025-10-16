@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email - PitchLense</title>
+    <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .email-container {
+            grid-template-columns: 300px 1fr;
+        }
+        @media (max-width: 768px) {
+            .email-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        .email-list-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        .email-list-item.active {
+            background-color: rgba(241, 216, 91, 0.2);
+        }
+        .email-content {
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        .attachment-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            margin: 0.25rem;
+        }
+        .email-filter-btn {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .email-filter-btn.active {
+            background-color: #FFF27A;
+            color: #1E1E21;
+            font-weight: 600;
+        }
+        .email-filter-btn:hover:not(.active) {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        /* SweetAlert2 Custom Styles */
+        .swal2-popup {
+            background: #2E3137 !important;
+            color: white !important;
+        }
+        .swal2-title {
+            color: white !important;
+        }
+        .swal2-html-container {
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+        .swal2-confirm {
+            background-color: #FFF27A !important;
+            color: #1E1E21 !important;
+        }
+        .swal2-cancel {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+        }
+        
+        /* Email body HTML rendering */
+        .email-body-content {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        .email-body-content a {
+            color: #FFF27A;
+            text-decoration: underline;
+        }
+        .email-body-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        .email-body-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 12px 0;
+        }
+        .email-body-content td, .email-body-content th {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px;
+        }
+        .email-body-content blockquote {
+            border-left: 3px solid #FFF27A;
+            padding-left: 12px;
+            margin-left: 0;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .email-body-content p {
+            margin: 8px 0;
+        }
+        .email-body-content ul, .email-body-content ol {
+            margin: 8px 0;
+            padding-left: 24px;
+        }
+    </style>
+</head>
+<body class="bg-[#1E1E21] text-white min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-[#2E3137] border border-white/10 rounded-[18px] mx-2 mt-2 flex-shrink-0">
+        <div class="flex items-center justify-between px-6 py-3">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 grid place-items-center">
+              <img src="/static/logo.svg" alt="PitchLense" class="w-9 h-9" onerror="this.outerHTML='<div class=\'w-9 h-9 rounded-full bg-accent grid place-items-center shadow-card\'><span class=\'font-extrabold text-black\'>W</span></div>'" />
+            </div>
+            <span class="text-secondary font-semibold">Email Client</span>
+          </div>
+          <div class="flex items-center gap-3">
+            
+            </button>
+            <div id="userProfileIcon" class="w-9 h-9 rounded-full border border-white/10 bg-[#FFF27A] grid place-items-center text-[#1E1E21] relative group">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.31 0-6 2.69-6 6h12c0-3.31-2.69-6-6-6Z"/>
+            </svg>
+            <div id="userEmailTooltip" class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+              <span id="userEmailText">Loading...</span>
+              <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-[#1E1E21]"></div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="grid flex-1 min-h-0 mobile-navbar" style="grid-template-columns: 84px 1fr; gap:12px;">
+        <aside class="bg-[#2C2F34] border border-white/10 rounded-[18px] flex flex-col items-center py-4 gap-3">
+          <nav class="flex flex-col gap-2 text-white/80 w-full items-center">
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10" href="/create-report.html" title="Create">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10" href="/view-report.html" title="Reports">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <line x1="9" y1="17" x2="9" y2="11"/>
+                <line x1="13" y1="17" x2="13" y2="7"/>
+                <line x1="17" y1="17" x2="17" y2="13"/>
+              </svg>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/market.html" title="Market">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 3v18h18"/>
+                <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+              </svg>
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                Market Data
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/extension.html" title="Extension">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+              </svg>
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                Extension
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg bg-white/10 hover:bg-white/10 relative group" href="/email.html" title="Email">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                Email Client
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="https://youtu.be/XUuLeXaEIdI" target="_blank" title="How to use PitchLense">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+              </svg>
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                How to use PitchLense
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+          </nav>
+          <div class="flex-1"></div>
+          <button id="signoutBtn" class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 text-white/80" title="Sign out">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </button>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="bg-[#2E3137] border border-white/10 rounded-[18px] mx-2 mb-3 flex flex-col overflow-hidden">
+            <!-- Email Toolbar -->
+            <div class="bg-[#2C2F34] border-b border-white/10 p-4 flex items-center gap-3">
+                <button id="composeBtn" class="bg-[#FFF27A] text-[#1E1E21] px-4 py-2 rounded-lg font-semibold hover:bg-[#f0e068] transition-colors flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"/>
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Compose
+                </button>
+                <button id="refreshBtn" class="text-white/80 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 4 23 10 17 10"/>
+                        <polyline points="1 20 1 14 7 14"/>
+                        <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                    </svg>
+                </button>
+                <button id="infoBtn" class="text-white/80 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition-colors" title="Email Server Info">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="16" x2="12" y2="12"/>
+                        <line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                </button>
+                
+                <!-- Email Filter Tabs -->
+                <div class="flex items-center gap-1 ml-4 bg-[#1E1E21] rounded-lg p-1">
+                    <button id="inboxBtn" class="email-filter-btn active px-4 py-1.5 text-sm rounded-md transition-colors" data-filter="inbox">
+                        Inbox
+                    </button>
+                    <button id="sentBtn" class="email-filter-btn px-4 py-1.5 text-sm rounded-md transition-colors" data-filter="sent">
+                        Sent
+                    </button>
+                </div>
+                
+                <div class="flex-1"></div>
+            </div>
+
+            <!-- Email Layout -->
+            <div class="email-container grid flex-1">
+                <!-- Email List -->
+                <div class="border-r-2 border-white/20 flex flex-col">
+                    <!-- Search -->
+                    <div class="p-4 border-b border-white/10">
+                        <div class="relative">
+                            <input type="text" id="emailSearch" placeholder="Search emails..." class="w-full bg-[#2C2F34] border border-white/20 rounded-lg px-4 py-2 pl-10 text-white placeholder-white/50">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50">
+                                <circle cx="11" cy="11" r="8"/>
+                                <path d="m21 21-4.35-4.35"/>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <!-- Email List -->
+                    <div id="emailList" class="flex-1 overflow-y-auto">
+                        <!-- Sample emails will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Email Content -->
+                <div id="emailContent" class="flex flex-col">
+                    <div class="flex-1 flex items-center justify-center text-white/50">
+                        <div class="text-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-4 opacity-50">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                <polyline points="22,6 12,13 2,6"/>
+                            </svg>
+                            <p>Select an email to view content</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Compose Email Modal -->
+    <div id="composeModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-[#2E3137] border border-white/10 rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col">
+                <div class="border-b border-white/10 p-4 flex items-center justify-between">
+                    <h3 class="text-lg font-semibold">Compose Email</h3>
+                    <button id="closeComposeModal" class="text-white/60 hover:text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="flex-1 flex flex-col p-4 space-y-4">
+                    <div class="flex items-center gap-3 mb-2">
+                        <select id="templateSelect" class="flex-1 bg-[#2C2F34] border border-white/20 rounded-lg px-4 py-2 text-white/90 text-sm">
+                            <option value="">Select a template...</option>
+                            <option value="follow_up">Follow Up</option>
+                            <option value="meeting_request">Meeting Request</option>
+                            <option value="thank_you">Thank You</option>
+                            <option value="proposal">Proposal</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">To</label>
+                        <input type="email" id="composeTo" class="w-full bg-[#2C2F34] border border-white/20 rounded-lg px-4 py-2 text-white" placeholder="recipient@example.com">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Subject</label>
+                        <input type="text" id="composeSubject" class="w-full bg-[#2C2F34] border border-white/20 rounded-lg px-4 py-2 text-white" placeholder="Email subject">
+                    </div>
+                    
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium mb-2">Message</label>
+                        <textarea id="composeBody" class="w-full h-64 bg-[#2C2F34] border border-white/20 rounded-lg px-4 py-2 text-white resize-none" placeholder="Type your message here..."></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Attachments</label>
+                        <input type="file" id="attachmentInput" multiple class="w-full bg-[#2C2F34] border border-white/20 rounded-lg px-4 py-2 text-white">
+                        <div id="attachmentList" class="mt-2 space-y-1"></div>
+                    </div>
+                </div>
+                
+                <div class="border-t border-white/10 p-4 flex items-center justify-between">
+                    <button id="saveDraftBtn" class="text-white/60 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-colors">
+                        Save Draft
+                    </button>
+                    <button id="sendEmailBtn" class="bg-[#FFF27A] text-[#1E1E21] px-6 py-2 rounded-lg font-semibold hover:bg-[#f0e068] transition-colors">
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-[#2E3137] border border-white/10 rounded-lg w-full max-w-2xl">
+                <div class="border-b border-white/10 p-4 flex items-center justify-between">
+                    <h3 class="text-lg font-semibold flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#FFF27A]">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="16" x2="12" y2="12"/>
+                            <line x1="12" y1="8" x2="12.01" y2="8"/>
+                        </svg>
+                        Email Server Information
+                    </h3>
+                    <button id="closeSettingsModal" class="text-white/60 hover:text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="p-4 space-y-4">
+                    <div class="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-4">
+                        <div class="flex items-start gap-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" class="text-blue-400 flex-shrink-0">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                            </svg>
+                            <div>
+                                <h4 class="text-blue-300 font-semibold mb-2">Hackathon Demo Mode</h4>
+                                <p class="text-sm text-blue-200 leading-relaxed">
+                                    This email client uses a <strong>centralized email server</strong> (contact@amanulla.in) for all users. 
+                                    All emails are sent from this shared account, with your PitchLense email shown as the sender.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Centralized Email Server</label>
+                        <input type="email" id="emailUsername" class="w-full bg-[#1E1E21] border border-white/20 rounded-lg px-4 py-2 text-white/60" readonly disabled value="contact@amanulla.in">
+                        <p class="text-xs text-white/50 mt-1">Shared email server for all PitchLense users (read-only)</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Your Identity</label>
+                        <input type="email" id="userIdentity" class="w-full bg-[#1E1E21] border border-white/20 rounded-lg px-4 py-2 text-white/60" readonly disabled>
+                        <p class="text-xs text-white/50 mt-1">Your PitchLense account email (shown to recipients as sender)</p>
+                    </div>
+                    
+                    <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                        <h4 class="font-medium mb-3">Server Configuration</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-white/60">IMAP Server:</span>
+                                <span class="text-white">imap.hostinger.com:993</span>
+                            </div>
+                            <div>
+                                <span class="text-white/60">SMTP Server:</span>
+                                <span class="text-white">smtp.hostinger.com:465</span>
+                            </div>
+                            <div>
+                                <span class="text-white/60">Encryption:</span>
+                                <span class="text-white">SSL/TLS</span>
+                            </div>
+                            <div>
+                                <span class="text-white/60">Status:</span>
+                                <span id="connectionStatus" class="text-green-400">Configured</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                        <div class="flex items-start gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="text-green-500 flex-shrink-0 mt-0.5">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                            <div class="text-xs text-green-200">
+                                <strong>How it works:</strong> When you send an email, it's sent from contact@amanulla.in with your email (${localStorage.getItem('userEmail')}) shown as the sender. Recipients can reply to you directly.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end gap-3">
+                        <button id="testConnectionBtn" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                            Test Email Server
+                        </button>
+                        <button id="closeSettingsModal" class="bg-[#FFF27A] text-[#1E1E21] px-6 py-2 rounded-lg font-semibold hover:bg-[#f0e068] transition-colors">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Email data storage
+        let emails = [];
+        let sentEmails = []; // Store sent emails separately
+        let selectedEmailId = null;
+        let currentFilter = 'inbox'; // 'inbox' or 'sent'
+        
+        // Utility function to format file size
+        function formatFileSize(bytes) {
+            if (!bytes) return '';
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+        }
+        
+        let emailTemplates = {
+            follow_up: {
+                subject: "Following up on our conversation",
+                body: "Hi, I hope this email finds you well. I wanted to follow up on our recent conversation regarding [topic]. Please let me know if you have any questions or if there's anything else I can help you with.\n\nBest regards,\n[Your name]"
+            },
+            meeting_request: {
+                subject: "Meeting Request - [Topic]",
+                body: "Hi, I hope you're doing well. I would like to schedule a meeting to discuss [topic] with you. Please let me know your availability for next week.\n\nLooking forward to hearing from you.\n\nBest regards,\n[Your name]"
+            },
+            thank_you: {
+                subject: "Thank you for your time",
+                body: "Hi, thank you for taking the time to meet with me today. I really appreciated our conversation about [topic]. I look forward to our continued collaboration.\n\nBest regards,\n[Your name]"
+            },
+            proposal: {
+                subject: "Proposal: [Project Name]",
+                body: "Hi, I hope this email finds you well. I've prepared a proposal for [project name] that I believe would be beneficial for your organization.\n\nPlease find the attached proposal document for your review. I'm happy to discuss any questions or modifications you might have.\n\nBest regards,\n[Your name]"
+            }
+        };
+
+        // Initialize the email client
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEmailClient();
+            loadEmails();
+            setupEventListeners();
+            loadSentEmails();
+        });
+
+        function initializeEmailClient() {
+            // Load user email if available
+            const userEmail = localStorage.getItem('userEmail');
+            if (userEmail) {
+                document.getElementById('userEmailText').textContent = userEmail;
+            }
+        }
+        
+        function loadSentEmails() {
+            // Load sent emails from localStorage
+            const savedSent = localStorage.getItem('sentEmails');
+            if (savedSent) {
+                try {
+                    sentEmails = JSON.parse(savedSent);
+                    updateSentCount();
+                } catch (e) {
+                    console.error('Error loading sent emails:', e);
+                }
+            }
+        }
+        
+        function saveSentEmailsToStorage() {
+            localStorage.setItem('sentEmails', JSON.stringify(sentEmails));
+            updateSentCount();
+        }
+        
+        function updateSentCount() {
+            const sentBtn = document.getElementById('sentBtn');
+            if (sentEmails.length > 0) {
+                sentBtn.innerHTML = `Sent <span class="ml-1 bg-[#FFF27A] text-[#1E1E21] px-1.5 py-0.5 rounded-full text-xs font-semibold">${sentEmails.length}</span>`;
+            } else {
+                sentBtn.textContent = 'Sent';
+            }
+        }
+
+        function setupEventListeners() {
+            // Compose button
+            document.getElementById('composeBtn').addEventListener('click', () => {
+                document.getElementById('composeModal').classList.remove('hidden');
+                loadDraft();
+            });
+
+            // Close compose modal
+            document.getElementById('closeComposeModal').addEventListener('click', () => {
+                document.getElementById('composeModal').classList.add('hidden');
+            });
+
+            // Send email button
+            document.getElementById('sendEmailBtn').addEventListener('click', sendEmail);
+
+            // Template select
+            document.getElementById('templateSelect').addEventListener('change', (e) => {
+                const template = emailTemplates[e.target.value];
+                if (template) {
+                    document.getElementById('composeSubject').value = template.subject;
+                    document.getElementById('composeBody').value = template.body;
+                }
+            });
+
+            // Settings button (if exists in header - for compatibility)
+            const settingsBtn = document.getElementById('settingsBtn');
+            if (settingsBtn) {
+                settingsBtn.addEventListener('click', () => {
+                    document.getElementById('settingsModal').classList.remove('hidden');
+                });
+            }
+
+            // Close settings modal (there are two close buttons)
+            const closeModalBtns = document.querySelectorAll('#closeSettingsModal');
+            closeModalBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('settingsModal').classList.add('hidden');
+                });
+            });
+
+            // Test connection
+            document.getElementById('testConnectionBtn').addEventListener('click', testConnection);
+
+            // Attachment input
+            document.getElementById('attachmentInput').addEventListener('change', handleAttachments);
+
+            // Email search
+            document.getElementById('emailSearch').addEventListener('input', filterEmails);
+
+            // Refresh button
+            document.getElementById('refreshBtn').addEventListener('click', loadEmails);
+            
+            // Info button (moved from header)
+            document.getElementById('infoBtn').addEventListener('click', () => {
+                document.getElementById('settingsModal').classList.remove('hidden');
+            });
+            
+            // Email filter buttons
+            document.getElementById('inboxBtn').addEventListener('click', () => switchFilter('inbox'));
+            document.getElementById('sentBtn').addEventListener('click', () => switchFilter('sent'));
+            
+            // Save draft button
+            document.getElementById('saveDraftBtn').addEventListener('click', saveDraft);
+        }
+        
+        function saveDraft() {
+            const to = document.getElementById('composeTo').value;
+            const subject = document.getElementById('composeSubject').value;
+            const body = document.getElementById('composeBody').value;
+            
+            if (!to && !subject && !body) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Empty Draft',
+                    text: 'There is nothing to save',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+            
+            // Save to localStorage
+            const draft = { to, subject, body, timestamp: new Date().toISOString() };
+            localStorage.setItem('emailDraft', JSON.stringify(draft));
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Draft Saved',
+                text: 'Your draft has been saved locally',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+        
+        function loadDraft() {
+            const draftData = localStorage.getItem('emailDraft');
+            if (draftData) {
+                try {
+                    const draft = JSON.parse(draftData);
+                    
+                    Swal.fire({
+                        icon: 'question',
+                        title: 'Load Draft?',
+                        text: 'You have a saved draft. Would you like to load it?',
+                        showCancelButton: true,
+                        confirmButtonText: 'Load Draft',
+                        cancelButtonText: 'Start Fresh'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            document.getElementById('composeTo').value = draft.to || '';
+                            document.getElementById('composeSubject').value = draft.subject || '';
+                            document.getElementById('composeBody').value = draft.body || '';
+                        }
+                    });
+                } catch (e) {
+                    console.error('Error loading draft:', e);
+                }
+            }
+        }
+        
+        function switchFilter(filter) {
+            currentFilter = filter;
+            
+            // Update active button
+            document.querySelectorAll('.email-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(filter + 'Btn').classList.add('active');
+            
+            // Render appropriate email list
+            if (filter === 'inbox') {
+                renderEmailList();
+            } else {
+                renderSentEmails();
+            }
+        }
+
+        async function loadEmails() {
+            try {
+                // Show loading state
+                const emailList = document.getElementById('emailList');
+                emailList.innerHTML = '<div class="p-4 text-center text-white/60">Loading emails...</div>';
+
+                const response = await fetch('/api/emails', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    
+                    if (response.status === 429) {
+                        // Rate limited or connection in progress
+                        emailList.innerHTML = '<div class="p-4 text-center text-yellow-400">Email fetch in progress or rate limited. Please wait a moment...</div>';
+                        
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Please Wait',
+                            text: error.error || 'Email server is busy, please try again in a few seconds',
+                            timer: 3000,
+                            showConfirmButton: false
+                        });
+                        return;
+                    }
+                    
+                    if (response.status === 504) {
+                        // Timeout
+                        emailList.innerHTML = '<div class="p-4 text-center text-white/60">Email server timeout. Please try again.<br><button onclick="loadEmails()" class="mt-2 text-[#FFF27A] hover:underline">Retry</button></div>';
+                        
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Connection Timeout',
+                            text: 'The email server took too long to respond. Please try again.',
+                            confirmButtonText: 'OK'
+                        });
+                        return;
+                    }
+                    
+                    if (response.status === 400 && (error.error.includes('Email credentials not configured') || error.error.includes('Email server not configured'))) {
+                        emailList.innerHTML = '<div class="p-4 text-center text-white/60">Email server not configured.<br><button onclick="document.getElementById(\'infoBtn\').click()" class="mt-2 text-[#FFF27A] hover:underline">View Server Info</button></div>';
+                        
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Email Server Not Configured',
+                            text: 'Please add EMAIL_PASSWORD to your .env file to enable email functionality.',
+                            confirmButtonText: 'OK'
+                        });
+                    } else {
+                        throw new Error(error.error || 'Failed to load emails');
+                    }
+                    return;
+                }
+
+                emails = await response.json();
+                
+                if (currentFilter === 'inbox') {
+                    renderEmailList();
+                }
+
+                if (emails.length === 0) {
+                    emailList.innerHTML = '<div class="p-4 text-center text-white/60">No emails found</div>';
+                }
+            } catch (error) {
+                console.error('Error loading emails:', error);
+                const emailList = document.getElementById('emailList');
+                emailList.innerHTML = `<div class="p-4 text-center text-red-400">Error loading emails: ${error.message}</div>`;
+            }
+        }
+
+        function renderEmailList() {
+            const emailList = document.getElementById('emailList');
+            emailList.innerHTML = '';
+
+            emails.forEach(email => {
+                const emailItem = document.createElement('div');
+                emailItem.className = `email-list-item p-4 border-b border-white/10 cursor-pointer ${!email.isRead ? 'font-semibold' : ''}`;
+                emailItem.dataset.emailId = email.id;
+
+                const attachmentIcon = email.attachments && email.attachments.length > 0 ? 
+                    `<div class="flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-60">
+                            <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.64 16.2a2 2 0 0 1-2.83-2.83l8.49-8.49"/>
+                        </svg>
+                        <span class="text-xs opacity-60">${email.attachments.length}</span>
+                    </div>` : '';
+
+                emailItem.innerHTML = `
+                    <div class="flex items-start justify-between mb-2">
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-white truncate">${email.from}</div>
+                            <div class="text-xs text-white/60">${new Date(email.date).toLocaleDateString()}</div>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            ${attachmentIcon}
+                            ${!email.isRead ? '<div class="w-2 h-2 bg-[#FFF27A] rounded-full"></div>' : ''}
+                        </div>
+                    </div>
+                    <div class="text-sm text-white/90 mb-1 truncate">${email.subject}</div>
+                    <div class="text-xs text-white/60 line-clamp-2">${email.preview}</div>
+                    ${email.attachments && email.attachments.length > 0 ? `
+                        <div class="mt-2 flex flex-wrap gap-1">
+                            ${email.attachments.map(att => {
+                                const attObj = typeof att === 'string' ? { filename: att } : att;
+                                return `<span class="text-xs bg-white/10 px-2 py-1 rounded flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.64 16.2a2 2 0 0 1-2.83-2.83l8.49-8.49"/>
+                                    </svg>
+                                    ${attObj.filename}
+                                </span>`;
+                            }).join('')}
+                        </div>
+                    ` : ''}
+                `;
+
+                emailItem.addEventListener('click', () => selectEmail(email.id));
+                emailList.appendChild(emailItem);
+            });
+        }
+
+        function selectEmail(emailId) {
+            selectedEmailId = emailId;
+            
+            // Find email in current filter (inbox or sent)
+            let email;
+            if (currentFilter === 'inbox') {
+                email = emails.find(e => e.id === emailId);
+            } else if (currentFilter === 'sent') {
+                email = sentEmails.find(e => e.id === emailId);
+            }
+            
+            if (email) {
+                email.isRead = true;
+                
+                // Update email list UI
+                document.querySelectorAll('.email-list-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                document.querySelector(`[data-email-id="${emailId}"]`).classList.add('active');
+
+                // Show email content
+                showEmailContent(email);
+            }
+        }
+
+        function showEmailContent(email) {
+            const emailContent = document.getElementById('emailContent');
+            
+            emailContent.innerHTML = `
+                <div class="flex flex-col h-full">
+                    <!-- Email Header -->
+                    <div class="border-b border-white/10 p-6">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h2 class="text-xl font-semibold mb-2">${email.subject}</h2>
+                                <div class="text-sm text-white/80">
+                                    <span class="font-medium">From:</span> ${email.from}<br>
+                                    <span class="font-medium">To:</span> ${email.to}<br>
+                                    <span class="font-medium">Date:</span> ${new Date(email.date).toLocaleString()}
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button id="toggleViewBtn" class="text-white/60 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors text-xs flex items-center gap-1" title="Toggle HTML/Text view">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="16 18 22 12 16 6"/>
+                                        <polyline points="8 6 2 12 8 18"/>
+                                    </svg>
+                                    HTML
+                                </button>
+                                <button onclick="deleteEmail(${email.id}, '${currentFilter}')" class="text-red-400 hover:text-red-300 px-3 py-1.5 rounded-lg hover:bg-red-500/10 transition-colors text-xs flex items-center gap-1" title="Delete email">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="3 6 5 6 21 6"/>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                    </svg>
+                                    Delete
+                                </button>
+                                <button onclick="analyzePitchLense(${email.id})" class="bg-[#FFF27A] text-[#1E1E21] px-4 py-2 rounded-lg font-semibold hover:bg-[#f0e068] transition-colors flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                                        <line x1="12" y1="22.08" x2="12" y2="12"/>
+                                    </svg>
+                                    PitchLense Analyze
+                                </button>
+                                <button onclick="replyToEmail(${email.id})" class="bg-[#FFF27A] text-[#1E1E21] px-4 py-2 rounded-lg font-semibold hover:bg-[#f0e068] transition-colors flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="9 14 4 9 9 4"/>
+                                        <path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
+                                    </svg>
+                                    Reply
+                                </button>
+                                <button onclick="forwardEmail(${email.id})" class="bg-[#FFF27A] text-[#1E1E21] px-4 py-2 rounded-lg font-semibold hover:bg-[#f0e068] transition-colors flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="15 10 20 15 15 20"/>
+                                        <path d="M4 4v7a4 4 0 0 0 4 4h12"/>
+                                    </svg>
+                                    Forward
+                                </button>
+                            </div>
+                        </div>
+                        
+                        ${email.attachments && email.attachments.length > 0 ? `
+                            <div class="mt-4">
+                                <div class="text-sm font-medium mb-2 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.64 16.2a2 2 0 0 1-2.83-2.83l8.49-8.49"/>
+                                    </svg>
+                                    Attachments (${email.attachments.length})
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    ${email.attachments.map(att => {
+                                        const attObj = typeof att === 'string' ? { filename: att } : att;
+                                        const sizeStr = attObj.size ? ` (${formatFileSize(attObj.size)})` : '';
+                                        const downloadUrl = attObj.downloadUrl || '#';
+                                        return `
+                                        <a href="${downloadUrl}" download="${attObj.filename}" class="attachment-item cursor-pointer hover:bg-white/20 transition-colors" title="Click to download">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                                <polyline points="7 10 12 15 17 10"/>
+                                                <line x1="12" y1="15" x2="12" y2="3"/>
+                                            </svg>
+                                            <span class="text-sm">${attObj.filename}${sizeStr}</span>
+                                        </a>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <!-- Email Body -->
+                    <div class="flex-1 email-content p-6">
+                        <div class="prose prose-invert max-w-none email-body-content">
+                            <!-- HTML content will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Inject HTML content into the email body
+            setTimeout(() => {
+                const bodyContent = emailContent.querySelector('.email-body-content');
+                let isHtmlView = true;
+                
+                if (bodyContent && email.body) {
+                    // Render HTML content by default
+                    renderEmailBody(bodyContent, email, isHtmlView);
+                    
+                    // Add toggle view functionality
+                    const toggleBtn = document.getElementById('toggleViewBtn');
+                    if (toggleBtn) {
+                        toggleBtn.onclick = () => {
+                            isHtmlView = !isHtmlView;
+                            renderEmailBody(bodyContent, email, isHtmlView);
+                            toggleBtn.innerHTML = `
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="16 18 22 12 16 6"/>
+                                    <polyline points="8 6 2 12 8 18"/>
+                                </svg>
+                                ${isHtmlView ? 'HTML' : 'Text'}
+                            `;
+                        };
+                    }
+                } else if (bodyContent && email.preview) {
+                    bodyContent.innerHTML = email.preview.replace(/\n/g, '<br>');
+                }
+            }, 0);
+            
+            function renderEmailBody(container, email, asHtml) {
+                if (asHtml) {
+                    // Render as HTML
+                    if (email.body && (email.body.includes('<html') || email.body.includes('<div') || email.body.includes('<p>') || email.body.includes('<br'))) {
+                        container.innerHTML = email.body;
+                    } else if (email.body) {
+                        container.innerHTML = email.body.replace(/\n/g, '<br>');
+                    }
+                } else {
+                    // Render as plain text
+                    const textContent = email.textBody || email.body.replace(/<[^>]*>/g, '');
+                    container.innerHTML = `<pre class="whitespace-pre-wrap font-sans text-white/90">${textContent}</pre>`;
+                }
+            }
+
+            // Re-render email list to update read status based on current filter
+            if (currentFilter === 'inbox') {
+                renderEmailList();
+            } else if (currentFilter === 'sent') {
+                renderSentEmails();
+            }
+        }
+
+        async function sendEmail() {
+            const to = document.getElementById('composeTo').value;
+            const subject = document.getElementById('composeSubject').value;
+            const body = document.getElementById('composeBody').value;
+            const useLlm = document.getElementById('composeLlmCheck').checked;
+            const attachments = Array.from(document.getElementById('attachmentInput').files);
+
+            if (!to || !subject || !body) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Fields',
+                    text: 'Please fill in To, Subject, and Message fields',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+
+            try {
+                // Disable send button
+                const sendBtn = document.getElementById('sendEmailBtn');
+                sendBtn.disabled = true;
+                sendBtn.textContent = 'Sending...';
+
+                const response = await fetch('/api/emails/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        to,
+                        subject,
+                        body,
+                        useLlm
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to send email');
+                }
+
+                const result = await response.json();
+                
+                // Add to sent emails
+                sentEmails.unshift({
+                    id: Date.now(),
+                    from: localStorage.getItem('userEmail') || 'You',
+                    to: to,
+                    subject: subject,
+                    preview: body.substring(0, 100),
+                    body: body,
+                    date: new Date().toISOString(),
+                    attachments: [],
+                    isRead: true
+                });
+                
+                // Save to localStorage
+                saveSentEmailsToStorage();
+                
+                // Close modal and show success
+                document.getElementById('composeModal').classList.add('hidden');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Email Sent!',
+                    text: `Your email to ${to} has been sent successfully via contact@amanulla.in`,
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+                
+                // Clear form
+                document.getElementById('composeTo').value = '';
+                document.getElementById('composeSubject').value = '';
+                document.getElementById('composeBody').value = '';
+                document.getElementById('composeLlmCheck').checked = false;
+                document.getElementById('attachmentInput').value = '';
+                document.getElementById('attachmentList').innerHTML = '';
+                
+                // Clear draft
+                localStorage.removeItem('emailDraft');
+
+                // Reload emails
+                await loadEmails();
+            } catch (error) {
+                console.error('Error sending email:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Failed to Send',
+                    text: error.message,
+                    confirmButtonText: 'OK'
+                });
+            } finally {
+                // Re-enable send button
+                const sendBtn = document.getElementById('sendEmailBtn');
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send';
+            }
+        }
+
+        function replyToEmail(emailId) {
+            const email = emails.find(e => e.id === emailId) || sentEmails.find(e => e.id === emailId);
+            if (!email) return;
+
+            // Open compose modal with reply data
+            document.getElementById('composeModal').classList.remove('hidden');
+            document.getElementById('composeTo').value = email.from || email.to;
+            document.getElementById('composeSubject').value = email.subject.startsWith('Re: ') ? email.subject : `Re: ${email.subject}`;
+            const emailBody = email.textBody || email.body || email.preview;
+            const strippedBody = emailBody.replace(/<[^>]*>/g, ''); // Strip HTML tags
+            document.getElementById('composeBody').value = `\n\nOn ${new Date(email.date).toLocaleString()}, ${email.from || 'you'} wrote:\n> ${strippedBody.replace(/\n/g, '\n> ')}`;
+        }
+
+        function forwardEmail(emailId) {
+            const email = emails.find(e => e.id === emailId) || sentEmails.find(e => e.id === emailId);
+            if (!email) return;
+
+            // Open compose modal with forward data
+            document.getElementById('composeModal').classList.remove('hidden');
+            document.getElementById('composeTo').value = '';
+            document.getElementById('composeSubject').value = email.subject.startsWith('Fwd: ') ? email.subject : `Fwd: ${email.subject}`;
+            const emailBody = email.textBody || email.body || email.preview;
+            document.getElementById('composeBody').value = `---------- Forwarded message ---------\nFrom: ${email.from}\nDate: ${new Date(email.date).toLocaleString()}\nSubject: ${email.subject}\nTo: ${email.to}\n\n${emailBody}`;
+        }
+        
+        async function analyzePitchLense(emailId) {
+            const email = emails.find(e => e.id === emailId) || sentEmails.find(e => e.id === emailId);
+            if (!email) return;
+            
+            try {
+                // Step 1: Start analyzing immediately
+                Swal.fire({
+                    title: 'Analyzing Email...',
+                    html: 'PitchLense AI is extracting startup information',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                const emailContent = email.textBody || email.body || email.preview;
+                const attachmentUrls = email.attachments?.map(a => a.downloadUrl).filter(Boolean) || [];
+                
+                console.log('Email object:', email);
+                console.log('Email attachments:', email.attachments);
+                console.log('Attachment URLs extracted:', attachmentUrls);
+                
+                const analyzeResponse = await fetch('/api/emails/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        emailId: email.id,
+                        emailContent: emailContent,
+                        attachments: email.attachments || []
+                    })
+                });
+                
+                if (!analyzeResponse.ok) {
+                    const error = await analyzeResponse.json();
+                    throw new Error(error.error || 'Analysis failed');
+                }
+                
+                const analysisResult = await analyzeResponse.json();
+                const { extracted } = analysisResult;
+                
+                console.log('Analysis result:', analysisResult);
+                console.log('Attachment URLs to send:', attachmentUrls);
+                
+                // Step 2: Show extracted data and ask for confirmation
+                const confirmCreate = await Swal.fire({
+                    icon: 'success',
+                    title: 'Startup Information Extracted',
+                    html: `
+                        <div class="text-left space-y-3">
+                            <div class="bg-[#1E1E21] p-3 rounded-lg">
+                                <div class="text-sm space-y-2">
+                                    <div><strong>Startup:</strong> ${extracted.startup_name}</div>
+                                    <div><strong>Founder:</strong> ${extracted.founder_name}</div>
+                                    <div><strong>Launch Date:</strong> ${extracted.launch_date}</div>
+                                    <div><strong>Confidence:</strong> <span class="text-${extracted.confidence === 'high' ? 'green' : extracted.confidence === 'medium' ? 'yellow' : 'red'}-400">${extracted.confidence}</span></div>
+                                    ${attachmentUrls.length > 0 ? `<div><strong>Attachments:</strong> ${attachmentUrls.length} file(s)</div>` : ''}
+                                </div>
+                            </div>
+                            <p class="text-sm text-white/80">Create a PitchLense report with this information?</p>
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Create Report',
+                    cancelButtonText: 'Cancel'
+                });
+                
+                if (!confirmCreate.isConfirmed) return;
+                
+                // Step 3: Create report
+                Swal.fire({
+                    title: 'Creating Report...',
+                    html: 'Uploading attachments and creating PitchLense report',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                console.log('Creating report with data:', {
+                    startup_name: extracted.startup_name,
+                    founder_name: extracted.founder_name,
+                    launch_date: extracted.launch_date,
+                    emailId: email.id,
+                    attachmentUrls: attachmentUrls,
+                    attachmentCount: attachmentUrls.length
+                });
+                
+                const createResponse = await fetch('/api/emails/create-report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        startup_name: extracted.startup_name,
+                        founder_name: extracted.founder_name,
+                        launch_date: extracted.launch_date,
+                        emailId: email.id,
+                        attachmentUrls: attachmentUrls
+                    })
+                });
+                
+                if (!createResponse.ok) {
+                    const error = await createResponse.json();
+                    throw new Error(error.error || 'Failed to create report');
+                }
+                
+                const reportResult = await createResponse.json();
+                
+                // Step 4: Success - redirect to report
+                const viewReport = await Swal.fire({
+                    icon: 'success',
+                    title: 'Report Created!',
+                    html: `
+                        <div class="text-left">
+                            <p class="mb-3">PitchLense report has been created successfully from email!</p>
+                            <div class="bg-[#1E1E21] p-3 rounded-lg text-sm">
+                                <div><strong>Report:</strong> ${extracted.startup_name} - Email</div>
+                                <div><strong>Founder:</strong> ${extracted.founder_name}</div>
+                                <div><strong>Status:</strong> <span class="text-yellow-400">Processing...</span></div>
+                                ${attachmentUrls.length > 0 ? `<div><strong>Files:</strong> ${attachmentUrls.length} uploaded to GCS</div>` : ''}
+                            </div>
+                            <p class="text-xs text-white/60 mt-2">The report will be analyzed in the background.</p>
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'View Report',
+                    cancelButtonText: 'Stay Here'
+                });
+                
+                if (viewReport.isConfirmed) {
+                    window.location.href = `/view-report.html`;
+                }
+                
+            } catch (error) {
+                console.error('Error in PitchLense analysis:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Analysis Failed',
+                    text: error.message,
+                    confirmButtonText: 'OK'
+                });
+            }
+        }
+        
+        function deleteEmail(emailId, folder) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Delete Email?',
+                text: 'Are you sure you want to delete this email? This action cannot be undone.',
+                showCancelButton: true,
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#ef4444'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if (folder === 'inbox') {
+                        // Remove from inbox
+                        const index = emails.findIndex(e => e.id === emailId);
+                        if (index > -1) {
+                            emails.splice(index, 1);
+                            renderEmailList();
+                            
+                            // Clear email content view
+                            document.getElementById('emailContent').innerHTML = `
+                                <div class="flex-1 flex items-center justify-center text-white/50">
+                                    <div class="text-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-4 opacity-50">
+                                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                            <polyline points="22,6 12,13 2,6"/>
+                                        </svg>
+                                        <p>Select an email to view content</p>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    } else if (folder === 'sent') {
+                        // Remove from sent
+                        const index = sentEmails.findIndex(e => e.id === emailId);
+                        if (index > -1) {
+                            sentEmails.splice(index, 1);
+                            saveSentEmailsToStorage();
+                            renderSentEmails();
+                            
+                            // Clear email content view
+                            document.getElementById('emailContent').innerHTML = `
+                                <div class="flex-1 flex items-center justify-center text-white/50">
+                                    <div class="text-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-4 opacity-50">
+                                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                            <polyline points="22,6 12,13 2,6"/>
+                                        </svg>
+                                        <p>Select an email to view content</p>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Email Deleted',
+                        text: 'The email has been deleted successfully',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        }
+
+        function handleAttachments(event) {
+            const files = Array.from(event.target.files);
+            const attachmentList = document.getElementById('attachmentList');
+            
+            attachmentList.innerHTML = '';
+            files.forEach(file => {
+                const attachmentDiv = document.createElement('div');
+                attachmentDiv.className = 'attachment-item';
+                attachmentDiv.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.64 16.2a2 2 0 0 1-2.83-2.83l8.49-8.49"/>
+                    </svg>
+                    <span class="text-sm">${file.name}</span>
+                `;
+                attachmentList.appendChild(attachmentDiv);
+            });
+        }
+
+        function renderSentEmails() {
+            const emailList = document.getElementById('emailList');
+            emailList.innerHTML = '';
+
+            if (sentEmails.length === 0) {
+                emailList.innerHTML = '<div class="p-4 text-center text-white/60">No sent emails</div>';
+                return;
+            }
+
+            sentEmails.forEach(email => {
+                const emailItem = document.createElement('div');
+                emailItem.className = `email-list-item p-4 border-b border-white/10 cursor-pointer`;
+                emailItem.dataset.emailId = email.id;
+
+                const attachmentIcon = email.attachments && email.attachments.length > 0 ? 
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-60"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.64 16.2a2 2 0 0 1-2.83-2.83l8.49-8.49"/></svg>' : '';
+
+                emailItem.innerHTML = `
+                    <div class="flex items-start justify-between mb-2">
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-white truncate">To: ${email.to}</div>
+                            <div class="text-xs text-white/60">${new Date(email.date).toLocaleDateString()}</div>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            ${attachmentIcon}
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" class="text-green-400">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-sm text-white/90 mb-1 truncate">${email.subject}</div>
+                    <div class="text-xs text-white/60 line-clamp-2">${email.preview}</div>
+                `;
+
+                emailItem.addEventListener('click', () => {
+                    selectedEmailId = email.id;
+                    document.querySelectorAll('.email-list-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    emailItem.classList.add('active');
+                    showEmailContent(email);
+                });
+                emailList.appendChild(emailItem);
+            });
+        }
+        
+        function filterEmails(event) {
+            const searchTerm = event.target.value.toLowerCase();
+            
+            if (!searchTerm) {
+                if (currentFilter === 'inbox') {
+                    renderEmailList();
+                } else {
+                    renderSentEmails();
+                }
+                return;
+            }
+
+            const emailList = document.getElementById('emailList');
+            emailList.innerHTML = '';
+            
+            const emailsToFilter = currentFilter === 'inbox' ? emails : sentEmails;
+
+            const filteredEmails = emailsToFilter.filter(email => 
+                email.subject.toLowerCase().includes(searchTerm) ||
+                (email.from && email.from.toLowerCase().includes(searchTerm)) ||
+                (email.to && email.to.toLowerCase().includes(searchTerm)) ||
+                email.preview.toLowerCase().includes(searchTerm)
+            );
+
+            if (filteredEmails.length === 0) {
+                emailList.innerHTML = '<div class="p-4 text-center text-white/60">No emails found</div>';
+                return;
+            }
+
+            filteredEmails.forEach(email => {
+                const emailItem = document.createElement('div');
+                emailItem.className = `email-list-item p-4 border-b border-white/10 cursor-pointer ${!email.isRead ? 'font-semibold' : ''}`;
+                emailItem.dataset.emailId = email.id;
+
+                const attachmentIcon = email.attachments && email.attachments.length > 0 ? 
+                    `<div class="flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-60">
+                            <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.64 16.2a2 2 0 0 1-2.83-2.83l8.49-8.49"/>
+                        </svg>
+                        <span class="text-xs opacity-60">${email.attachments.length}</span>
+                    </div>` : '';
+
+                emailItem.innerHTML = `
+                    <div class="flex items-start justify-between mb-2">
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-white truncate">${email.from || email.to}</div>
+                            <div class="text-xs text-white/60">${new Date(email.date).toLocaleDateString()}</div>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            ${attachmentIcon}
+                            ${!email.isRead ? '<div class="w-2 h-2 bg-[#FFF27A] rounded-full"></div>' : ''}
+                        </div>
+                    </div>
+                    <div class="text-sm text-white/90 mb-1 truncate">${email.subject}</div>
+                    <div class="text-xs text-white/60 line-clamp-2">${email.preview}</div>
+                    ${email.attachments && email.attachments.length > 0 ? `
+                        <div class="mt-2 flex flex-wrap gap-1">
+                            ${email.attachments.map(att => {
+                                const attObj = typeof att === 'string' ? { filename: att } : att;
+                                return `<span class="text-xs bg-white/10 px-2 py-1 rounded flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.64 16.2a2 2 0 0 1-2.83-2.83l8.49-8.49"/>
+                                    </svg>
+                                    ${attObj.filename}
+                                </span>`;
+                            }).join('')}
+                        </div>
+                    ` : ''}
+                `;
+
+                emailItem.addEventListener('click', () => selectEmail(email.id));
+                emailList.appendChild(emailItem);
+            });
+        }
+
+        // No save function needed - using centralized email server
+        // Settings are read-only from server configuration
+
+        async function testConnection() {
+            try {
+                document.getElementById('connectionStatus').textContent = 'Testing...';
+                document.getElementById('connectionStatus').className = 'text-yellow-400';
+                
+                const response = await fetch('/api/emails/test-connection', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.details || error.error || 'Connection failed');
+                }
+
+                document.getElementById('connectionStatus').textContent = 'Active';
+                document.getElementById('connectionStatus').className = 'text-green-400';
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Connection Successful!',
+                    text: 'Email server is properly configured and ready to use.',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } catch (error) {
+                console.error('Connection test failed:', error);
+                document.getElementById('connectionStatus').textContent = 'Failed';
+                document.getElementById('connectionStatus').className = 'text-red-400';
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Connection Failed',
+                    text: `Could not connect to email server: ${error.message}`,
+                    confirmButtonText: 'OK'
+                });
+            }
+        }
+
+        // Load email server settings
+        async function loadEmailSettings() {
+            try {
+                const response = await fetch('/api/emails/settings', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const settings = await response.json();
+                    if (settings.email_address) {
+                        document.getElementById('emailUsername').value = settings.email_address;
+                    }
+                    if (settings.configured) {
+                        document.getElementById('connectionStatus').textContent = 'Active';
+                        document.getElementById('connectionStatus').className = 'text-green-400';
+                    } else {
+                        document.getElementById('connectionStatus').textContent = 'Not Configured';
+                        document.getElementById('connectionStatus').className = 'text-red-400';
+                    }
+                }
+                
+                // Set user identity
+                const userEmail = localStorage.getItem('userEmail');
+                if (userEmail) {
+                    document.getElementById('userIdentity').value = userEmail;
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+            }
+        }
+
+        // Load settings on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEmailSettings();
+        });
+    </script>
+</body>
+</html>
