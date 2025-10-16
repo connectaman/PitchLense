@@ -21,6 +21,9 @@ const crypto = require('crypto');
 const { Storage } = require('@google-cloud/storage');
 const axios = require('axios');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const nodemailer = require('nodemailer');
+const Imap = require('imap');
+const { simpleParser } = require('mailparser');
 const app = express();
 
 const PORT = process.env.PORT || 3000;
@@ -1142,6 +1145,62 @@ app.get('/api/reports/:reportId/uploads/:uploadIndex/download', requireAuth, asy
   }
 });
 
+// Share report via email
+app.post('/api/reports/share-email', requireAuth, async (req, res) => {
+  try {
+    const { to, subject, html } = req.body;
+    
+    if (!to || !subject || !html) {
+      return res.status(400).json({ error: 'Missing required fields: to, subject, html' });
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(to)) {
+      return res.status(400).json({ error: 'Invalid email address' });
+    }
+    
+    // Get email configuration
+    const emailConfig = getEmailConfig();
+    if (!emailConfig) {
+      return res.status(500).json({ error: 'Email service not configured' });
+    }
+    
+    // Create nodemailer transporter (note: it's createTransport, not createTransporter)
+    const transporter = nodemailer.createTransport({
+      host: emailConfig.imap.host.replace('imap.', 'smtp.'), // Convert IMAP to SMTP host
+      port: 465,
+      secure: true,
+      auth: {
+        user: emailConfig.imap.user,
+        pass: emailConfig.imap.password
+      }
+    });
+    
+    // Send email
+    const info = await transporter.sendMail({
+      from: `"PitchLense" <${emailConfig.imap.user}>`,
+      to: to,
+      subject: subject,
+      html: html
+    });
+    
+    console.log('[api] Email sent successfully:', info.messageId);
+    res.json({ 
+      success: true, 
+      messageId: info.messageId,
+      message: 'Email sent successfully' 
+    });
+    
+  } catch (error) {
+    console.error('[api] Failed to send email:', error);
+    res.status(500).json({ 
+      error: 'Failed to send email', 
+      details: error.message 
+    });
+  }
+});
+
 // Download extension as zip
 app.get('/api/extension/download-zip', requireAuth, async (req, res) => {
   try {
@@ -1236,9 +1295,7 @@ app.get('/api/extension/download-zip', requireAuth, async (req, res) => {
 });
 
 // ===== EMAIL ENDPOINTS =====
-const nodemailer = require('nodemailer');
-const Imap = require('imap');
-const { simpleParser } = require('mailparser');
+// Email libraries are imported at the top of the file
 
 // Store attachments in memory temporarily (keyed by uid-filename)
 const emailAttachments = new Map();
