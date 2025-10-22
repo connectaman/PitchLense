@@ -382,7 +382,7 @@ async function initializeDatabase() {
 
 async function checkTables() {
   try {
-    const tables = ['users', 'reports', 'uploads', 'chats'];
+    const tables = ['users', 'reports', 'uploads', 'chats', 'investments', 'investment_updates'];
     const existingTables = [];
     const missingTables = [];
     

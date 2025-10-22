@@ -58,23 +58,94 @@ docker-compose logs -f pitchlense
 Copy `env.example` to `.env` and configure the following variables:
 
 #### Required Variables
-- `JWT_SECRET`: Secret key for JWT token signing
-- `GOOGLE_CLOUD_STORAGE_BUCKET`: Your GCS bucket name
-- `GOOGLE_APPLICATION_CREDENTIALS`: Path to your GCS service account key
+
+**AI & APIs:**
+- `GEMINI_API_KEY`: Google Gemini AI API key for analysis
+- `FMP_API_KEY`: Financial Modeling Prep API key for market data
+
+**Google Cloud Platform:**
+- `BUCKET` / `GCS_BUCKET`: Google Cloud Storage bucket name
+- `GOOGLE_CLOUD_PROJECT`: Your GCP project ID
+- `CLOUD_RUN_URL`: Cloud Run service endpoint for AI processing
+- `GOOGLE_APPLICATION_CREDENTIALS`: Path to service account key JSON
+
+**Database (MySQL/Cloud SQL):**
+- `DB_USER`: Database username
+- `DB_PASSWORD`: Database password
+- `DB_HOST`: Database host address
+- `DB_NAME`: Database name (default: pitchlense)
+- `DB_PORT`: Database port (default: 3306)
+- `DB_SSL`: Enable SSL (true/false)
+
+**Authentication:**
+- `JWT_SECRET`: Secret key for JWT signing (use strong random string)
 
 #### Optional Variables
-- `NODE_ENV`: Environment (default: production)
+
+**Email Integration (Gmail):**
+- `GMAIL_USER`, `IMAP_USER`, `SMTP_USER`: Email addresses
+- `GMAIL_APP_PASSWORD`, `IMAP_PASSWORD`, `SMTP_PASSWORD`: App passwords
+- `IMAP_HOST`, `IMAP_PORT`: IMAP server settings
+- `SMTP_HOST`, `SMTP_PORT`: SMTP server settings
+
+**Application:**
+- `NODE_ENV`: Environment mode (production/development)
 - `PORT`: Application port (default: 3000)
-- `DATABASE_PATH`: SQLite database path
-- `CORS_ORIGIN`: CORS allowed origins
 
-### Google Cloud Storage Setup
+### Google Cloud Platform Setup
 
-1. Create a Google Cloud Storage bucket
-2. Create a service account with Storage Admin permissions
-3. Download the service account key JSON file
-4. Place it in your project directory
-5. Update `GOOGLE_APPLICATION_CREDENTIALS` in `.env`
+1. **Create a GCP project** and enable APIs:
+   - Gemini AI API
+   - Cloud Storage API
+   - Cloud Natural Language API
+   - Cloud SQL Admin API (if using Cloud SQL)
+
+2. **Set up Google Cloud Storage**:
+   - Create a bucket for file uploads
+   - Create service account with Storage Admin role
+   - Download service account key JSON
+   - Set `GOOGLE_APPLICATION_CREDENTIALS` path
+
+3. **Set up Cloud SQL** (or external MySQL):
+   - Create MySQL 8.0+ instance
+   - Create database: `pitchlense`
+   - Run `backend/database.sql` to create tables
+   - Configure connection (TCP or Unix socket)
+
+4. **Set up Cloud Run** (optional, for AI processing):
+   - Deploy AI processing service
+   - Get the service URL
+   - Set `CLOUD_RUN_URL`
+
+### API Keys Setup
+
+#### Financial Modeling Prep (FMP)
+1. Sign up at [financialmodelingprep.com](https://financialmodelingprep.com/)
+2. Get your API key from the dashboard
+3. Set `FMP_API_KEY` in `.env`
+
+**Used for:**
+- Real-time company search
+- Market news (General, Stock, Crypto, Forex)
+- Insider trading data
+- Crowdfunding campaigns
+- Equity offerings
+- Company financials and profile data
+- Market performance metrics
+- Commodities pricing
+- Economic indicators
+
+#### Google Gemini AI
+1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Create an API key
+3. Set `GEMINI_API_KEY` in `.env`
+
+**Used for:**
+- Startup pitch analysis
+- Founder DNA analysis
+- Email pitch evaluation
+- Q&A chat responses
+- Meeting transcript analysis
 
 ## Production Deployment
 
