@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PitchLense — Market News</title>
+    <link rel="icon" type="image/svg+xml" href="/static/logo.svg" />
+    <script>
+      tailwind.config = { theme: { extend: { colors: { background:'#1E1E21', surface:'#2E3137', text:'#ffffff', secondary:'#cfd4dd', accent:'#f1d85b' }}}}
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="bg-background text-text font-sans antialiased overflow-x-hidden bg-solid">
+    <div class="h-screen flex flex-col p-3 gap-3">
+      <header class="h-16 bg-[#2E3137] border border-white/10 rounded-[22px] flex items-center justify-between px-6 mobile-header">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-accent grid place-items-center"><img src="/static/logo.svg" class="w-5 h-5"/></div>
+          <div class="text-base font-semibold">PitchLense</div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div id="userProfileIcon" class="w-9 h-9 rounded-full border border-white/10 bg-[#FFF27A] grid place-items-center text-[#1E1E21] relative group">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.31 0-6 2.69-6 6h12c0-3.31-2.69-6-6-6Z"/>
+            </svg>
+            <div id="userEmailTooltip" class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+              <span id="userEmailText">Loading...</span>
+              <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-[#1E1E21]"></div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="grid flex-1 min-h-0 mobile-navbar" style="grid-template-columns: 84px 1fr; gap:12px;">
+        <aside id="pitchlense-navbar" class="bg-[#2C2F34] border border-white/10 rounded-[18px] flex flex-col items-center py-4 gap-3">
+          <nav class="flex flex-col gap-2 text-white/80 w-full items-center">
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10" href="/create-report.html" title="Create">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10" href="/view-report.html" title="Reports">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <line x1="9" y1="17" x2="9" y2="11"/>
+                <line x1="13" y1="17" x2="13" y2="7"/>
+                <line x1="17" y1="17" x2="17" y2="13"/>
+              </svg>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/market.html" title="Market">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 3v18h18"/>
+                <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+              </svg>
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                Market Data
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/investment.html" title="Investments">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="1" x2="12" y2="23"></line>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+              </svg>
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                Investments
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/search.html" title="Search">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                Search Symbols
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg bg-white/10 hover:bg-white/10 relative group" href="/news.html" title="News">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
+                <line x1="7" y1="8" x2="17" y2="8"/>
+                <line x1="7" y1="12" x2="17" y2="12"/>
+                <line x1="7" y1="16" x2="13" y2="16"/>
+              </svg>
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                Market News
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/extension.html" title="Extension">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+              </svg>
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                Extension
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/email.html" title="Email">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                Email Client
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="https://youtu.be/XUuLeXaEIdI" target="_blank" title="How to use PitchLense">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+              </svg>
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                How to use PitchLense
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+          </nav>
+          <div class="flex-1"></div>
+          <button id="signoutBtn" class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 text-white/80" title="Sign out">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </button>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto p-4 mobile-main">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-bold">Market Intelligence</h2>
+            <button id="refreshBtn" class="px-4 py-2 bg-[#FFF27A] text-[#1E1E21] font-semibold rounded-full hover:opacity-90 transition-opacity flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"/>
+                <polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10"/>
+                <path d="M20.49 15a9 9 0 0 1-14.13 3.36L1 14"/>
+              </svg>
+              Refresh
+            </button>
+          </div>
+
+          <!-- Tabs Navigation -->
+          <div class="bg-[#2E3137] border border-white/10 rounded-xl p-2 mb-6 flex gap-2 overflow-x-auto">
+            <button class="tab-button active flex-shrink-0 px-4 py-2 rounded-lg font-semibold transition-all text-sm" data-tab="general">
+              📰 General News
+            </button>
+            <!-- <button class="tab-button flex-shrink-0 px-4 py-2 rounded-lg font-semibold transition-all text-sm" data-tab="press">
+              📢 Press Releases
+            </button> -->
+            <button class="tab-button flex-shrink-0 px-4 py-2 rounded-lg font-semibold transition-all text-sm" data-tab="stock">
+              📊 Stock News
+            </button>
+            <button class="tab-button flex-shrink-0 px-4 py-2 rounded-lg font-semibold transition-all text-sm" data-tab="crypto">
+              ₿ Crypto News
+            </button>
+            <button class="tab-button flex-shrink-0 px-4 py-2 rounded-lg font-semibold transition-all text-sm" data-tab="forex">
+              💱 Forex News
+            </button>
+            <button class="tab-button flex-shrink-0 px-4 py-2 rounded-lg font-semibold transition-all text-sm" data-tab="insider">
+              🔍 Insider Trades
+            </button>
+            <button class="tab-button flex-shrink-0 px-4 py-2 rounded-lg font-semibold transition-all text-sm" data-tab="crowdfunding">
+              💡 Crowdfunding
+            </button>
+            <button class="tab-button flex-shrink-0 px-4 py-2 rounded-lg font-semibold transition-all text-sm" data-tab="equity">
+              💰 Equity Offerings
+            </button>
+            <button class="tab-button flex-shrink-0 px-4 py-2 rounded-lg font-semibold transition-all text-sm" data-tab="ownership">
+              🏢 Acquisition Ownership
+            </button>
+          </div>
+
+          <!-- General News Tab Content -->
+          <div id="generalTab" class="tab-content">
+            <div id="generalGrid" class="grid gap-4 mobile-cards" style="grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));"></div>
+            <div id="generalLoading" class="hidden min-h-[60vh] grid place-items-center">
+            <div class="text-center">
+              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFF27A] mx-auto mb-4"></div>
+                <div class="text-lg font-semibold text-white">Loading General News...</div>
+            </div>
+          </div>
+            <div id="generalEmpty" class="hidden min-h-[60vh] grid place-items-center">
+              <div class="text-center">
+                <div class="text-lg font-semibold">No General News Available</div>
+                <div class="text-sm text-white/60 mt-1">Check back later</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Press Releases Tab Content -->
+          <!-- <div id="pressTab" class="tab-content hidden">
+            <div id="pressGrid" class="grid gap-4 mobile-cards" style="grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));"></div>
+            <div id="pressLoading" class="hidden min-h-[60vh] grid place-items-center">
+              <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFF27A] mx-auto mb-4"></div>
+                <div class="text-lg font-semibold text-white">Loading Press Releases...</div>
+              </div>
+            </div>
+            <div id="pressEmpty" class="hidden min-h-[60vh] grid place-items-center">
+              <div class="text-center">
+                <div class="text-lg font-semibold">No Press Releases Available</div>
+                <div class="text-sm text-white/60 mt-1">Check back later</div>
+              </div>
+            </div>
+          </div> -->
+
+          <!-- Stock News Tab Content -->
+          <div id="stockTab" class="tab-content hidden">
+            <div id="stockGrid" class="grid gap-4 mobile-cards" style="grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));"></div>
+            <div id="stockLoading" class="hidden min-h-[60vh] grid place-items-center">
+              <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFF27A] mx-auto mb-4"></div>
+                <div class="text-lg font-semibold text-white">Loading Stock News...</div>
+              </div>
+                </div>
+            <div id="stockEmpty" class="hidden min-h-[60vh] grid place-items-center">
+              <div class="text-center">
+                <div class="text-lg font-semibold">No Stock News Available</div>
+                <div class="text-sm text-white/60 mt-1">Check back later</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Crypto News Tab Content -->
+          <div id="cryptoTab" class="tab-content hidden">
+            <div id="cryptoGrid" class="grid gap-4 mobile-cards" style="grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));"></div>
+            <div id="cryptoLoading" class="hidden min-h-[60vh] grid place-items-center">
+              <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFF27A] mx-auto mb-4"></div>
+                <div class="text-lg font-semibold text-white">Loading Crypto News...</div>
+              </div>
+            </div>
+            <div id="cryptoEmpty" class="hidden min-h-[60vh] grid place-items-center">
+              <div class="text-center">
+                <div class="text-lg font-semibold">No Crypto News Available</div>
+                <div class="text-sm text-white/60 mt-1">Check back later</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Forex News Tab Content -->
+          <div id="forexTab" class="tab-content hidden">
+            <div id="forexGrid" class="grid gap-4 mobile-cards" style="grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));"></div>
+            <div id="forexLoading" class="hidden min-h-[60vh] grid place-items-center">
+              <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFF27A] mx-auto mb-4"></div>
+                <div class="text-lg font-semibold text-white">Loading Forex News...</div>
+              </div>
+            </div>
+            <div id="forexEmpty" class="hidden min-h-[60vh] grid place-items-center">
+              <div class="text-center">
+                <div class="text-lg font-semibold">No Forex News Available</div>
+                <div class="text-sm text-white/60 mt-1">Check back later</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Insider Trades Tab Content -->
+          <div id="insiderTab" class="tab-content hidden">
+            <div id="insiderGrid" class="grid gap-4 mobile-cards" style="grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));"></div>
+            <div id="insiderLoading" class="hidden min-h-[60vh] grid place-items-center">
+              <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFF27A] mx-auto mb-4"></div>
+                <div class="text-lg font-semibold text-white">Loading Insider Trades...</div>
+              </div>
+            </div>
+            <div id="insiderEmpty" class="hidden min-h-[60vh] grid place-items-center">
+              <div class="text-center">
+                <div class="text-lg font-semibold">No Insider Trades Available</div>
+                <div class="text-sm text-white/60 mt-1">Check back later</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Crowdfunding Tab Content -->
+          <div id="crowdfundingTab" class="tab-content hidden">
+            <div id="crowdfundingGrid" class="grid gap-4 mobile-cards" style="grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));"></div>
+            <div id="crowdfundingLoading" class="hidden min-h-[60vh] grid place-items-center">
+              <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFF27A] mx-auto mb-4"></div>
+                <div class="text-lg font-semibold text-white">Loading Crowdfunding Campaigns...</div>
+              </div>
+            </div>
+            <div id="crowdfundingEmpty" class="hidden min-h-[60vh] grid place-items-center">
+              <div class="text-center">
+                <div class="text-lg font-semibold">No Crowdfunding Campaigns Available</div>
+                <div class="text-sm text-white/60 mt-1">Check back later</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Equity Offerings Tab Content -->
+          <div id="equityTab" class="tab-content hidden">
+            <div id="equityGrid" class="grid gap-4 mobile-cards" style="grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));"></div>
+            <div id="equityLoading" class="hidden min-h-[60vh] grid place-items-center">
+              <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFF27A] mx-auto mb-4"></div>
+                <div class="text-lg font-semibold text-white">Loading Equity Offerings...</div>
+              </div>
+            </div>
+            <div id="equityEmpty" class="hidden min-h-[60vh] grid place-items-center">
+              <div class="text-center">
+                <div class="text-lg font-semibold">No Equity Offerings Available</div>
+                <div class="text-sm text-white/60 mt-1">Check back later</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Acquisition Ownership Tab Content -->
+          <div id="ownershipTab" class="tab-content hidden">
+            <!-- Symbol Search -->
+            <div class="bg-[#2E3137] border border-white/10 rounded-xl p-4 mb-6">
+              <div class="flex gap-3 mb-4">
+                <input 
+                  type="text" 
+                  id="ownershipSymbolInput" 
+                  placeholder="Enter symbol (e.g., AAPL, MSFT, TSLA...)" 
+                  class="flex-1 px-4 py-2 bg-[#1E1E21] border border-white/10 rounded-lg text-white outline-none focus:border-accent"
+                />
+                <button 
+                  id="searchOwnershipBtn" 
+                  class="px-6 py-2 bg-[#FFF27A] text-[#1E1E21] font-semibold rounded-lg hover:opacity-90 transition-opacity"
+                >
+                  Search
+                </button>
+              </div>
+              
+              <!-- Quick Search Buttons -->
+              <div class="border-t border-white/10 pt-4">
+                <div class="text-xs text-white/60 mb-3">Quick Search - Top 50 Companies:</div>
+                <div id="quickSearchButtons" class="flex flex-wrap gap-2"></div>
+              </div>
+            </div>
+
+            <div id="ownershipGrid" class="grid gap-4 mobile-cards" style="grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));"></div>
+            <div id="ownershipLoading" class="hidden min-h-[60vh] grid place-items-center">
+              <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFF27A] mx-auto mb-4"></div>
+                <div class="text-lg font-semibold text-white">Loading Ownership Data...</div>
+              </div>
+            </div>
+            <div id="ownershipEmpty" class="hidden min-h-[60vh] grid place-items-center">
+              <div class="text-center">
+                <div class="text-lg font-semibold">No Ownership Data Available</div>
+                <div class="text-sm text-white/60 mt-1">Search for a symbol to view ownership data</div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script src="/static/cache-util.js"></script>
+    <script src="/static/news.js"></script>
+    
+    <!-- Circular Footer -->
+    <footer class="fixed bottom-4 right-4 z-50">
+      <div class="footer-expanded bg-[#2E3137] border border-white/10 rounded-[22px] px-4 py-3 mb-2 opacity-0 transform translate-y-2 pointer-events-none transition-all duration-300 ease-out">
+        <div class="flex items-center justify-center gap-2 text-sm text-white/80 whitespace-nowrap overflow-x-auto">
+          <span>Created with</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="#ef4444"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.0 0 0 0 0-7.78z"/></svg>
+          <span>by</span>
+          <a href="https://amanulla.in/" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Aman Ulla</a>
+          <span>,</span>
+          <a href="#" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Srinivas Alva</a>
+          <span class="text-white/40">|</span>
+          <a href="https://vision.hack2skill.com/event/genaiexchangehackathon/?utm_source=hack2skill&utm_medium=homepage#overview" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors">Hack2Skill‑Google Hackathon</a>
+        </div>
+      </div>
+      
+      <div class="footer-circle w-12 h-12 bg-[#2E3137] border border-white/10 rounded-full flex items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-all duration-300 ease-out shadow-lg hover:shadow-xl">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#ef4444" class="transition-transform duration-300 ease-out">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
+        </svg>
+      </div>
+    </footer>
+    <script src="/static/navbar.js"></script>
+  </body>
+</html>
+
+

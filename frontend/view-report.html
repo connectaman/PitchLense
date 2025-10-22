@@ -55,7 +55,7 @@
       </header>
 
       <div class="grid flex-1 min-h-0 mobile-navbar" style="grid-template-columns: 84px 1fr; gap:12px;">
-        <aside class="bg-[#2C2F34] border border-white/10 rounded-[18px] flex flex-col items-center py-4 gap-3">
+        <aside id="pitchlense-navbar" class="bg-[#2C2F34] border border-white/10 rounded-[18px] flex flex-col items-center py-4 gap-3">
           <nav class="flex flex-col gap-2 text-white/80 w-full items-center">
             <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10" href="/create-report.html" title="Create">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -79,6 +79,44 @@
               <!-- Tooltip -->
               <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
                 Market Data
+                <!-- Tooltip arrow -->
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/investment.html" title="Investments">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="1" x2="12" y2="23"></line>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+              </svg>
+              <!-- Tooltip -->
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                Investments
+                <!-- Tooltip arrow -->
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/search.html" title="Search">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <!-- Tooltip -->
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                Search Symbols
+                <!-- Tooltip arrow -->
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/news.html" title="News">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
+                <line x1="7" y1="8" x2="17" y2="8"/>
+                <line x1="7" y1="12" x2="17" y2="12"/>
+                <line x1="7" y1="16" x2="13" y2="16"/>
+              </svg>
+              <!-- Tooltip -->
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                Market News
                 <!-- Tooltip arrow -->
                 <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
               </div>
@@ -940,5 +978,7 @@
         </svg>
       </div>
     </footer>
+    <script src="/static/navbar.js"></script>
   </body>
 </html>
+

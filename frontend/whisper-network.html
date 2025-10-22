@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whisper Network Tracker - PitchLense</title>
+    <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .signal-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .signal-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(241, 216, 91, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(241, 216, 91, 0.15);
+        }
+        .momentum-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .momentum-high { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .momentum-medium { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+        .momentum-low { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+        
+        .trend-up { color: #10b981; }
+        .trend-down { color: #ef4444; }
+        
+        .pulse-dot {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        
+        .tab-button {
+            color: rgba(255, 255, 255, 0.8);
+            border: 1px solid transparent;
+            border-radius: 10px;
+            padding: 0.5rem 0.75rem;
+            outline: none;
+        }
+        .tab-button:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+        .tab-button.active {
+            background-color: #FFF27A;
+            color: #1E1E21;
+            border-color: #FFF27A;
+        }
+        .tab-button:focus, .tab-button:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255, 242, 122, 0.35);
+            border-color: rgba(255, 242, 122, 0.65);
+        }
+    </style>
+</head>
+<body class="bg-background text-text font-sans antialiased overflow-x-hidden bg-solid">
+    <div id="app" class="h-screen flex flex-col p-3 gap-3">
+        <!-- Header -->
+        <header class="h-16 bg-[#2E3137] border border-white/10 rounded-[22px] flex items-center justify-between px-6 mobile-header flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full grid place-items-center">
+                    <img src="/static/logo.svg" alt="PitchLense" class="w-5 h-5" />
+                </div>
+                <span class="text-base font-semibold">Whisper Network Tracker</span>
+                <span class="pulse-dot inline-block w-2 h-2 bg-green-400 rounded-full ml-2"></span>
+            </div>
+            <div class="flex items-center gap-3">
+                <button id="refreshBtn" class="text-white/60 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition-colors" title="Refresh Data">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 4 23 10 17 10"/>
+                        <polyline points="1 20 1 14 7 14"/>
+                        <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                    </svg>
+                </button>
+                <div id="userProfileIcon" class="w-9 h-9 rounded-full border border-white/15 bg-[#FFF27A] grid place-items-center text-[#1E1E21] relative group">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                        <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.31 0-6 2.69-6 6h12c0-3.31-2.69-6-6-6Z"/>
+                    </svg>
+                    <div id="userEmailTooltip" class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                        <span id="userEmailText">Loading...</span>
+                        <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-[#1E1E21]"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid flex-1 min-h-0 mobile-navbar" style="grid-template-columns: 84px 1fr; gap:12px;">
+            <!-- Sidebar Navigation -->
+            <aside id="pitchlense-navbar" class="bg-[#2C2F34] border border-white/10 rounded-[18px] flex flex-col items-center py-4 gap-3">
+                <!-- Navigation will be loaded by navbar.js -->
+            </aside>
+
+            <!-- Main Content -->
+            <main class="flex-1 flex flex-col overflow-hidden bg-[#2E3137] border border-white/10 rounded-[14px] mobile-main">
+                <!-- Tabs -->
+                <div class="border-b border-white/10 px-6 pt-4 flex items-center gap-6">
+                    <button class="tab-button active py-3 transition-all" data-tab="overview">
+                        Overview
+                    </button>
+                    <button class="tab-button py-3 transition-all" data-tab="product">
+                        Product Momentum
+                    </button>
+                    <button class="tab-button py-3 transition-all" data-tab="github">
+                        GitHub Signals
+                    </button>
+                    <button class="tab-button py-3 transition-all" data-tab="discussions">
+                        Tech Discussions
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-6">
+                    <!-- Overview Tab -->
+                    <div id="overview-tab" class="tab-content">
+                        <div class="max-w-7xl mx-auto space-y-6">
+                            <!-- Hero Section -->
+                            <div class="text-center mb-8">
+                                <h1 class="text-3xl font-bold text-white mb-2">🔮 Whisper Network Tracker</h1>
+                                <p class="text-white/70">Discover pre-funding opportunities before anyone else</p>
+                            </div>
+
+                            <!-- Key Metrics -->
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div class="bg-[#2C2F34] border border-white/10 rounded-xl p-4">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-white/60 text-sm">Trending Products</span>
+                                        <span class="text-2xl">🚀</span>
+                                    </div>
+                                    <div id="metric-products" class="text-3xl font-bold text-white">--</div>
+                                    <div class="text-xs text-white/50 mt-1">Last 24h on Product Hunt</div>
+                                </div>
+
+                                <div class="bg-[#2C2F34] border border-white/10 rounded-xl p-4">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-white/60 text-sm">Hot Repos</span>
+                                        <span class="text-2xl">⭐</span>
+                                    </div>
+                                    <div id="metric-repos" class="text-3xl font-bold text-white">--</div>
+                                    <div class="text-xs text-white/50 mt-1">Trending on GitHub</div>
+                                </div>
+
+                                <div class="bg-[#2C2F34] border border-white/10 rounded-xl p-4">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-white/60 text-sm">Tech Discussions</span>
+                                        <span class="text-2xl">💬</span>
+                                    </div>
+                                    <div id="metric-discussions" class="text-3xl font-bold text-white">--</div>
+                                    <div class="text-xs text-white/50 mt-1">Hacker News front page</div>
+                                </div>
+
+                                <div class="bg-[#2C2F34] border border-white/10 rounded-xl p-4">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-white/60 text-sm">High Signals</span>
+                                        <span class="text-2xl">🔥</span>
+                                    </div>
+                                    <div id="metric-signals" class="text-3xl font-bold text-[#FFF27A]">--</div>
+                                    <div class="text-xs text-white/50 mt-1">Strong momentum detected</div>
+                                </div>
+                            </div>
+
+                            <!-- Top Signals -->
+                            <div class="bg-[#2C2F34] border border-white/10 rounded-xl p-6">
+                                <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" class="text-[#FFF27A]">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                    Top Signals Right Now
+                                </h2>
+                                <div id="top-signals-list" class="space-y-3">
+                                    <div class="text-center py-8 text-white/60">
+                                        <div class="animate-spin h-8 w-8 border-4 border-[#FFF27A] border-t-transparent rounded-full mx-auto mb-3"></div>
+                                        <p>Loading signals...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Product Momentum Tab -->
+                    <div id="product-tab" class="tab-content hidden">
+                        <div class="max-w-7xl mx-auto space-y-6">
+                            <div>
+                                <h2 class="text-2xl font-bold text-white mb-2">🚀 Product Momentum</h2>
+                                <p class="text-white/60">Products generating organic buzz and user adoption</p>
+                            </div>
+
+                            <div id="producthunt-list" class="space-y-4">
+                                <div class="text-center py-8 text-white/60">Loading Product Hunt data...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GitHub Tab -->
+                    <div id="github-tab" class="tab-content hidden">
+                        <div class="max-w-7xl mx-auto space-y-6">
+                            <div>
+                                <h2 class="text-2xl font-bold text-white mb-2">⭐ GitHub Signals</h2>
+                                <p class="text-white/60">Repositories gaining rapid developer attention</p>
+                            </div>
+
+                            <div id="github-list" class="space-y-4">
+                                <div class="text-center py-8 text-white/60">Loading GitHub data...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Discussions Tab -->
+                    <div id="discussions-tab" class="tab-content hidden">
+                        <div class="max-w-7xl mx-auto space-y-6">
+                            <div>
+                                <h2 class="text-2xl font-bold text-white mb-2">💬 Tech Discussions</h2>
+                                <p class="text-white/60">What the tech community is talking about</p>
+                            </div>
+
+                            <div id="hackernews-list" class="space-y-4">
+                                <div class="text-center py-8 text-white/60">Loading Hacker News data...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Load Navbar Component -->
+    <script src="/static/navbar.js"></script>
+    <script>
+        // Initialize
+        const userEmail = localStorage.getItem('userEmail');
+        if (userEmail) {
+            document.getElementById('userEmailText').textContent = userEmail;
+        }
+
+        // Tab switching
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.dataset.tab;
+                
+                // Update active button
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                // Show corresponding content
+                tabContents.forEach(content => content.classList.add('hidden'));
+                document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+            });
+        });
+
+        // Refresh button
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            loadAllData();
+        });
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllData();
+        });
+
+        async function loadAllData() {
+            try {
+                // Load all data in parallel
+                await Promise.all([
+                    loadProductHuntData(),
+                    loadGitHubData(),
+                    loadHackerNewsData(),
+                    loadTopSignals()
+                ]);
+                
+                updateMetrics();
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        let allData = {
+            productHunt: [],
+            github: [],
+            hackerNews: [],
+            topSignals: []
+        };
+
+        async function loadProductHuntData() {
+            try {
+                const response = await fetch('/api/whisper-network/producthunt', {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) throw new Error('Failed to load Product Hunt data');
+                
+                const data = await response.json();
+                allData.productHunt = data.products || [];
+                renderProductHunt(allData.productHunt);
+            } catch (error) {
+                console.error('Product Hunt error:', error);
+                document.getElementById('producthunt-list').innerHTML = 
+                    '<div class="text-center py-8 text-red-400">Failed to load Product Hunt data</div>';
+            }
+        }
+
+        async function loadGitHubData() {
+            try {
+                const response = await fetch('/api/whisper-network/github', {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) throw new Error('Failed to load GitHub data');
+                
+                const data = await response.json();
+                allData.github = data.repos || [];
+                renderGitHub(allData.github);
+            } catch (error) {
+                console.error('GitHub error:', error);
+                document.getElementById('github-list').innerHTML = 
+                    '<div class="text-center py-8 text-red-400">Failed to load GitHub data</div>';
+            }
+        }
+
+        async function loadHackerNewsData() {
+            try {
+                const response = await fetch('/api/whisper-network/hackernews', {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) throw new Error('Failed to load Hacker News data');
+                
+                const data = await response.json();
+                allData.hackerNews = data.stories || [];
+                renderHackerNews(allData.hackerNews);
+            } catch (error) {
+                console.error('Hacker News error:', error);
+                document.getElementById('hackernews-list').innerHTML = 
+                    '<div class="text-center py-8 text-red-400">Failed to load Hacker News data</div>';
+            }
+        }
+
+        async function loadTopSignals() {
+            try {
+                const response = await fetch('/api/whisper-network/top-signals', {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) throw new Error('Failed to load top signals');
+                
+                const data = await response.json();
+                allData.topSignals = data.signals || [];
+                renderTopSignals(allData.topSignals);
+            } catch (error) {
+                console.error('Top signals error:', error);
+                document.getElementById('top-signals-list').innerHTML = 
+                    '<div class="text-center py-8 text-red-400">Failed to load signals</div>';
+            }
+        }
+
+        function updateMetrics() {
+            document.getElementById('metric-products').textContent = allData.productHunt.length;
+            document.getElementById('metric-repos').textContent = allData.github.length;
+            document.getElementById('metric-discussions').textContent = allData.hackerNews.length;
+            document.getElementById('metric-signals').textContent = allData.topSignals.length;
+        }
+
+        function renderTopSignals(signals) {
+            const container = document.getElementById('top-signals-list');
+            
+            if (signals.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-white/60">No strong signals detected</div>';
+                return;
+            }
+
+            container.innerHTML = signals.map(signal => `
+                <div class="signal-card">
+                    <div class="flex items-start gap-4">
+                        <div class="text-4xl">${signal.icon}</div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-lg font-bold text-white">${signal.name}</h3>
+                                <span class="momentum-badge momentum-${signal.momentum}">${signal.momentumLabel}</span>
+                            </div>
+                            <p class="text-white/70 text-sm mb-3">${signal.description}</p>
+                            <div class="flex items-center gap-4 text-sm">
+                                <span class="text-white/60">
+                                    <strong class="text-[#FFF27A]">${signal.metric}</strong> ${signal.metricLabel}
+                                </span>
+                                <span class="text-white/60">Source: ${signal.source}</span>
+                            </div>
+                            ${signal.url ? `<a href="${signal.url}" target="_blank" class="text-[#FFF27A] hover:text-[#f0e068] text-sm mt-2 inline-block">View →</a>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderProductHunt(products) {
+            const container = document.getElementById('producthunt-list');
+            
+            if (products.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-white/60">No products found</div>';
+                return;
+            }
+
+            container.innerHTML = products.map(product => `
+                <div class="signal-card">
+                    <div class="flex items-start gap-4">
+                        <img src="${product.thumbnail || '/static/logo.svg'}" alt="${product.name}" class="w-16 h-16 rounded-lg object-cover">
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-lg font-bold text-white">${product.name}</h3>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-white/60 text-sm">▲ ${product.votes || 0} votes</span>
+                                </div>
+                            </div>
+                            <p class="text-white/70 text-sm mb-3">${product.tagline || product.description || 'No description'}</p>
+                            <div class="flex items-center gap-4 text-sm">
+                                ${product.topics ? product.topics.map(topic => 
+                                    `<span class="px-2 py-1 bg-white/10 rounded text-white/60">${topic}</span>`
+                                ).join('') : ''}
+                            </div>
+                            ${product.url ? `<a href="${product.url}" target="_blank" class="text-[#FFF27A] hover:text-[#f0e068] text-sm mt-2 inline-block">Visit Product →</a>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderGitHub(repos) {
+            const container = document.getElementById('github-list');
+            
+            if (repos.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-white/60">No repositories found</div>';
+                return;
+            }
+
+            container.innerHTML = repos.map(repo => `
+                <div class="signal-card">
+                    <div class="flex items-start gap-4">
+                        <div class="text-4xl">⭐</div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-lg font-bold text-white">${repo.name}</h3>
+                                <div class="flex items-center gap-3 text-sm">
+                                    <span class="text-white/60">⭐ ${repo.stars?.toLocaleString() || 0}</span>
+                                    <span class="text-white/60">🔱 ${repo.forks?.toLocaleString() || 0}</span>
+                                    ${repo.starsToday ? `<span class="text-green-400">+${repo.starsToday} today</span>` : ''}
+                                </div>
+                            </div>
+                            <p class="text-white/70 text-sm mb-3">${repo.description || 'No description'}</p>
+                            <div class="flex items-center gap-4 text-sm">
+                                ${repo.language ? `<span class="px-2 py-1 bg-white/10 rounded text-white/60">${repo.language}</span>` : ''}
+                                ${repo.topics ? repo.topics.slice(0, 3).map(topic => 
+                                    `<span class="px-2 py-1 bg-white/10 rounded text-white/60">${topic}</span>`
+                                ).join('') : ''}
+                            </div>
+                            ${repo.url ? `<a href="${repo.url}" target="_blank" class="text-[#FFF27A] hover:text-[#f0e068] text-sm mt-2 inline-block">View Repository →</a>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderHackerNews(stories) {
+            const container = document.getElementById('hackernews-list');
+            
+            if (stories.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-white/60">No stories found</div>';
+                return;
+            }
+
+            container.innerHTML = stories.map(story => `
+                <div class="signal-card">
+                    <div class="flex items-start gap-4">
+                        <div class="text-4xl">💬</div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-lg font-bold text-white">${story.title}</h3>
+                                <div class="flex items-center gap-3 text-sm">
+                                    <span class="text-white/60">▲ ${story.score || 0} points</span>
+                                    <span class="text-white/60">💬 ${story.descendants || 0} comments</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4 text-sm text-white/60 mb-2">
+                                <span>by ${story.by || 'unknown'}</span>
+                                <span>${story.time ? new Date(story.time * 1000).toLocaleDateString() : ''}</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                ${story.url ? `<a href="${story.url}" target="_blank" class="text-[#FFF27A] hover:text-[#f0e068] text-sm">Read Article →</a>` : ''}
+                                <a href="https://news.ycombinator.com/item?id=${story.id}" target="_blank" class="text-white/60 hover:text-white text-sm">View Discussion →</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
+
+
+

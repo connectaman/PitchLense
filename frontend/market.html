@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PitchLense — Market Data</title>
+    <title>PitchLense — Market Performance</title>
     <link rel="icon" type="image/svg+xml" href="/static/logo.svg" />
     <script>
       tailwind.config = { theme: { extend: { colors: { background:'#1E1E21', surface:'#2E3137', text:'#ffffff', secondary:'#cfd4dd', accent:'#f1d85b' }}}}
@@ -24,31 +24,20 @@
           <div class="text-base font-semibold">PitchLense</div>
         </div>
         <div class="flex items-center gap-3">
-          <div id="searchWrap" class="flex items-center gap-2">
-            <button id="searchBtn" class="w-9 h-9 grid place-items-center rounded-full bg-[#FFF27A] border border-white/10 text-[#1E1E21]">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="7"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-            </button>
-            <input id="searchInput" type="text" placeholder="Search stocks..." class="h-9 w-0 opacity-0 px-0 bg-[#1E1E21] border border-white/10 rounded-full text-sm text-white/80 outline-none transition-all duration-200" />
-            <button id="refreshBtn" title="Refresh Market Data" class="w-9 h-9 grid place-items-center rounded-full bg-[#FFF27A] border border-white/10 text-[#1E1E21]">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="23 4 23 10 17 10"/>
-                <polyline points="1 20 1 14 7 14"/>
-                <path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10"/>
-                <path d="M20.49 15a9 9 0 0 1-14.13 3.36L1 14"/>
-              </svg>
-            </button>
-          </div>
+          <button id="refreshBtn" title="Refresh Market Data" class="w-9 h-9 grid place-items-center rounded-full bg-[#FFF27A] border border-white/10 text-[#1E1E21]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/>
+              <polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10"/>
+              <path d="M20.49 15a9 9 0 0 1-14.13 3.36L1 14"/>
+            </svg>
+          </button>
           <div id="userProfileIcon" class="w-9 h-9 rounded-full border border-white/10 bg-[#FFF27A] grid place-items-center text-[#1E1E21] relative group">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
               <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.31 0-6 2.69-6 6h12c0-3.31-2.69-6-6-6Z"/>
             </svg>
-            <!-- User email tooltip -->
             <div id="userEmailTooltip" class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
               <span id="userEmailText">Loading...</span>
-              <!-- Tooltip arrow -->
               <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-[#1E1E21]"></div>
             </div>
           </div>
@@ -56,84 +45,12 @@
       </header>
 
       <div class="grid flex-1 min-h-0 mobile-navbar" style="grid-template-columns: 84px 1fr; gap:12px;">
-        <aside class="bg-[#2C2F34] border border-white/10 rounded-[18px] flex flex-col items-center py-4 gap-3">
-          <nav class="flex flex-col gap-2 text-white/80 w-full items-center">
-            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10" href="/create-report.html" title="Create">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-            </a>
-            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10" href="/view-report.html" title="Reports">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <line x1="9" y1="17" x2="9" y2="11"/>
-                <line x1="13" y1="17" x2="13" y2="7"/>
-                <line x1="17" y1="17" x2="17" y2="13"/>
-              </svg>
-            </a>
-            <a class="w-10 h-10 grid place-items-center rounded-lg bg-white/10 hover:bg-white/10 relative group" href="/market.html" title="Market">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 3v18h18"/>
-                <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
-              </svg>
-              <!-- Tooltip -->
-              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
-                Market Data
-                <!-- Tooltip arrow -->
-                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
-              </div>
-            </a>
-            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/extension.html" title="Extension">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="7" height="7"/>
-                <rect x="14" y="3" width="7" height="7"/>
-                <rect x="14" y="14" width="7" height="7"/>
-                <rect x="3" y="14" width="7" height="7"/>
-              </svg>
-              <!-- Tooltip -->
-              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
-                Extension
-                <!-- Tooltip arrow -->
-                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
-              </div>
-            </a>
-            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/email.html" title="Email">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                <polyline points="22,6 12,13 2,6"/>
-              </svg>
-              <!-- Tooltip -->
-              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
-                Email Client
-                <!-- Tooltip arrow -->
-                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
-              </div>
-            </a>
-            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="https://youtu.be/XUuLeXaEIdI" target="_blank" title="How to use PitchLense">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-              </svg>
-              <!-- Tooltip -->
-              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
-                How to use PitchLense
-                <!-- Tooltip arrow -->
-                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
-              </div>
-            </a>
-          </nav>
-          <div class="flex-1"></div>
-          <button id="signoutBtn" class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 text-white/80" title="Sign out">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-          </button>
+        <aside id="pitchlense-navbar" class="bg-[#2C2F34] border border-white/10 rounded-[18px] flex flex-col items-center py-4 gap-3">
+          <!-- Navbar content will be rendered by navbar.js -->
         </aside>
 
         <main class="flex-1 overflow-y-auto p-4 mobile-main">
-          <!-- Header with Market Info -->
+          <!-- Header -->
           <div class="flex items-center justify-between mb-6">
             <div>
               <h2 class="text-2xl font-bold text-white flex items-center gap-3">
@@ -141,148 +58,161 @@
                   <path d="M3 3v18h18"/>
                   <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
                 </svg>
-                NIFTY 50 Market Data
+                Market Performance
               </h2>
               <p class="text-white/60 mt-1" id="lastUpdate">Last updated: Loading...</p>
-            </div>
-            <div class="flex items-center gap-2">
-              <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
-              <span class="text-sm text-white/60" id="marketStatus">Market Closed</span>
-            </div>
-          </div>
-
-          <!-- Market Overview Cards -->
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6" id="marketOverview">
-            <div class="card p-4">
-              <div class="text-sm text-white/60 mb-1">Index Value</div>
-              <div class="text-2xl font-bold text-white" id="indexValue">-</div>
-            </div>
-            <div class="card p-4">
-              <div class="text-sm text-white/60 mb-1">Change</div>
-              <div class="text-xl font-semibold flex items-center gap-2" id="indexChange">
-                <span>-</span>
-                <span class="text-sm" id="indexChangePercent">-</span>
-              </div>
-            </div>
-            <div class="card p-4">
-              <div class="text-sm text-white/60 mb-1">52W High</div>
-              <div class="text-xl font-semibold text-white" id="yearHigh">-</div>
-            </div>
-            <div class="card p-4">
-              <div class="text-sm text-white/60 mb-1">52W Low</div>
-              <div class="text-xl font-semibold text-white" id="yearLow">-</div>
-            </div>
-          </div>
-
-          <!-- Advance/Decline Stats -->
-          <div class="grid grid-cols-3 gap-4 mb-6" id="advanceDecline">
-            <div class="card p-4 text-center">
-              <div class="text-sm text-green-400 mb-1">Advances</div>
-              <div class="text-xl font-bold text-green-400" id="advances">-</div>
-            </div>
-            <div class="card p-4 text-center">
-              <div class="text-sm text-red-400 mb-1">Declines</div>
-              <div class="text-xl font-bold text-red-400" id="declines">-</div>
-            </div>
-            <div class="card p-4 text-center">
-              <div class="text-sm text-white/60 mb-1">Unchanged</div>
-              <div class="text-xl font-bold text-white/60" id="unchanged">-</div>
-            </div>
-          </div>
-
-          <!-- Charts Section -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <div class="card p-6">
-              <h3 class="text-lg font-semibold text-white mb-4">Top Gainers</h3>
-              <div class="relative overflow-hidden" style="height: 300px; max-height: 300px;">
-                <canvas id="gainersChart"></canvas>
-              </div>
-            </div>
-            <div class="card p-6">
-              <h3 class="text-lg font-semibold text-white mb-4">Top Losers</h3>
-              <div class="relative overflow-hidden" style="height: 300px; max-height: 300px;">
-                <canvas id="losersChart"></canvas>
-              </div>
-            </div>
-          </div>
-
-          <!-- Stock Table -->
-          <div class="card p-6">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-semibold text-white">NIFTY 50 Stocks</h3>
-              <div class="flex items-center gap-2">
-                <input type="text" id="stockSearch" placeholder="Search stocks..." class="px-3 py-2 bg-[#1E1E21] border border-white/10 rounded-lg text-white text-sm placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-accent">
-                <button id="sortBtn" class="px-3 py-2 bg-[#FFF27A] text-[#1E1E21] rounded-lg text-sm font-medium hover:opacity-90">
-                  Sort by Change %
-                </button>
-              </div>
-            </div>
-            
-            <!-- Responsive Table -->
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm" id="stocksTable">
-                <thead>
-                  <tr class="border-b border-white/10 text-white/60">
-                    <th class="text-left py-3 px-2">Symbol</th>
-                    <th class="text-right py-3 px-2">Last Price</th>
-                    <th class="text-right py-3 px-2">Change</th>
-                    <th class="text-right py-3 px-2">Change %</th>
-                    <th class="text-right py-3 px-2">Volume</th>
-                    <th class="text-right py-3 px-2">52W High</th>
-                    <th class="text-right py-3 px-2">52W Low</th>
-                  </tr>
-                </thead>
-                <tbody id="stocksTableBody" class="text-white">
-                  <!-- Table rows will be populated by JavaScript -->
-                </tbody>
-              </table>
             </div>
           </div>
 
           <!-- Loading State -->
-          <div id="loadingState" class="hidden min-h-[60vh] grid place-items-center">
+          <div id="loadingState" class="min-h-[60vh] grid place-items-center">
             <div class="text-center">
               <div class="mx-auto w-20 h-20 rounded-2xl bg-white/5 border border-white/10 grid place-items-center mb-4">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFF27A]"></div>
               </div>
               <div class="text-lg font-semibold text-white">Loading Market Data...</div>
-              <div class="text-sm text-white/60 mt-1">Fetching latest NIFTY 50 information</div>
+              <div class="text-sm text-white/60 mt-1">Fetching latest market information</div>
             </div>
           </div>
 
-          <!-- Error State -->
-          <div id="errorState" class="hidden min-h-[60vh] grid place-items-center">
-            <div class="text-center">
-              <div class="mx-auto w-20 h-20 rounded-2xl bg-white/5 border border-white/10 grid place-items-center mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="15" y1="9" x2="9" y2="15"/>
-                  <line x1="9" y1="9" x2="15" y2="15"/>
-                </svg>
+          <!-- Main Content -->
+          <div id="mainContent" class="hidden">
+            <!-- Commodities Overview - KPI Section -->
+            <div class="card p-6 mb-6">
+              <h3 class="text-lg font-semibold text-white mb-4">🛢️ Commodities Overview</h3>
+              <div id="commoditiesGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <!-- Commodities will be populated here -->
               </div>
-              <div class="text-lg font-semibold text-white">Failed to Load Market Data</div>
-              <div class="text-sm text-white/60 mt-1">Please try refreshing the page</div>
-              <button id="retryBtn" class="mt-4 px-4 py-2 bg-[#FFF27A] text-[#1E1E21] rounded-lg font-medium hover:opacity-90">
-                Retry
-              </button>
+            </div>
+
+            <!-- Top Gainers & Losers -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <div class="card p-6">
+                <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <span class="text-green-400">▲</span> Top 10 Gainers
+                </h3>
+                <div class="relative overflow-hidden" style="height: 300px;">
+                  <canvas id="gainersChart"></canvas>
+                </div>
+              </div>
+              <div class="card p-6">
+                <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <span class="text-red-400">▼</span> Top 10 Losers
+                </h3>
+                <div class="relative overflow-hidden" style="height: 300px;">
+                  <canvas id="losersChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Treasury Rates -->
+            <div class="card p-6 mb-6">
+              <h3 class="text-lg font-semibold text-white mb-4">📊 US Treasury Rates</h3>
+              <div class="relative overflow-hidden" style="height: 350px;">
+                <canvas id="treasuryChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Economic Indicators -->
+            <div class="mb-6">
+              <h3 class="text-lg font-semibold text-white mb-4">📈 Economic Indicators</h3>
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="card p-6">
+                  <h4 class="text-md font-medium text-white mb-3">GDP</h4>
+                  <div class="relative overflow-hidden" style="height: 250px;">
+                    <canvas id="gdpChart"></canvas>
+                  </div>
+                </div>
+                <div class="card p-6">
+                  <h4 class="text-md font-medium text-white mb-3">Real GDP Per Capita</h4>
+                  <div class="relative overflow-hidden" style="height: 250px;">
+                    <canvas id="gdpPerCapitaChart"></canvas>
+                  </div>
+                </div>
+                <div class="card p-6">
+                  <h4 class="text-md font-medium text-white mb-3">Inflation Rate</h4>
+                  <div class="relative overflow-hidden" style="height: 250px;">
+                    <canvas id="inflationChart"></canvas>
+                  </div>
+                </div>
+                <div class="card p-6">
+                  <h4 class="text-md font-medium text-white mb-3">Unemployment Rate</h4>
+                  <div class="relative overflow-hidden" style="height: 250px;">
+                    <canvas id="unemploymentChart"></canvas>
+                  </div>
+                </div>
+                <div class="card p-6 lg:col-span-2">
+                  <h4 class="text-md font-medium text-white mb-3">US Recession Probabilities</h4>
+                  <div class="relative overflow-hidden" style="height: 250px;">
+                    <canvas id="recessionChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sector & Industry Performance -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <div class="card p-6">
+                <h3 class="text-lg font-semibold text-white mb-4">🏭 Sector Performance (Energy)</h3>
+                <div class="relative overflow-hidden" style="height: 300px;">
+                  <canvas id="sectorChart"></canvas>
+                </div>
+              </div>
+              <div class="card p-6">
+                <h3 class="text-lg font-semibold text-white mb-4">🧬 Industry Performance (Biotechnology)</h3>
+                <div class="relative overflow-hidden" style="height: 300px;">
+                  <canvas id="industryChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sector PE Ratio -->
+            <div class="card p-6 mb-6">
+              <h3 class="text-lg font-semibold text-white mb-4">📊 Historical Sector P/E Ratio (Energy)</h3>
+              <div class="relative overflow-hidden" style="height: 300px;">
+                <canvas id="sectorPEChart"></canvas>
+              </div>
             </div>
           </div>
         </main>
       </div>
     </div>
 
+    <script src="/static/cache-util.js"></script>
     <script>
-      let marketData = null;
-      let gainersChart = null;
-      let losersChart = null;
+      const FMP_API_KEY = 'WwNxldd0G8oDcMy1V0FPNIirF74a1p4E';
+      let charts = {};
 
-      // Authentication check - using same pattern as other pages
+      // Commodity symbols
+      const commodities = [
+        { symbol: "GCUSD", name: "Gold", icon: "🥇" },
+        { symbol: "SIUSD", name: "Silver", icon: "🥈" },
+        { symbol: "CLUSD", name: "Crude Oil", icon: "🛢️" },
+        { symbol: "NGUSD", name: "Natural Gas", icon: "⚡" },
+        { symbol: "HGUSD", name: "Copper", icon: "🔩" },
+        { symbol: "ZCUSX", name: "Corn", icon: "🌽" },
+        { symbol: "ZSUSX", name: "Soybean", icon: "🌱" },
+        { symbol: "KEUSX", name: "Wheat", icon: "🌾" },
+        { symbol: "KCUSX", name: "Coffee", icon: "☕" },
+        { symbol: "SBUSX", name: "Sugar", icon: "🍬" },
+        { symbol: "CCUSD", name: "Cocoa", icon: "🍫" },
+        { symbol: "CTUSX", name: "Cotton", icon: "🧵" },
+        { symbol: "OJUSX", name: "Orange Juice", icon: "🍊" },
+        { symbol: "PLUSD", name: "Platinum", icon: "💍" },
+        { symbol: "PAUSD", name: "Palladium", icon: "💎" },
+        { symbol: "LEUSX", name: "Live Cattle", icon: "🐄" },
+        { symbol: "HEUSX", name: "Lean Hogs", icon: "🐖" },
+        { symbol: "LBUSD", name: "Lumber", icon: "🪵" },
+        { symbol: "BZUSD", name: "Brent Crude", icon: "🛢️" },
+        { symbol: "RBUSD", name: "Gasoline", icon: "⛽" }
+      ];
+
+      // Authentication check
       function checkAuth() {
         fetch('/api/auth/me').then(r => r.json()).then(d => {
           if (!d.user) {
             window.location.href = '/auth.html';
           } else {
-            // Load user email in tooltip
             const userEmailText = document.getElementById('userEmailText');
             if (userEmailText) {
               userEmailText.textContent = d.user.email;
@@ -291,584 +221,573 @@
         }).catch(() => window.location.href = '/auth.html');
       }
 
-      // Format number with Indian number system
+      // Format number
       function formatNumber(num) {
-        if (num >= 10000000) {
-          return (num / 10000000).toFixed(2) + ' Cr';
-        } else if (num >= 100000) {
-          return (num / 100000).toFixed(2) + ' L';
-        } else if (num >= 1000) {
-          return (num / 1000).toFixed(2) + ' K';
-        }
+        if (num >= 1000000000) return (num / 1000000000).toFixed(2) + 'B';
+        if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
+        if (num >= 1000) return (num / 1000).toFixed(2) + 'K';
         return num.toFixed(2);
       }
 
-      // Format currency
-      function formatCurrency(num) {
-        return '₹' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      }
-
-      // Get market data from NSE API
+      // Fetch all market data
       async function fetchMarketData() {
         try {
           document.getElementById('loadingState').classList.remove('hidden');
-          document.getElementById('errorState').classList.add('hidden');
-          
-          // Try direct API call first (will likely fail due to CORS)
-          // In production, you should use a backend proxy to handle this
-          const corsProxy = 'https://cors-anywhere.herokuapp.com/';
-          const nseUrl = 'https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%2050';
-          
-          try {
-            const response = await fetch(corsProxy + nseUrl, {
-              method: 'GET',
-              headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-              }
-            });
+          document.getElementById('mainContent').classList.add('hidden');
 
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-            }
+          // Fetch all data in parallel
+          const [
+            gainers,
+            losers,
+            treasury,
+            gdp,
+            gdpPerCapita,
+            inflation,
+            unemployment,
+            recession,
+            sectorPerf,
+            industryPerf,
+            sectorPE,
+            ...commoditiesData
+          ] = await Promise.allSettled([
+            cachedFetch(`https://financialmodelingprep.com/stable/biggest-gainers?apikey=${FMP_API_KEY}`).then(r => r.json()),
+            cachedFetch(`https://financialmodelingprep.com/stable/biggest-losers?apikey=${FMP_API_KEY}`).then(r => r.json()),
+            cachedFetch(`https://financialmodelingprep.com/stable/treasury-rates?apikey=${FMP_API_KEY}`).then(r => r.json()),
+            cachedFetch(`https://financialmodelingprep.com/stable/economic-indicators?name=GDP&apikey=${FMP_API_KEY}`).then(r => r.json()),
+            cachedFetch(`https://financialmodelingprep.com/stable/economic-indicators?name=realGDPPerCapita&apikey=${FMP_API_KEY}`).then(r => r.json()),
+            cachedFetch(`https://financialmodelingprep.com/stable/economic-indicators?name=inflation&apikey=${FMP_API_KEY}`).then(r => r.json()),
+            cachedFetch(`https://financialmodelingprep.com/stable/economic-indicators?name=unemploymentRate&apikey=${FMP_API_KEY}`).then(r => r.json()),
+            cachedFetch(`https://financialmodelingprep.com/stable/economic-indicators?name=smoothedUSRecessionProbabilities&apikey=${FMP_API_KEY}`).then(r => r.json()),
+            cachedFetch(`https://financialmodelingprep.com/stable/historical-sector-performance?sector=Energy&apikey=${FMP_API_KEY}`).then(r => r.json()),
+            cachedFetch(`https://financialmodelingprep.com/stable/historical-industry-performance?industry=Biotechnology&apikey=${FMP_API_KEY}`).then(r => r.json()),
+            cachedFetch(`https://financialmodelingprep.com/stable/historical-sector-pe?sector=Energy&apikey=${FMP_API_KEY}`).then(r => r.json()),
+            ...commodities.slice(0, 20).map(c => 
+              cachedFetch(`https://financialmodelingprep.com/stable/quote?symbol=${c.symbol}&apikey=${FMP_API_KEY}`).then(r => r.json())
+            )
+          ]);
 
-            const data = await response.json();
-            marketData = data;
-            updateMarketDisplay(data);
-            document.getElementById('loadingState').classList.add('hidden');
-            return;
-          } catch (corsError) {
-            console.log('Direct API failed, using backend proxy or sample data');
-          }
+          // Update charts with fetched data
+          updateGainersLosers(
+            gainers.status === 'fulfilled' ? gainers.value : [],
+            losers.status === 'fulfilled' ? losers.value : []
+          );
+          
+          updateTreasuryRates(treasury.status === 'fulfilled' ? treasury.value : []);
+          updateEconomicIndicators({
+            gdp: gdp.status === 'fulfilled' ? gdp.value : [],
+            gdpPerCapita: gdpPerCapita.status === 'fulfilled' ? gdpPerCapita.value : [],
+            inflation: inflation.status === 'fulfilled' ? inflation.value : [],
+            unemployment: unemployment.status === 'fulfilled' ? unemployment.value : [],
+            recession: recession.status === 'fulfilled' ? recession.value : []
+          });
+          
+          updateSectorIndustry(
+            sectorPerf.status === 'fulfilled' ? sectorPerf.value : [],
+            industryPerf.status === 'fulfilled' ? industryPerf.value : [],
+            sectorPE.status === 'fulfilled' ? sectorPE.value : []
+          );
+          
+          updateCommodities(commoditiesData);
 
-          // Try backend proxy if available
-          try {
-            const response = await fetch('/api/market/nifty50', {
-              method: 'GET',
-              headers: {
-                'Accept': 'application/json'
-              }
-            });
-
-            if (response.ok) {
-              const data = await response.json();
-              marketData = data;
-              updateMarketDisplay(data);
-              document.getElementById('loadingState').classList.add('hidden');
-              return;
-            }
-          } catch (proxyError) {
-            console.log('Backend proxy not available, using sample data');
-          }
-          
-          // Fallback to sample data
-          throw new Error('API not accessible, using sample data');
-          
-        } catch (error) {
-          console.log('Using sample market data:', error.message);
-          
-          // Use sample data as fallback
-          const sampleData = getSampleData();
-          marketData = sampleData;
-          updateMarketDisplay(sampleData);
+          document.getElementById('lastUpdate').textContent = `Last updated: ${new Date().toLocaleString()}`;
           document.getElementById('loadingState').classList.add('hidden');
-          
-          // Show a subtle notification that we're using sample data
-          setTimeout(() => {
-            const notice = document.createElement('div');
-            notice.className = 'fixed top-4 right-4 bg-yellow-500/20 border border-yellow-500/30 rounded-lg px-4 py-2 text-yellow-200 text-sm z-50';
-            notice.innerHTML = `
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                </svg>
-                Using sample data - API not accessible
-              </div>
-            `;
-            document.body.appendChild(notice);
-            setTimeout(() => notice.remove(), 5000);
-          }, 1000);
+          document.getElementById('mainContent').classList.remove('hidden');
+
+        } catch (error) {
+          console.error('Error fetching market data:', error);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error Loading Data',
+            text: 'Failed to fetch market data. Please try again.',
+            background: '#2C2F34',
+            color: '#fff'
+          });
         }
       }
 
-      // Sample data for demonstration (based on provided API response)
-      function getSampleData() {
-        // Generate some random variations for demo
-        const baseTime = new Date();
-        baseTime.setMinutes(baseTime.getMinutes() - Math.floor(Math.random() * 30));
-        
-        return {
-          "name": "NIFTY 50",
-          "advance": {"declines": "12", "advances": "38", "unchanged": "1"},
-          "timestamp": baseTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
-          "data": [
-            {
-              "symbol": "NIFTY 50", 
-              "identifier": "NIFTY 50", 
-              "lastPrice": 25323.55, 
-              "change": 178.05, 
-              "pChange": 0.71, 
-              "yearHigh": 25669.35, 
-              "yearLow": 21743.65, 
-              "totalTradedVolume": 289907167,
-              "previousClose": 25145.5,
-              "open": 25181.95,
-              "dayHigh": 25365.15,
-              "dayLow": 25159.35
+      // Update Gainers & Losers Charts
+      function updateGainersLosers(gainers, losers) {
+        const topGainers = gainers.slice(0, 10);
+        const topLosers = losers.slice(0, 10);
+
+        // Destroy existing charts
+        if (charts.gainers) charts.gainers.destroy();
+        if (charts.losers) charts.losers.destroy();
+
+        // Gainers Chart
+        const gainersCtx = document.getElementById('gainersChart').getContext('2d');
+        charts.gainers = new Chart(gainersCtx, {
+          type: 'bar',
+          data: {
+            labels: topGainers.map(g => g.symbol),
+            datasets: [{
+              label: 'Change %',
+              data: topGainers.map(g => g.changesPercentage),
+              backgroundColor: 'rgba(34, 197, 94, 0.8)',
+              borderColor: 'rgba(34, 197, 94, 1)',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (context) => {
+                    const item = topGainers[context.dataIndex];
+                    return `${item.name}: +${item.changesPercentage.toFixed(2)}%`;
+                  }
+                }
+              }
             },
-            {
-              "symbol": "BAJFINANCE", 
-              "identifier": "BAJFINANCEEQN", 
-              "lastPrice": 1060.65, 
-              "change": 41.5, 
-              "pChange": 4.07, 
-              "totalTradedVolume": 10204553, 
-              "yearHigh": 1063, 
-              "yearLow": 645.1,
-              "previousClose": 1019.15
-            },
-            {
-              "symbol": "NESTLEIND", 
-              "identifier": "NESTLEINDEQN", 
-              "lastPrice": 1222.3, 
-              "change": 46.8, 
-              "pChange": 3.98, 
-              "totalTradedVolume": 2283207, 
-              "yearHigh": 1259.85, 
-              "yearLow": 1055,
-              "previousClose": 1175.5
-            },
-            {
-              "symbol": "BAJAJFINSV", 
-              "identifier": "BAJAJFINSVEQN", 
-              "lastPrice": 2082.9, 
-              "change": 63.5, 
-              "pChange": 3.14, 
-              "totalTradedVolume": 1497129, 
-              "yearHigh": 2135, 
-              "yearLow": 1551.65,
-              "previousClose": 2019.4
-            },
-            {
-              "symbol": "TRENT", 
-              "identifier": "TRENTEQN", 
-              "lastPrice": 4739, 
-              "change": 121.8, 
-              "pChange": 2.64, 
-              "totalTradedVolume": 1298439, 
-              "yearHigh": 8345, 
-              "yearLow": 4488,
-              "previousClose": 4617.2
-            },
-            {
-              "symbol": "ASIANPAINT", 
-              "identifier": "ASIANPAINTEQN", 
-              "lastPrice": 2377, 
-              "change": 58.9, 
-              "pChange": 2.54, 
-              "totalTradedVolume": 753630, 
-              "yearHigh": 3103.55, 
-              "yearLow": 2124.75,
-              "previousClose": 2318.1
-            },
-            {
-              "symbol": "RELIANCE", 
-              "identifier": "RELIANCEEQN", 
-              "lastPrice": 1374.7, 
-              "change": -1.2, 
-              "pChange": -0.09, 
-              "totalTradedVolume": 10881505, 
-              "yearHigh": 1551, 
-              "yearLow": 1114.85,
-              "previousClose": 1375.9
-            },
-            {
-              "symbol": "TCS", 
-              "identifier": "TCSEQN", 
-              "lastPrice": 2970, 
-              "change": 20.7, 
-              "pChange": 0.7, 
-              "totalTradedVolume": 4281951, 
-              "yearHigh": 4494.9, 
-              "yearLow": 2866.6,
-              "previousClose": 2960.3
-            },
-            {
-              "symbol": "INFY", 
-              "identifier": "INFYEQN", 
-              "lastPrice": 1474.4, 
-              "change": -15.5, 
-              "pChange": -1.04, 
-              "totalTradedVolume": 6986007, 
-              "yearHigh": 2006.45, 
-              "yearLow": 1307,
-              "previousClose": 1489.9
-            },
-            {
-              "symbol": "HDFCBANK", 
-              "identifier": "HDFCBANKEQN", 
-              "lastPrice": 978.5, 
-              "change": 1.35, 
-              "pChange": 0.14, 
-              "totalTradedVolume": 23310303, 
-              "yearHigh": 1018.85, 
-              "yearLow": 812.15,
-              "previousClose": 977.15
-            },
-            {
-              "symbol": "ICICIBANK", 
-              "identifier": "ICICIBANKEQN", 
-              "lastPrice": 1399, 
-              "change": 14.9, 
-              "pChange": 1.08, 
-              "totalTradedVolume": 8988491, 
-              "yearHigh": 1500, 
-              "yearLow": 1186,
-              "previousClose": 1384.1
-            },
-            {
-              "symbol": "BHARTIARTL", 
-              "identifier": "BHARTIARTLEQN", 
-              "lastPrice": 1967, 
-              "change": 20.4, 
-              "pChange": 1.05, 
-              "totalTradedVolume": 3447352, 
-              "yearHigh": 2045.8, 
-              "yearLow": 1511,
-              "previousClose": 1946.6
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { color: 'rgba(255, 255, 255, 0.6)' },
+                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+              },
+              x: {
+                ticks: { color: 'rgba(255, 255, 255, 0.6)' },
+                grid: { display: false }
+              }
             }
-          ],
-          "metadata": {
-            "indexName": "NIFTY 50",
-            "last": 25323.55,
-            "change": 178.05,
-            "percChange": 0.71,
-            "yearHigh": 25669.35,
-            "yearLow": 21743.65,
-            "previousClose": 25145.5,
-            "open": 25181.95,
-            "high": 25365.15,
-            "low": 25159.35
           }
-        };
+        });
+
+        // Losers Chart
+        const losersCtx = document.getElementById('losersChart').getContext('2d');
+        charts.losers = new Chart(losersCtx, {
+          type: 'bar',
+          data: {
+            labels: topLosers.map(l => l.symbol),
+            datasets: [{
+              label: 'Change %',
+              data: topLosers.map(l => l.changesPercentage),
+              backgroundColor: 'rgba(239, 68, 68, 0.8)',
+              borderColor: 'rgba(239, 68, 68, 1)',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (context) => {
+                    const item = topLosers[context.dataIndex];
+                    return `${item.name}: ${item.changesPercentage.toFixed(2)}%`;
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                ticks: { color: 'rgba(255, 255, 255, 0.6)' },
+                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+              },
+              x: {
+                ticks: { color: 'rgba(255, 255, 255, 0.6)' },
+                grid: { display: false }
+              }
+            }
+          }
+        });
       }
 
-      // Update market display with data
-      function updateMarketDisplay(data) {
-        // Update header info
-        document.getElementById('lastUpdate').textContent = `Last updated: ${data.timestamp || new Date().toLocaleString()}`;
-        
-        // Handle both real API response format and our sample format
-        let indexData;
-        if (data.metadata) {
-          // Our sample data format
-          indexData = data.metadata;
-        } else if (data.data && data.data[0] && data.data[0].symbol === 'NIFTY 50') {
-          // Real API response format
-          indexData = data.data[0];
-        } else {
-          // Fallback
-          indexData = data.data?.[0];
-        }
-        
-        // Update market overview cards
-        if (indexData) {
-          document.getElementById('indexValue').textContent = formatCurrency(indexData.last || indexData.lastPrice);
-          document.getElementById('yearHigh').textContent = formatCurrency(indexData.yearHigh);
-          document.getElementById('yearLow').textContent = formatCurrency(indexData.yearLow);
-          
-          const change = indexData.change || (indexData.last - indexData.previousClose);
-          const changePercent = indexData.percChange || indexData.pChange;
-          
-          const changeElement = document.getElementById('indexChange');
-          const changePercentElement = document.getElementById('indexChangePercent');
-          
-          if (change >= 0) {
-            changeElement.innerHTML = `<span class="text-green-400">+${formatCurrency(change)}</span>`;
-            changePercentElement.innerHTML = `<span class="text-green-400">(+${changePercent.toFixed(2)}%)</span>`;
-          } else {
-            changeElement.innerHTML = `<span class="text-red-400">${formatCurrency(change)}</span>`;
-            changePercentElement.innerHTML = `<span class="text-red-400">(${changePercent.toFixed(2)}%)</span>`;
+      // Update Treasury Rates Chart
+      function updateTreasuryRates(data) {
+        if (!data || data.length === 0) return;
+
+        const latest = data[0];
+        if (charts.treasury) charts.treasury.destroy();
+
+        const ctx = document.getElementById('treasuryChart').getContext('2d');
+        charts.treasury = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: ['1M', '2M', '3M', '6M', '1Y', '2Y', '3Y', '5Y', '7Y', '10Y', '20Y', '30Y'],
+            datasets: [{
+              label: 'Yield %',
+              data: [
+                latest.month1, latest.month2, latest.month3, latest.month6,
+                latest.year1, latest.year2, latest.year3, latest.year5,
+                latest.year7, latest.year10, latest.year20, latest.year30
+              ],
+              borderColor: '#FFF27A',
+              backgroundColor: 'rgba(255, 242, 122, 0.1)',
+              tension: 0.4,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              y: {
+                ticks: { color: 'rgba(255, 255, 255, 0.6)' },
+                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+              },
+              x: {
+                ticks: { color: 'rgba(255, 255, 255, 0.6)' },
+                grid: { display: false }
+              }
+            }
           }
-        }
-
-        // Update advance/decline stats
-        if (data.advance) {
-          document.getElementById('advances').textContent = data.advance.advances;
-          document.getElementById('declines').textContent = data.advance.declines;
-          document.getElementById('unchanged').textContent = data.advance.unchanged;
-        }
-
-        // Update stock table
-        updateStocksTable(data.data || []);
-        
-        // Update charts
-        updateCharts(data.data || []);
+        });
       }
 
-      // Update stocks table
-      function updateStocksTable(stocks) {
-        const tbody = document.getElementById('stocksTableBody');
-        tbody.innerHTML = '';
-
-        // Filter out the index itself (NIFTY 50)
-        const stockData = stocks.filter(stock => stock.symbol !== 'NIFTY 50');
-
-        stockData.forEach(stock => {
-          const row = document.createElement('tr');
-          row.className = 'border-b border-white/5 hover:bg-white/5 transition-colors';
+      // Update Economic Indicators
+      function updateEconomicIndicators(indicators) {
+        // GDP Chart
+        if (indicators.gdp && indicators.gdp.length > 0) {
+          const gdpData = indicators.gdp.slice(0, 20).reverse();
+          if (charts.gdp) charts.gdp.destroy();
           
-          const changeColor = stock.pChange >= 0 ? 'text-green-400' : 'text-red-400';
-          const changePrefix = stock.pChange >= 0 ? '+' : '';
+          const ctx = document.getElementById('gdpChart').getContext('2d');
+          charts.gdp = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: gdpData.map(d => new Date(d.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })),
+              datasets: [{
+                label: 'GDP (Billions)',
+                data: gdpData.map(d => d.value),
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4,
+                fill: true
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: {
+                  ticks: { color: 'rgba(255, 255, 255, 0.6)' },
+                  grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                x: {
+                  ticks: { color: 'rgba(255, 255, 255, 0.6)', maxRotation: 45, minRotation: 45 },
+                  grid: { display: false }
+                }
+              }
+            }
+          });
+        }
+
+        // GDP Per Capita Chart
+        if (indicators.gdpPerCapita && indicators.gdpPerCapita.length > 0) {
+          const data = indicators.gdpPerCapita.slice(0, 20).reverse();
+          if (charts.gdpPerCapita) charts.gdpPerCapita.destroy();
           
-          row.innerHTML = `
-            <td class="py-3 px-2">
-              <div class="font-medium">${stock.symbol}</div>
-            </td>
-            <td class="py-3 px-2 text-right font-medium">${formatCurrency(stock.lastPrice)}</td>
-            <td class="py-3 px-2 text-right">
-              <span class="${changeColor}">${changePrefix}${formatCurrency(stock.change)}</span>
-            </td>
-            <td class="py-3 px-2 text-right">
-              <span class="${changeColor}">${changePrefix}${stock.pChange.toFixed(2)}%</span>
-            </td>
-            <td class="py-3 px-2 text-right text-white/60">${formatNumber(stock.totalTradedVolume)}</td>
-            <td class="py-3 px-2 text-right text-white/60">${formatCurrency(stock.yearHigh)}</td>
-            <td class="py-3 px-2 text-right text-white/60">${formatCurrency(stock.yearLow)}</td>
+          const ctx = document.getElementById('gdpPerCapitaChart').getContext('2d');
+          charts.gdpPerCapita = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: data.map(d => new Date(d.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })),
+              datasets: [{
+                label: 'GDP Per Capita',
+                data: data.map(d => d.value),
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4,
+                fill: true
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: {
+                  ticks: { color: 'rgba(255, 255, 255, 0.6)' },
+                  grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                x: {
+                  ticks: { color: 'rgba(255, 255, 255, 0.6)', maxRotation: 45, minRotation: 45 },
+                  grid: { display: false }
+                }
+              }
+            }
+          });
+        }
+
+        // Inflation Chart
+        if (indicators.inflation && indicators.inflation.length > 0) {
+          const data = indicators.inflation.slice(0, 20).reverse();
+          if (charts.inflation) charts.inflation.destroy();
+          
+          const ctx = document.getElementById('inflationChart').getContext('2d');
+          charts.inflation = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: data.map(d => new Date(d.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })),
+              datasets: [{
+                label: 'Inflation %',
+                data: data.map(d => d.value),
+                borderColor: '#f59e0b',
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                tension: 0.4,
+                fill: true
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: {
+                  ticks: { color: 'rgba(255, 255, 255, 0.6)' },
+                  grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                x: {
+                  ticks: { color: 'rgba(255, 255, 255, 0.6)', maxRotation: 45, minRotation: 45 },
+                  grid: { display: false }
+                }
+              }
+            }
+          });
+        }
+
+        // Unemployment Chart
+        if (indicators.unemployment && indicators.unemployment.length > 0) {
+          const data = indicators.unemployment.slice(0, 20).reverse();
+          if (charts.unemployment) charts.unemployment.destroy();
+          
+          const ctx = document.getElementById('unemploymentChart').getContext('2d');
+          charts.unemployment = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: data.map(d => new Date(d.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })),
+              datasets: [{
+                label: 'Unemployment %',
+                data: data.map(d => d.value),
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                tension: 0.4,
+                fill: true
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: {
+                  ticks: { color: 'rgba(255, 255, 255, 0.6)' },
+                  grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                x: {
+                  ticks: { color: 'rgba(255, 255, 255, 0.6)', maxRotation: 45, minRotation: 45 },
+                  grid: { display: false }
+                }
+              }
+            }
+          });
+        }
+
+        // Recession Probabilities Chart
+        if (indicators.recession && indicators.recession.length > 0) {
+          const data = indicators.recession.slice(0, 20).reverse();
+          if (charts.recession) charts.recession.destroy();
+          
+          const ctx = document.getElementById('recessionChart').getContext('2d');
+          charts.recession = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: data.map(d => new Date(d.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })),
+              datasets: [{
+                label: 'Recession Probability %',
+                data: data.map(d => d.value),
+                borderColor: '#8b5cf6',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                tension: 0.4,
+                fill: true
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: {
+                  ticks: { color: 'rgba(255, 255, 255, 0.6)' },
+                  grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                x: {
+                  ticks: { color: 'rgba(255, 255, 255, 0.6)', maxRotation: 45, minRotation: 45 },
+                  grid: { display: false }
+                }
+              }
+            }
+          });
+        }
+      }
+
+      // Update Sector & Industry Charts
+      function updateSectorIndustry(sectorData, industryData, sectorPEData) {
+        // Sector Performance
+        if (sectorData && sectorData.length > 0) {
+          const data = sectorData.slice(0, 30).reverse();
+          if (charts.sector) charts.sector.destroy();
+          
+          const ctx = document.getElementById('sectorChart').getContext('2d');
+          charts.sector = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: data.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })),
+              datasets: [{
+                label: 'Average Change %',
+                data: data.map(d => d.averageChange),
+                borderColor: '#FFF27A',
+                backgroundColor: 'rgba(255, 242, 122, 0.1)',
+                tension: 0.4,
+                fill: true
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: {
+                  ticks: { color: 'rgba(255, 255, 255, 0.6)' },
+                  grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                x: {
+                  ticks: { color: 'rgba(255, 255, 255, 0.6)', maxRotation: 45, minRotation: 45 },
+                  grid: { display: false }
+                }
+              }
+            }
+          });
+        }
+
+        // Industry Performance
+        if (industryData && industryData.length > 0) {
+          const data = industryData.slice(0, 30).reverse();
+          if (charts.industry) charts.industry.destroy();
+          
+          const ctx = document.getElementById('industryChart').getContext('2d');
+          charts.industry = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: data.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })),
+              datasets: [{
+                label: 'Average Change %',
+                data: data.map(d => d.averageChange),
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4,
+                fill: true
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: {
+                  ticks: { color: 'rgba(255, 255, 255, 0.6)' },
+                  grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                x: {
+                  ticks: { color: 'rgba(255, 255, 255, 0.6)', maxRotation: 45, minRotation: 45 },
+                  grid: { display: false }
+                }
+              }
+            }
+          });
+        }
+
+        // Sector P/E Ratio
+        if (sectorPEData && sectorPEData.length > 0) {
+          const data = sectorPEData.slice(0, 30).reverse();
+          if (charts.sectorPE) charts.sectorPE.destroy();
+          
+          const ctx = document.getElementById('sectorPEChart').getContext('2d');
+          charts.sectorPE = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: data.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })),
+              datasets: [{
+                label: 'P/E Ratio',
+                data: data.map(d => d.pe),
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4,
+                fill: true
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: {
+                  ticks: { color: 'rgba(255, 255, 255, 0.6)' },
+                  grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                x: {
+                  ticks: { color: 'rgba(255, 255, 255, 0.6)', maxRotation: 45, minRotation: 45 },
+                  grid: { display: false }
+                }
+              }
+            }
+          });
+        }
+      }
+
+      // Update Commodities Grid
+      function updateCommodities(commoditiesData) {
+        const grid = document.getElementById('commoditiesGrid');
+        grid.innerHTML = '';
+
+        commoditiesData.forEach((result, index) => {
+          if (result.status !== 'fulfilled' || !result.value || !result.value[0]) return;
+
+          const data = result.value[0];
+          const commodity = commodities[index];
+          const isPositive = data.changePercentage >= 0;
+          const color = isPositive ? 'text-green-400' : 'text-red-400';
+          const bgColor = isPositive ? 'bg-green-500/10' : 'bg-red-500/10';
+
+          const card = document.createElement('div');
+          card.className = `p-4 rounded-lg border border-white/10 ${bgColor}`;
+          card.innerHTML = `
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-2xl">${commodity.icon}</span>
+              <span class="${color} text-xs font-semibold">${isPositive ? '+' : ''}${data.changePercentage.toFixed(2)}%</span>
+            </div>
+            <div class="text-white font-medium text-sm mb-1">${commodity.name}</div>
+            <div class="text-white/80 text-xs">${data.symbol}</div>
+            <div class="text-white font-bold mt-2">$${data.price.toFixed(2)}</div>
+            <div class="${color} text-xs">${isPositive ? '+' : ''}${data.change.toFixed(2)}</div>
           `;
-          
-          tbody.appendChild(row);
+          grid.appendChild(card);
         });
       }
 
-      // Update charts
-      function updateCharts(stocks) {
-        // Filter out the index itself
-        const stockData = stocks.filter(stock => stock.symbol !== 'NIFTY 50');
-        
-        // Get top 5 gainers and losers
-        const sortedStocks = [...stockData].sort((a, b) => a.pChange - b.pChange);
-        const topGainers = sortedStocks.slice(-5).reverse();
-        const topLosers = sortedStocks.slice(0, 5);
-
-        // Destroy existing charts properly
-        if (gainersChart) {
-          gainersChart.destroy();
-          gainersChart = null;
-        }
-        if (losersChart) {
-          losersChart.destroy();
-          losersChart = null;
-        }
-
-        // Clear canvas and recreate
-        const gainersCanvas = document.getElementById('gainersChart');
-        const losersCanvas = document.getElementById('losersChart');
-        
-        if (gainersCanvas && losersCanvas) {
-          // Wait for next frame to ensure proper sizing
-          requestAnimationFrame(() => {
-            // Clear any existing canvas content and set proper dimensions
-            gainersCanvas.style.width = '100%';
-            gainersCanvas.style.height = '100%';
-            gainersCanvas.style.maxHeight = '300px';
-            gainersCanvas.style.display = 'block';
-            
-            losersCanvas.style.width = '100%';
-            losersCanvas.style.height = '100%';
-            losersCanvas.style.maxHeight = '300px';
-            losersCanvas.style.display = 'block';
-
-            // Create gainers chart
-          const gainersCtx = gainersCanvas.getContext('2d');
-          gainersChart = new Chart(gainersCtx, {
-            type: 'bar',
-            data: {
-              labels: topGainers.map(stock => stock.symbol),
-              datasets: [{
-                label: 'Change %',
-                data: topGainers.map(stock => stock.pChange),
-                backgroundColor: 'rgba(34, 197, 94, 0.8)',
-                borderColor: 'rgba(34, 197, 94, 1)',
-                borderWidth: 1
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              interaction: {
-                intersect: false,
-                mode: 'index'
-              },
-              plugins: {
-                legend: { display: false }
-              },
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  ticks: { 
-                    color: 'rgba(255, 255, 255, 0.6)',
-                    maxTicksLimit: 6
-                  },
-                  grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                },
-                x: {
-                  ticks: { 
-                    color: 'rgba(255, 255, 255, 0.6)',
-                    maxRotation: 45,
-                    minRotation: 0
-                  },
-                  grid: { display: false }
-                }
-              },
-              layout: {
-                padding: {
-                  top: 10,
-                  bottom: 10,
-                  left: 10,
-                  right: 10
-                }
-              }
-            }
-          });
-
-          // Create losers chart
-          const losersCtx = losersCanvas.getContext('2d');
-          losersChart = new Chart(losersCtx, {
-            type: 'bar',
-            data: {
-              labels: topLosers.map(stock => stock.symbol),
-              datasets: [{
-                label: 'Change %',
-                data: topLosers.map(stock => stock.pChange),
-                backgroundColor: 'rgba(239, 68, 68, 0.8)',
-                borderColor: 'rgba(239, 68, 68, 1)',
-                borderWidth: 1
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              interaction: {
-                intersect: false,
-                mode: 'index'
-              },
-              plugins: {
-                legend: { display: false }
-              },
-              scales: {
-                y: {
-                  beginAtZero: false,
-                  ticks: { 
-                    color: 'rgba(255, 255, 255, 0.6)',
-                    maxTicksLimit: 6
-                  },
-                  grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                },
-                x: {
-                  ticks: { 
-                    color: 'rgba(255, 255, 255, 0.6)',
-                    maxRotation: 45,
-                    minRotation: 0
-                  },
-                  grid: { display: false }
-                }
-              },
-              layout: {
-                padding: {
-                  top: 10,
-                  bottom: 10,
-                  left: 10,
-                  right: 10
-                }
-              }
-            }
-          });
-          }); // Close requestAnimationFrame
-        }
-      }
-
-      // Search functionality
-      function setupSearch() {
-        const searchInput = document.getElementById('stockSearch');
-        searchInput.addEventListener('input', (e) => {
-          const query = e.target.value.toLowerCase();
-          const rows = document.querySelectorAll('#stocksTableBody tr');
-          
-          rows.forEach(row => {
-            const symbol = row.querySelector('td').textContent.toLowerCase();
-            row.style.display = symbol.includes(query) ? '' : 'none';
-          });
-        });
-      }
-
-      // Sort functionality
-      function setupSort() {
-        document.getElementById('sortBtn').addEventListener('click', () => {
-          if (!marketData?.data) return;
-          
-          const stockData = marketData.data.filter(stock => stock.symbol !== 'NIFTY 50');
-          const sorted = [...stockData].sort((a, b) => b.pChange - a.pChange);
-          
-          updateStocksTable(sorted);
-        });
-      }
-
-      // Chart resize handler
-      function handleChartResize() {
-        if (gainersChart) {
-          gainersChart.resize();
-        }
-        if (losersChart) {
-          losersChart.resize();
-        }
-      }
-
-      // Debounced resize handler
-      let resizeTimeout;
-      function debouncedResize() {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(handleChartResize, 250);
-      }
-
-      // Initialize the page
+      // Initialize
       async function init() {
-        setupSearch();
-        setupSort();
         await fetchMarketData();
 
         // Set up refresh button
         document.getElementById('refreshBtn').addEventListener('click', fetchMarketData);
-        
-        // Set up retry button
-        document.getElementById('retryBtn').addEventListener('click', fetchMarketData);
-
-        // Set up sign out
-        document.getElementById('signoutBtn').addEventListener('click', async () => {
-          try {
-            await fetch('/api/auth/logout', { method: 'POST' });
-          } catch (e) {}
-          window.location.href = '/auth.html';
-        });
-
-        // Add resize listener for charts
-        window.addEventListener('resize', debouncedResize);
-        
-        // Cleanup on page unload
-        window.addEventListener('beforeunload', () => {
-          window.removeEventListener('resize', debouncedResize);
-          if (gainersChart) {
-            gainersChart.destroy();
-          }
-          if (losersChart) {
-            losersChart.destroy();
-          }
-        });
       }
 
-      // Start the application - check auth first, then initialize
+      // Start
       checkAuth();
       init();
     </script>
+    <script src="/static/navbar.js"></script>
   </body>
 </html>
+

@@ -21,10 +21,252 @@ const crypto = require('crypto');
 const { Storage } = require('@google-cloud/storage');
 const axios = require('axios');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { LanguageServiceClient } = require('@google-cloud/language').v2;
 const nodemailer = require('nodemailer');
+
+// Caching and rate limiting utilities
+class CacheManager {
+  constructor() {
+    this.cache = new Map();
+    this.ttl = new Map(); // Time to live tracking
+  }
+
+  set(key, value, ttlSeconds = 300) { // 5 minute default TTL
+    this.cache.set(key, value);
+    this.ttl.set(key, Date.now() + (ttlSeconds * 1000));
+  }
+
+  get(key) {
+    if (this.ttl.has(key) && Date.now() > this.ttl.get(key)) {
+      this.delete(key);
+      return null;
+    }
+    return this.cache.get(key);
+  }
+
+  delete(key) {
+    this.cache.delete(key);
+    this.ttl.delete(key);
+  }
+
+  clear() {
+    this.cache.clear();
+    this.ttl.clear();
+  }
+
+  // Clean up expired entries
+  cleanup() {
+    const now = Date.now();
+    for (const [key, expiry] of this.ttl.entries()) {
+      if (now > expiry) {
+        this.delete(key);
+      }
+    }
+  }
+}
+
+class RateLimiter {
+  constructor() {
+    this.requests = new Map();
+    this.windowMs = 60000; // 1 minute window
+    this.maxRequests = 10; // Max 10 requests per minute for LLM endpoints
+  }
+
+  isAllowed(userId) {
+    const now = Date.now();
+    const userRequests = this.requests.get(userId) || [];
+
+    // Remove requests outside the window
+    const validRequests = userRequests.filter(time => now - time < this.windowMs);
+
+    if (validRequests.length >= this.maxRequests) {
+      return false;
+    }
+
+    validRequests.push(now);
+    this.requests.set(userId, validRequests);
+    return true;
+  }
+
+  getRemainingTime(userId) {
+    const userRequests = this.requests.get(userId) || [];
+    if (userRequests.length === 0) return 0;
+
+    const oldestRequest = Math.min(...userRequests);
+    const timeUntilReset = this.windowMs - (Date.now() - oldestRequest);
+    return Math.max(0, timeUntilReset);
+  }
+}
+
+// Guardrails utilities for LLM response validation
+class LLMGuardrails {
+  // Validate that AI response only references provided sources
+  static validateSourceCitations(response, availableSources) {
+    const sourcesRegex = /Sources used:\s*\[([^\]]+)\]/gi;
+    const matches = response.match(sourcesRegex);
+
+    if (!matches) {
+      return { valid: false, reason: 'No source citation found' };
+    }
+
+    const citedSources = matches[0].replace(/Sources used:\s*\[/, '').replace(/\]/, '').split(',').map(s => s.trim());
+
+    for (const citedSource of citedSources) {
+      if (citedSource === 'None - information not available in the provided data') {
+        continue;
+      }
+
+      const found = availableSources.some(source =>
+        source.filename?.toLowerCase().includes(citedSource.toLowerCase()) ||
+        source.filetype?.toLowerCase().includes(citedSource.toLowerCase()) ||
+        citedSource.toLowerCase().includes(source.filename?.toLowerCase()) ||
+        citedSource.toLowerCase().includes(source.filetype?.toLowerCase())
+      );
+
+      if (!found) {
+        return {
+          valid: false,
+          reason: `Cited source "${citedSource}" not found in available sources`,
+          citedSources,
+          availableSources: availableSources.map(s => s.filename || s.filetype)
+        };
+      }
+    }
+
+    return { valid: true };
+  }
+
+  // Check for potential hallucinations in response content
+  static detectHallucinations(response, context) {
+    const warnings = [];
+
+    // Check for numerical data that might be fabricated
+    const numbersRegex = /\$\d+(?:,\d+)*(?:\.\d+)?|\d+\s*%|(?:\d{4}|\d{1,2}\/\d{1,2}\/\d{2,4})/g;
+    const numbersInResponse = response.match(numbersRegex) || [];
+
+    if (numbersInResponse.length > 0) {
+      const contextText = JSON.stringify(context).toLowerCase();
+      const numbersInContext = contextText.match(numbersRegex) || [];
+
+      for (const number of numbersInResponse) {
+        const numberStr = number.replace(/[$,%]/g, '');
+        const foundInContext = numbersInContext.some(ctxNum =>
+          ctxNum.replace(/[$,%]/g, '') === numberStr);
+
+        if (!foundInContext && !isNaN(parseFloat(numberStr))) {
+          warnings.push(`Potentially fabricated numerical data: ${numberStr}`);
+        }
+      }
+    }
+
+    // Check for overly confident language that might indicate hallucination
+    const confidentPhrases = [
+      'definitely', 'certainly', 'absolutely', 'without doubt', 'proven',
+      'guaranteed', 'will definitely', 'always', 'never'
+    ];
+
+    const lowerResponse = response.toLowerCase();
+    for (const phrase of confidentPhrases) {
+      if (lowerResponse.includes(phrase) && !context.toLowerCase().includes(phrase)) {
+        warnings.push(`Overly confident language detected: "${phrase}"`);
+        break;
+      }
+    }
+
+    // Check response length vs context ratio (potential verbose hallucination)
+    const responseLength = response.length;
+    const contextLength = JSON.stringify(context).length;
+    const ratio = responseLength / contextLength;
+
+    if (ratio > 3) {
+      warnings.push(`Response is disproportionately long compared to source context (ratio: ${ratio.toFixed(2)})`);
+    }
+
+    return { hasHallucinations: warnings.length > 0, warnings };
+  }
+
+  // Calculate confidence score based on multiple factors
+  static calculateConfidenceScore(response, context, sourceValidation) {
+    let score = 100;
+
+    // Reduce score if sources are invalid
+    if (!sourceValidation.valid) {
+      score -= 30;
+    }
+
+    // Reduce score for potential hallucinations
+    const hallucinationCheck = this.detectHallucinations(response, context);
+    score -= hallucinationCheck.warnings.length * 15;
+
+    // Check for uncertainty indicators in response
+    const uncertaintyPhrases = [
+      'i don\'t know', 'not available', 'not found', 'unclear', 'uncertain',
+      'might be', 'could be', 'possibly', 'potentially'
+    ];
+
+    const hasUncertainty = uncertaintyPhrases.some(phrase =>
+      response.toLowerCase().includes(phrase));
+
+    if (hasUncertainty) {
+      score -= 10;
+    }
+
+    // Bonus for specific source citations
+    if (response.includes('Sources used:') && sourceValidation.valid) {
+      score += 10;
+    }
+
+    return Math.max(0, Math.min(100, score));
+  }
+
+  // Validate response format and content limits
+  static validateResponseFormat(response, maxLength = 2000) {
+    const issues = [];
+
+    if (response.length > maxLength) {
+      issues.push(`Response exceeds maximum length (${response.length} > ${maxLength})`);
+    }
+
+    if (response.length < 50) {
+      issues.push(`Response is too short (${response.length} < 50)`);
+    }
+
+    // Check for repetitive content
+    const words = response.toLowerCase().split(/\s+/);
+    const uniqueWords = new Set(words);
+    const repetitionRatio = uniqueWords.size / words.length;
+
+    if (repetitionRatio < 0.3) {
+      issues.push('Response contains excessive repetition');
+    }
+
+    return { valid: issues.length === 0, issues };
+  }
+
+  // Sanitize response to remove potential harmful content
+  static sanitizeResponse(response) {
+    // Remove any potential code injection attempts
+    let sanitized = response.replace(/<script[^>]*>.*?<\/script>/gi, '');
+    sanitized = sanitized.replace(/javascript:/gi, '');
+    sanitized = sanitized.replace(/vbscript:/gi, '');
+    sanitized = sanitized.replace(/onload=/gi, '');
+    sanitized = sanitized.replace(/onerror=/gi, '');
+
+    return sanitized;
+  }
+}
 const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 const app = express();
+
+// Initialize cache and rate limiting
+const responseCache = new CacheManager();
+const rateLimiter = new RateLimiter();
+
+// Cleanup cache every 5 minutes
+setInterval(() => {
+  responseCache.cleanup();
+}, 5 * 60 * 1000);
 
 const PORT = process.env.PORT || 3000;
 
@@ -55,6 +297,16 @@ const FIXED_SALT = 'pitchlense_fixed_salt_2024_secure_auth';
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'your-gemini-api-key-here');
+
+// Initialize Google Cloud Natural Language API
+let languageClient = null;
+try {
+  // Initialize with default credentials (ADC) or service account key
+  languageClient = new LanguageServiceClient();
+} catch (error) {
+  // Content moderation will be skipped if Natural Language API is not available
+}
+
 // Support multiple names for bucket/Cloud Run URL
 const GCS_BUCKET = process.env.BUCKET || process.env.GCS_BUCKET || process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
 const CLOUD_RUN_URL = process.env.CLOUD_RUN_URL || process.env.CLOUDRUN_URL || process.env.CLOUD_RUN_ENDPOINT;
@@ -100,19 +352,10 @@ async function initializeDatabase() {
       delete dbConfig.socketPath;
     }
     
-    console.log('Connecting to MySQL database...', {
-      host: dbConfig.host,
-      port: dbConfig.port,
-      database: dbConfig.database,
-      ssl: !!dbConfig.ssl,
-      socketPath: !!dbConfig.socketPath
-    });
-    
     db = mysql.createPool(dbConfig);
     
     // Test connection
     const connection = await db.getConnection();
-    console.log('✅ Successfully connected to MySQL database');
     connection.release();
     
     // Create wrapper functions for compatibility
@@ -139,8 +382,6 @@ async function initializeDatabase() {
 
 async function checkTables() {
   try {
-    console.log('Checking if database tables exist...');
-    
     const tables = ['users', 'reports', 'uploads', 'chats'];
     const existingTables = [];
     const missingTables = [];
@@ -149,19 +390,9 @@ async function checkTables() {
       try {
         await dbAll(`DESCRIBE ${tableName(table)}`);
         existingTables.push(table);
-        console.log(`✅ Table ${tableName(table)} exists`);
       } catch (e) {
         missingTables.push(table);
-        console.log(`❌ Table ${tableName(table)} does not exist`);
       }
-    }
-    
-    if (missingTables.length > 0) {
-      console.log(`\n⚠️  Missing tables: ${missingTables.join(', ')}`);
-      console.log('💡 Please run the SQL setup script to create the missing tables.');
-      console.log('📄 See backend/setup-database.sql for the complete setup script.');
-    } else {
-      console.log('\n✅ All required tables exist and are accessible');
     }
     
     return { existingTables, missingTables };
@@ -198,7 +429,6 @@ app.use((req, res, next) => {
     "base-uri 'self';";
   
   res.setHeader('Content-Security-Policy', csp);
-  console.log('CSP Header set:', csp);
   next();
 });
 
@@ -221,14 +451,7 @@ app.use(express.json({
 }));
 
 // Additional middleware to log request details for auth endpoints
-app.use((req, res, next) => {
-  if (req.path.startsWith('/api/auth/')) {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
-    console.log('Content-Type:', req.headers['content-type']);
-    console.log('Body received:', JSON.stringify(req.body, null, 2));
-  }
-  next();
-});
+// Request logging removed for production security
 
 app.use(cookieParser());
 
@@ -258,6 +481,182 @@ function requireAuth(req, res, next) {
   next();
 }
 
+// Rate limiting middleware for LLM endpoints
+const checkLLMRateLimit = (req, res, next) => {
+  const userId = req.user?.id || req.ip;
+  if (!rateLimiter.isAllowed(userId)) {
+    const remainingTime = Math.ceil(rateLimiter.getRemainingTime(userId) / 1000);
+    return res.status(429).json({
+      error: 'Rate limit exceeded',
+      message: `Too many LLM requests. Try again in ${remainingTime} seconds.`,
+      retryAfter: remainingTime
+    });
+  }
+  next();
+};
+
+// Content moderation middleware using Google Cloud Natural Language API and Gemini AI
+const moderateContent = async (content) => {
+  if (!languageClient) {
+    return { safe: true, reason: 'API not available' };
+  }
+
+  try {
+    const document = {
+      content: content,
+      type: 'PLAIN_TEXT',
+    };
+
+    const [result] = await languageClient.moderateText({ document });
+
+    const categories = result.moderationCategories || [];
+
+    const violations = [];
+
+    // Check for various harmful categories
+    if (categories && Array.isArray(categories)) {
+      for (const category of categories) {
+        const { name, confidence } = category;
+
+      // Skip categories with low confidence
+      if (confidence < 0.7) continue;
+
+      // Check for specific harmful categories
+      const harmfulCategories = [
+        'Adult',
+        'Medical',
+        'Violence',
+        'Racy',
+        'Derogatory',
+        'Profanity',
+        'Sensitive Subjects',
+        'Religion & Belief',
+        'Politics',
+        'Finance',
+        'Legal',
+        'Death, Harm & Tragedy',
+        'War & Conflict',
+        'Terrorism & Violent Extremism',
+        'Gambling',
+        'Tobacco',
+        'Alcohol',
+        'Drugs',
+        'Firearms & Weapons'
+      ];
+
+        if (harmfulCategories.some(harmful => name.includes(harmful))) {
+          violations.push({
+            category: name,
+            confidence: confidence,
+            severity: confidence > 0.9 ? 'high' : confidence > 0.8 ? 'medium' : 'low'
+          });
+        }
+      }
+    }
+
+    // Step 2: Check for professional tone using Gemini AI
+    // This catches informal/casual language that isn't harmful but unprofessional
+    try {
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+      const professionalismPrompt = `Analyze the following email content for professional appropriateness in a business pitch/proposal context.
+Email Content:
+${content}
+
+Evaluate if this email is appropriate for a professional business pitch. Check for:
+1. Informal slang (e.g., "fire", "no cap", "dead ass", "lit", "yolo", etc.)
+2. Excessive casual language or emojis
+3. Lack of professional tone
+4. Inappropriate language for business communication
+
+Return ONLY a JSON object with this format:
+{
+  "isProfessional": true/false,
+  "reason": "brief explanation",
+  "informalTerms": ["list", "of", "informal", "terms", "found"]
+}`;
+
+      const profResult = await model.generateContent(professionalismPrompt);
+      const profResponse = await profResult.response;
+      const profText = profResponse.text();
+      
+      // Parse the professionalism check result
+      const profJsonText = profText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const profData = JSON.parse(profJsonText);
+      
+
+      
+      if (!profData.isProfessional) {
+        violations.push({
+          category: 'Unprofessional Language',
+          confidence: 0.9,
+          severity: 'high',
+          reason: profData.reason,
+          informalTerms: profData.informalTerms
+        });
+      }
+    } catch (profError) {
+
+      // Don't block if professionalism check fails, just log it
+    }
+
+    return {
+      safe: violations.length === 0,
+      violations: violations,
+      contentLength: content.length
+    };
+
+  } catch (error) {
+    console.error('Content moderation error:', error);
+    // Return safe by default if moderation fails
+    return { safe: true, reason: 'Moderation failed, allowing content', error: error.message };
+  }
+};
+
+// Content moderation middleware for API endpoints
+const checkContentModeration = async (req, res, next) => {
+  try {
+    const { content, emailContent } = req.body;
+    const contentToCheck = content || emailContent;
+
+    if (!contentToCheck || contentToCheck.trim().length < 50) {
+      // Skip moderation for very short content
+      return next();
+    }
+
+    const moderationResult = await moderateContent(contentToCheck);
+
+    if (!moderationResult.safe) {
+
+
+      // Build a user-friendly error message
+      let errorMessage = 'The content is not appropriate for a professional business pitch.';
+      const hasUnprofessional = moderationResult.violations.some(v => v.category === 'Unprofessional Language');
+      
+      if (hasUnprofessional) {
+        const unprofViolation = moderationResult.violations.find(v => v.category === 'Unprofessional Language');
+        errorMessage += ` ${unprofViolation.reason || ''}`;
+        if (unprofViolation.informalTerms && unprofViolation.informalTerms.length > 0) {
+          errorMessage += ` Found informal terms: ${unprofViolation.informalTerms.join(', ')}.`;
+        }
+      }
+
+      return res.status(400).json({
+        error: 'Content moderation failed',
+        message: errorMessage,
+        violations: moderationResult.violations,
+        contentLength: moderationResult.contentLength
+      });
+    }
+
+    next();
+
+  } catch (error) {
+    console.error('Content moderation middleware error:', error);
+    // Continue processing if moderation fails
+    next();
+  }
+};
+
 // Auth routes
 app.post('/api/auth/signup', async (req, res) => {
   try {
@@ -267,15 +666,9 @@ app.post('/api/auth/signup', async (req, res) => {
       return res.status(429).json({ error: 'Too many attempts. Please try again later.' });
     }
     
-    console.log('Signup request received:', {
-      body: req.body,
-      contentType: req.headers['content-type'],
-      method: req.method
-    });
-    
     const { email, password, salt, name } = req.body || {};
     if (!email || !password || !salt) {
-      console.log('Missing required fields:', { email: !!email, password: !!password, salt: !!salt });
+
       return res.status(400).json({ 
         error: 'email, password, and salt required',
         received: { email: !!email, password: !!password, salt: !!salt }
@@ -308,35 +701,29 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(429).json({ error: 'Too many attempts. Please try again later.' });
     }
     
-    console.log('Login request received:', {
-      body: req.body,
-      contentType: req.headers['content-type'],
-      method: req.method
-    });
-    
     const { email, password, salt } = req.body || {};
     if (!email || !password || !salt) {
-      console.log('Missing required fields:', { email: !!email, password: !!password, salt: !!salt });
+
       return res.status(400).json({ 
         error: 'email, password, and salt required',
         received: { email: !!email, password: !!password, salt: !!salt }
       });
     }
     
-    console.log('Secure login attempt for:', email, 'password length:', password.length);
-    console.log('Received salt:', salt);
-    console.log('Expected salt:', FIXED_SALT);
-    console.log('Salt matches:', salt === FIXED_SALT);
+
+
+
+
     
     const user = await dbGet(`SELECT id,email,password_hash,name FROM ${tableName('users')} WHERE email=?`, [String(email).toLowerCase()]);
     if (!user) return res.status(401).json({ error: 'invalid_credentials' });
     
     // Direct comparison of PBKDF2 hashes
-    console.log('Stored hash:', user.password_hash);
-    console.log('Received hash:', password);
-    console.log('Hashes match:', password === user.password_hash);
+
+
+
     const ok = password === user.password_hash;
-    console.log('Secure comparison result:', ok);
+
     
     if (!ok) return res.status(401).json({ error: 'invalid_credentials' });
     
@@ -367,7 +754,7 @@ app.get('/api/auth/me', (req, res) => {
 });
 
 // QnA API endpoints
-app.post('/api/qna/ask', requireAuth, async (req, res) => {
+app.post('/api/qna/ask', requireAuth, checkLLMRateLimit, async (req, res) => {
   try {
     const { report_id, question } = req.body || {};
     if (!report_id || !question) return res.status(400).json({ error: 'report_id and question required' });
@@ -379,6 +766,23 @@ app.post('/api/qna/ask', requireAuth, async (req, res) => {
     // Check if report is ready
     if (report.status !== 'success' || !report.report_path) {
       return res.status(400).json({ error: 'Report is not ready for QnA yet' });
+    }
+
+    // Create cache key for this question
+    const cacheKey = `qna_${report_id}_${question.trim().toLowerCase()}`;
+
+    // Check cache first
+    const cachedResponse = responseCache.get(cacheKey);
+    if (cachedResponse) {
+
+      return res.json({
+        success: true,
+        response: cachedResponse.response,
+        chat_id: cachedResponse.chat_id,
+        confidence: cachedResponse.confidence,
+        warnings: cachedResponse.warnings,
+        cached: true
+      });
     }
 
     // Fetch report data from GCS
@@ -416,19 +820,62 @@ app.post('/api/qna/ask', requireAuth, async (req, res) => {
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const aiResponse = response.text();
+    let aiResponse = response.text();
+
+    // Apply guardrails validation
+    const availableSources = reportData.files || [];
+    const sourceValidation = LLMGuardrails.validateSourceCitations(aiResponse, availableSources);
+    const hallucinationCheck = LLMGuardrails.detectHallucinations(aiResponse, reportData);
+    const confidenceScore = LLMGuardrails.calculateConfidenceScore(aiResponse, reportData, sourceValidation);
+    const formatValidation = LLMGuardrails.validateResponseFormat(aiResponse);
+
+    // Sanitize response
+    aiResponse = LLMGuardrails.sanitizeResponse(aiResponse);
+
+    // If major issues detected, add warnings to response
+    let warnings = [];
+    if (!sourceValidation.valid) {
+      warnings.push(`Source citation issue: ${sourceValidation.reason}`);
+    }
+    if (hallucinationCheck.hasHallucinations) {
+      warnings.push(...hallucinationCheck.warnings);
+    }
+    if (!formatValidation.valid) {
+      warnings.push(...formatValidation.issues);
+    }
+
+    // If confidence is too low, reject the response
+    if (confidenceScore < 40) {
+      return res.status(400).json({
+        error: 'Response failed validation checks',
+        confidence: confidenceScore,
+        warnings
+      });
+    }
+
+    // Log guardrails results for monitoring
+
 
     // Save chat to database
     const chatId = crypto.randomUUID();
     await dbRun(
-      `INSERT INTO ${tableName('chats')} (chat_id, report_id, user_id, user_message, ai_response, created_at) VALUES (?, ?, ?, ?, ?, NOW())`,
-      [chatId, report_id, req.user.id, question, aiResponse]
-    );
+      `INSERT INTO ${tableName('chats')} (chat_id, report_id, user_id, user_message, ai_response, confidence_score, warnings, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [chatId, report_id, req.user.id, question, aiResponse, confidenceScore, JSON.stringify(warnings)]);
 
-    res.json({ 
-      success: true, 
+    // Cache the response for future requests
+    responseCache.set(cacheKey, {
       response: aiResponse,
-      chat_id: chatId 
+      chat_id: chatId,
+      confidence: confidenceScore,
+      warnings: warnings.length > 0 ? warnings : undefined
+    }, 600); // Cache for 10 minutes
+
+    res.json({
+      success: true,
+      response: aiResponse,
+      chat_id: chatId,
+      confidence: confidenceScore,
+      warnings: warnings.length > 0 ? warnings : undefined
     });
 
   } catch (error) {
@@ -449,8 +896,7 @@ app.get('/api/qna/history/:report_id', requireAuth, async (req, res) => {
     // Get chat history
     const chats = await dbAll(
       `SELECT chat_id, user_message, ai_response, created_at FROM ${tableName('chats')} WHERE report_id=? AND user_id=? ORDER BY created_at ASC`,
-      [report_id, req.user.id]
-    );
+      [report_id, req.user.id]);
 
     res.json({ 
       success: true, 
@@ -464,7 +910,7 @@ app.get('/api/qna/history/:report_id', requireAuth, async (req, res) => {
 });
 
 // General Pitch Analysis API (for content script)
-app.post('/api/analyze', async (req, res) => {
+app.post('/api/analyze', checkLLMRateLimit, checkContentModeration, async (req, res) => {
   try {
     const { text, url, title } = req.body || {};
     
@@ -472,7 +918,22 @@ app.post('/api/analyze', async (req, res) => {
       return res.status(400).json({ error: 'Text content is required and must be at least 10 characters' });
     }
 
-    console.log(`[api] Pitch analysis request: url=${url} title=${title} contentLength=${text.length}`);
+
+
+    // Create cache key for this analysis
+    const contentHash = crypto.createHash('md5').update(text.trim().toLowerCase()).digest('hex');
+    const cacheKey = `analysis_${contentHash}_${url || 'no_url'}`;
+
+    // Check cache first
+    const cachedAnalysis = responseCache.get(cacheKey);
+    if (cachedAnalysis) {
+
+      return res.json({
+        success: true,
+        ...cachedAnalysis,
+        cached: true
+      });
+    }
 
     // Check if API key is available
     if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your-gemini-api-key-here') {
@@ -539,7 +1000,7 @@ Respond ONLY with the JSON object, no additional text.
       analysis = {
         overallScore: 5,
         clarity: "Fair",
-        persuasiveness: "Fair", 
+        persuasiveness: "Fair",
         structure: "Fair",
         feedback: "The content was analyzed but the response format was not as expected. Please review for clarity, professional tone, and clear value proposition.",
         recommendations: [
@@ -551,6 +1012,30 @@ Respond ONLY with the JSON object, no additional text.
         areasForImprovement: ["Review overall structure and clarity"]
       };
     }
+
+    // Apply guardrails validation for analysis responses
+    const contextData = { content: text, url, title };
+    const sourceValidation = LLMGuardrails.validateSourceCitations(JSON.stringify(analysis), [{ filename: 'input_content', filetype: 'text' }]);
+    const hallucinationCheck = LLMGuardrails.detectHallucinations(JSON.stringify(analysis), contextData);
+    const confidenceScore = LLMGuardrails.calculateConfidenceScore(JSON.stringify(analysis), contextData, sourceValidation);
+
+    // Sanitize analysis response
+    analysis.feedback = LLMGuardrails.sanitizeResponse(analysis.feedback || '');
+    analysis.recommendations = (analysis.recommendations || []).map(rec => LLMGuardrails.sanitizeResponse(rec));
+    analysis.keyStrengths = (analysis.keyStrengths || []).map(strength => LLMGuardrails.sanitizeResponse(strength));
+    analysis.areasForImprovement = (analysis.areasForImprovement || []).map(area => LLMGuardrails.sanitizeResponse(area));
+
+    // If confidence is too low, reject the response
+    if (confidenceScore < 40) {
+      return res.status(400).json({
+        error: 'Analysis failed validation checks',
+        confidence: confidenceScore,
+        warnings: ['Response quality below acceptable threshold']
+      });
+    }
+
+    // Log guardrails results for monitoring
+
 
     // Validate and set defaults for required fields
     analysis.overallScore = Math.max(1, Math.min(10, analysis.overallScore || 5));
@@ -567,8 +1052,12 @@ Respond ONLY with the JSON object, no additional text.
     analysis.title = title;
     analysis.analyzedAt = new Date().toISOString();
     analysis.contentLength = text.length;
+    analysis.confidence = confidenceScore;
 
-    console.log(`[api] Pitch analysis completed: score=${analysis.overallScore} url=${url}`);
+
+
+    // Cache the analysis response
+    responseCache.set(cacheKey, analysis, 1800); // Cache for 30 minutes
 
     res.json({
       success: true,
@@ -585,7 +1074,7 @@ Respond ONLY with the JSON object, no additional text.
 });
 
 // Email Analysis API
-app.post('/api/analyze-email', async (req, res) => {
+app.post('/api/analyze-email', checkLLMRateLimit, async (req, res) => {
   try {
     const { content, emailId, url, source } = req.body || {};
     
@@ -593,7 +1082,22 @@ app.post('/api/analyze-email', async (req, res) => {
       return res.status(400).json({ error: 'Email content is required and must be at least 10 characters' });
     }
 
-    console.log(`[api] Email analysis request: emailId=${emailId} source=${source} contentLength=${content.length}`);
+
+
+    // Create cache key for this email analysis
+    const contentHash = crypto.createHash('md5').update(content.trim().toLowerCase()).digest('hex');
+    const cacheKey = `email_analysis_${contentHash}_${emailId || 'no_id'}`;
+
+    // Check cache first
+    const cachedEmailAnalysis = responseCache.get(cacheKey);
+    if (cachedEmailAnalysis) {
+
+      return res.json({
+        success: true,
+        ...cachedEmailAnalysis,
+        cached: true
+      });
+    }
 
     // Check if API key is available
     if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your-gemini-api-key-here') {
@@ -660,7 +1164,7 @@ Respond ONLY with the JSON object, no additional text.
       analysis = {
         overallScore: 5,
         clarity: "Fair",
-        persuasiveness: "Fair", 
+        persuasiveness: "Fair",
         structure: "Fair",
         feedback: "The email content was analyzed but the response format was not as expected. Please review the email for clarity, professional tone, and clear value proposition.",
         recommendations: [
@@ -673,23 +1177,57 @@ Respond ONLY with the JSON object, no additional text.
       };
     }
 
-    // Validate and set defaults for required fields
-    analysis.overallScore = Math.max(1, Math.min(10, analysis.overallScore || 5));
-    analysis.clarity = analysis.clarity || "Fair";
-    analysis.persuasiveness = analysis.persuasiveness || "Fair";
-    analysis.structure = analysis.structure || "Fair";
-    analysis.feedback = analysis.feedback || "Email analysis completed.";
-    analysis.recommendations = Array.isArray(analysis.recommendations) ? analysis.recommendations : [];
-    analysis.keyStrengths = Array.isArray(analysis.keyStrengths) ? analysis.keyStrengths : [];
-    analysis.areasForImprovement = Array.isArray(analysis.areasForImprovement) ? analysis.areasForImprovement : [];
+    // Apply guardrails validation for analysis responses
+    const contextData = { content, emailId, url, source };
+    const sourceValidation = LLMGuardrails.validateSourceCitations(JSON.stringify(analysis), [{ filename: 'email_content', filetype: 'email' }]);
+    const hallucinationCheck = LLMGuardrails.detectHallucinations(JSON.stringify(analysis), contextData);
+    const confidenceScore = LLMGuardrails.calculateConfidenceScore(JSON.stringify(analysis), contextData, sourceValidation);
+
+    // Sanitize analysis response
+    analysis.feedback = LLMGuardrails.sanitizeResponse(analysis.feedback || '');
+    analysis.recommendations = (analysis.recommendations || []).map(rec => LLMGuardrails.sanitizeResponse(rec));
+    analysis.keyStrengths = (analysis.keyStrengths || []).map(strength => LLMGuardrails.sanitizeResponse(strength));
+    analysis.areasForImprovement = (analysis.areasForImprovement || []).map(area => LLMGuardrails.sanitizeResponse(area));
+
+    // If confidence is too low, reject the response
+    if (confidenceScore < 40) {
+      return res.status(400).json({
+        error: 'Email analysis failed validation checks',
+        confidence: confidenceScore,
+        warnings: ['Response quality below acceptable threshold']
+      });
+    }
+
+    // Log guardrails results for monitoring
+
+
+  // Validate and set defaults for required fields
+  analysis.overallScore = Math.max(1, Math.min(10, analysis.overallScore || 5));
+  analysis.clarity = analysis.clarity || "Fair";
+  analysis.persuasiveness = analysis.persuasiveness || "Fair";
+  analysis.structure = analysis.structure || "Fair";
+  analysis.feedback = analysis.feedback || "Email analysis completed.";
+  analysis.recommendations = Array.isArray(analysis.recommendations) ? analysis.recommendations : [];
+  analysis.keyStrengths = Array.isArray(analysis.keyStrengths) ? analysis.keyStrengths : [];
+  analysis.areasForImprovement = Array.isArray(analysis.areasForImprovement) ? analysis.areasForImprovement : [];
+
+  // Enhanced guardrails for email analysis - check for startup information claims
+  if (analysis.feedback && analysis.feedback.includes('startup') && !content.toLowerCase().includes('startup')) {
+
+    analysis.confidence = Math.max(0, analysis.confidence - 20);
+  }
 
     // Add metadata
     analysis.emailId = emailId;
     analysis.source = source || 'gmail';
     analysis.analyzedAt = new Date().toISOString();
     analysis.contentLength = content.length;
+    analysis.confidence = confidenceScore;
 
-    console.log(`[api] Email analysis completed: score=${analysis.overallScore} emailId=${emailId}`);
+
+
+    // Cache the email analysis response
+    responseCache.set(cacheKey, analysis, 1800); // Cache for 30 minutes
 
     res.json({
       success: true,
@@ -715,9 +1253,9 @@ async function gcsSaveBytes(bucketName, objectPath, bytes, contentType) {
   const bucket = client.bucket(bucketName);
   const file = bucket.file(objectPath);
   try {
-    console.log(`[gcs] save start bucket=${bucketName} object=${objectPath} bytes=${bytes ? bytes.length : 0} contentType=${contentType}`);
+
     await file.save(bytes, { contentType, resumable: false, validation: false });
-    console.log(`[gcs] save success -> gs://${bucketName}/${objectPath}`);
+
   } catch (e) {
     console.error(`[gcs] save failed bucket=${bucketName} object=${objectPath}:`, e?.message || e);
     throw e;
@@ -739,7 +1277,7 @@ async function gcsFileExists(gsUri){
     const [exists] = await file.exists();
     return !!exists;
   } catch (e) {
-    console.warn(`[gcs] exists check failed for ${gsUri}:`, e?.message || e);
+
     return false;
   }
 }
@@ -749,7 +1287,6 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 app.post('/api/reports', requireAuth, upload.array('files'), async (req, res) => {
   try {
-    console.log(`[api] POST /api/reports user=${req.user?.id} bucket=${GCS_BUCKET || '(unset)'} cloudRun=${CLOUD_RUN_URL ? 'set' : 'unset'}`);
     const startup_name = req.body.startup_name?.trim();
     const founder_name = req.body.founder_name?.trim();
     const launch_date = req.body.launch_date?.trim();
@@ -757,7 +1294,7 @@ app.post('/api/reports', requireAuth, upload.array('files'), async (req, res) =>
     if (!Array.isArray(file_types)) file_types = [file_types].filter(Boolean);
 
     const files = req.files || [];
-    console.log(`[api] incoming files=${files.length}`, files.map(f=>({name:f.originalname, type:f.mimetype, size:f.size})))
+    
     if (!startup_name || !founder_name || !launch_date) {
       return res.status(400).json({ error: 'startup_name, founder_name, and launch_date are required' });
     }
@@ -772,12 +1309,11 @@ app.post('/api/reports', requireAuth, upload.array('files'), async (req, res) =>
     const report_id = crypto.randomUUID();
     const report_name = startup_name;
     const report_path = GCS_BUCKET ? `gs://${GCS_BUCKET}/runs/${report_id}.json` : null;
-    console.log(`[api] creating report_id=${report_id} name=${report_name} total_files=${files.length} report_path=${report_path}`);
+
     await dbRun(
       `INSERT INTO ${tableName('reports')} (report_id, user_id, report_name, startup_name, founder_name, launch_date, status, is_delete, is_pinned, report_path, total_files, created_at)
        VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, 0, ?, ?, NOW())`,
-      [report_id, req.user.id, report_name, startup_name, founder_name, launch_date, report_path, files.length]
-    );
+      [report_id, req.user.id, report_name, startup_name, founder_name, launch_date, report_path, files.length]);
 
     // Respond immediately
     const report = await dbGet(`SELECT * FROM ${tableName('reports')} WHERE report_id=?`, [report_id]);
@@ -786,21 +1322,20 @@ app.post('/api/reports', requireAuth, upload.array('files'), async (req, res) =>
     // Background: upload files to GCS and create uploads rows, then trigger Cloud Run
     setImmediate(async () => {
       try {
-        console.log(`[bg] start report_id=${report_id} files=${files.length}`);
+
         const createdUploads = [];
         if (!GCS_BUCKET) throw new Error('BUCKET env is not set');
         for (let i = 0; i < files.length; i++) {
           const f = files[i];
           const kind = file_types[i];
           const objectPath = `uploads/${report_id}/${f.originalname}`;
-          console.log(`[bg] upload ${i+1}/${files.length} -> ${objectPath} type=${f.mimetype} size=${f.size}`);
+
           const gcsPath = await gcsSaveBytes(GCS_BUCKET, objectPath, f.buffer, f.mimetype || 'application/octet-stream');
           await dbRun(
             `INSERT INTO ${tableName('uploads')} (file_id, user_id, report_id, filename, file_format, upload_path, created_at)
              VALUES (?, ?, ?, ?, ?, ?, NOW())`,
-            [crypto.randomUUID(), req.user.id, report_id, f.originalname, kind, gcsPath]
-          );
-          console.log(`[bg] db upload row inserted report_id=${report_id} file=${f.originalname} path=${gcsPath}`);
+            [crypto.randomUUID(), req.user.id, report_id, f.originalname, kind, gcsPath]);
+
           createdUploads.push({
             filetype: kind,
             filename: f.originalname,
@@ -818,16 +1353,16 @@ app.post('/api/reports', requireAuth, upload.array('files'), async (req, res) =>
             destination_gcs
           };
           // Fire-and-forget: do not await Cloud Run job completion/response
-          console.log(`[bg] trigger cloud-run url=${CLOUD_RUN_URL} company=${startup_name} uploads=${createdUploads.length} dest=${destination_gcs}`);
+
           axios.post(CLOUD_RUN_URL, payload, { timeout: 5000 })
             .then((resp) => {
-              console.log(`[bg] cloud-run request sent status=${resp.status}`);
+
             })
             .catch((err) => {
-              console.warn(`[bg] cloud-run request error:`, err?.response ? `${err.response.status} ${String(err.response.data).slice(0,200)}` : (err?.message || err));
+              // Cloud Run request failed
             });
         } else {
-          console.warn('[bg] CLOUD_RUN_URL not set; skipping trigger');
+
         }
       } catch (err) {
         console.error(`[bg] processing failed report_id=${report_id}:`, err?.message || err);
@@ -888,20 +1423,6 @@ app.get('/api/reports', requireAuth, async (req, res) => {
     // Count expected parameters
     const expectedParamCount = where.filter(w => w.includes('?')).length + 2; // +2 for LIMIT and OFFSET
     
-    console.log('Reports query debug:', { 
-      whereSql,
-      where,
-      params,
-      limit, 
-      skip, 
-      limitInt,
-      skipInt,
-      queryParams, 
-      paramTypes: queryParams.map(p => typeof p),
-      paramCount: queryParams.length,
-      expectedCount: expectedParamCount
-    });
-    
     // Validate parameter count
     if (queryParams.length !== expectedParamCount) {
       throw new Error(`Parameter count mismatch: expected ${expectedParamCount}, got ${queryParams.length}`);
@@ -919,8 +1440,6 @@ app.get('/api/reports', requireAuth, async (req, res) => {
         return String(param); // all other params as strings
       });
       
-      console.log('Safe params:', safeParams, 'Types:', safeParams.map(p => typeof p));
-      
       rows = await dbAll(sql, safeParams);
     } catch (error) {
       console.error('Error in reports query:', {
@@ -932,11 +1451,11 @@ app.get('/api/reports', requireAuth, async (req, res) => {
       
       // Try fallback approach without prepared statements
       try {
-        console.log('Trying fallback query without prepared statements...');
+
         const fallbackSql = `SELECT * FROM ${tableName('reports')} ${whereSql} ORDER BY created_at DESC LIMIT ${limitInt} OFFSET ${skipInt}`;
-        console.log('Fallback SQL:', fallbackSql);
+
         rows = await dbAll(fallbackSql, params);
-        console.log('Fallback query succeeded');
+
       } catch (fallbackError) {
         console.error('Fallback query also failed:', fallbackError.message);
         throw error; // Throw original error
@@ -990,9 +1509,11 @@ app.patch('/api/reports/:id/pin', requireAuth, async (req, res) => {
   try {
     const id = req.params.id;
     const r = await dbGet(`SELECT is_pinned FROM ${tableName('reports')} WHERE report_id=? AND user_id=?`, [id, req.user.id]);
+
     if (!r) return res.status(404).json({ error: 'not_found' });
     const next = r.is_pinned ? 0 : 1;
     await dbRun(`UPDATE ${tableName('reports')} SET is_pinned=? WHERE report_id=? AND user_id=?`, [next, id, req.user.id]);
+
     res.json({ pinned: !!next });
   } catch (e) { console.error(e); res.status(500).json({ error: 'toggle_pin_failed' }); }
 });
@@ -1001,6 +1522,7 @@ app.get('/api/reports/:id/data', requireAuth, async (req, res) => {
   try {
     const id = req.params.id;
     const r = await dbGet(`SELECT * FROM ${tableName('reports')} WHERE report_id=? AND user_id=? AND is_delete=0`, [id, req.user.id]);
+
     if (!r) return res.status(404).json({ error: 'not_found' });
     
     // If report is not success, return the report metadata without data
@@ -1039,6 +1561,7 @@ app.get('/api/reports/:id/data', requireAuth, async (req, res) => {
       });
     } catch (fetchError) {
       console.error(`[api] Failed to fetch report data for ${id}:`, fetchError?.message || fetchError);
+
       res.status(500).json({ error: 'failed_to_fetch_report_data' });
     }
   } catch (e) { 
@@ -1054,6 +1577,7 @@ app.get('/api/reports/:id/uploads', requireAuth, async (req, res) => {
     
     // Verify user owns this report
     const report = await dbGet(`SELECT report_id FROM ${tableName('reports')} WHERE report_id=? AND user_id=? AND is_delete=0`, [reportId, req.user.id]);
+
     if (!report) {
       return res.status(404).json({ error: 'report_not_found' });
     }
@@ -1061,8 +1585,8 @@ app.get('/api/reports/:id/uploads', requireAuth, async (req, res) => {
     // Get all uploads for this report
     const uploads = await dbAll(
       `SELECT filename, upload_path, file_format FROM ${tableName('uploads')} WHERE report_id=? ORDER BY created_at ASC`,
-      [reportId]
-    );
+
+      [reportId]);
 
     // Instead of generating signed URLs, return proxy URLs
     const filesWithUrls = uploads.map((upload, index) => {
@@ -1072,12 +1596,14 @@ app.get('/api/reports/:id/uploads', requireAuth, async (req, res) => {
         file_format: upload.file_format,
         // Use our proxy endpoint instead of signed URL
         public_url: `/api/reports/${reportId}/uploads/${index}/download`
+
       };
     });
 
     res.json({ files: filesWithUrls });
   } catch (error) {
     console.error(`[api] Failed to get uploads for report ${req.params.id}:`, error?.message || error);
+
     res.status(500).json({ error: 'failed_to_get_uploads' });
   }
 });
@@ -1089,6 +1615,7 @@ app.get('/api/reports/:reportId/uploads/:uploadIndex/download', requireAuth, asy
     
     // Verify user owns this report
     const report = await dbGet(`SELECT report_id FROM ${tableName('reports')} WHERE report_id=? AND user_id=? AND is_delete=0`, [reportId, req.user.id]);
+
     if (!report) {
       return res.status(404).json({ error: 'report_not_found' });
     }
@@ -1096,8 +1623,8 @@ app.get('/api/reports/:reportId/uploads/:uploadIndex/download', requireAuth, asy
     // Get the specific upload
     const uploads = await dbAll(
       `SELECT filename, upload_path, file_format FROM ${tableName('uploads')} WHERE report_id=? ORDER BY created_at ASC`,
-      [reportId]
-    );
+
+      [reportId]);
 
     const index = parseInt(uploadIndex, 10);
     if (isNaN(index) || index < 0 || index >= uploads.length) {
@@ -1139,6 +1666,7 @@ app.get('/api/reports/:reportId/uploads/:uploadIndex/download', requireAuth, asy
       
   } catch (error) {
     console.error(`[api] Failed to download file:`, error?.message || error);
+
     if (!res.headersSent) {
       res.status(500).json({ error: 'download_failed' });
     }
@@ -1180,12 +1708,13 @@ app.post('/api/reports/share-email', requireAuth, async (req, res) => {
     // Send email
     const info = await transporter.sendMail({
       from: `"PitchLense" <${emailConfig.imap.user}>`,
+
       to: to,
       subject: subject,
       html: html
     });
     
-    console.log('[api] Email sent successfully:', info.messageId);
+
     res.json({ 
       success: true, 
       messageId: info.messageId,
@@ -1235,23 +1764,23 @@ app.get('/api/extension/download-zip', requireAuth, async (req, res) => {
       const isWindows = process.platform === 'win32';
       const zipCommand = isWindows 
         ? `powershell -Command "Compress-Archive -Path 'extension\\*' -DestinationPath 'temp_extension.zip' -Force"`
+
         : `zip -r temp_extension.zip extension/ -x "*.DS_Store" "*/node_modules/*"`;
       
-      await execAsync(`cd "${path.join(__dirname, '..')}" && ${zipCommand}`);
       
-      // Send the zip file
+      await execAsync(`cd "${path.join(__dirname, '..')}" && ${zipCommand}`);      // Send the zip file
+
       const zipBuffer = fs.readFileSync(zipPath);
       res.send(zipBuffer);
       
       // Clean up temp file
       try {
-        fs.unlinkSync(zipPath);
-      } catch (e) {
+        fs.unlinkSync(zipPath);} catch (e) {
         // Ignore cleanup errors
       }
 
     } catch (zipError) {
-      console.log('System zip not available, falling back to manual approach:', zipError.message);
+
       
       // Fallback: Return JSON with file contents that can be zipped on frontend
       const files = [];
@@ -1293,6 +1822,1143 @@ app.get('/api/extension/download-zip', requireAuth, async (req, res) => {
     res.status(500).json({ error: 'failed_to_create_zip' });
   }
 });
+
+// ===== INVESTMENT ENDPOINTS =====
+// Investment tracking for investors
+
+// Create new investment
+app.post('/api/investments', requireAuth, async (req, res) => {
+  try {
+    const {
+      startup_name,
+      investor_name,
+      funding_round,
+      investment_amount,
+      equity_percentage,
+      company_valuation,
+      investment_date,
+      investment_type,
+      notes,
+      status
+    } = req.body;
+
+    // Validation
+    if (!startup_name || !investment_amount || !investment_date) {
+      return res.status(400).json({ error: 'startup_name, investment_amount, and investment_date are required' });
+    }
+
+    const investment_id = crypto.randomUUID();
+    
+    await dbRun(
+      `INSERT INTO ${tableName('investments')} 
+
+       (investment_id, user_id, startup_name, investor_name, funding_round, investment_amount, 
+        equity_percentage, company_valuation, investment_date, investment_type, notes, status, is_deleted, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NOW(), NOW())`,
+
+      [
+        investment_id,
+        req.user.id,
+        startup_name,
+        investor_name || null,
+        funding_round || null,
+        investment_amount,
+        equity_percentage || null,
+        company_valuation || null,
+        investment_date,
+        investment_type || 'Equity',
+        notes || null,
+        status || 'Active'
+      ]);
+
+    const investment = await dbGet(
+      `SELECT * FROM ${tableName('investments')} WHERE investment_id=?`,
+
+      [investment_id]);
+
+    res.json({ success: true, investment });
+  } catch (error) {
+    console.error('Create investment error:', error);
+    res.status(500).json({ error: 'Failed to create investment', details: error.message });
+  }
+});
+
+// Get all investments for user
+app.get('/api/investments', requireAuth, async (req, res) => {
+  try {
+    const { status, search, sort_by = 'investment_date', sort_order = 'DESC' } = req.query;
+    
+    const where = ['is_deleted = 0', 'user_id = ?'];
+    const params = [req.user.id];
+
+    if (status) {
+      where.push('status = ?');
+      params.push(status);
+    }
+
+    if (search) {
+      where.push('(LOWER(startup_name) LIKE ? OR LOWER(investor_name) LIKE ?)');
+      const like = `%${String(search).toLowerCase()}%`;
+
+      params.push(like, like);
+    }
+
+    const whereSql = where.join(' AND ');
+    
+    // Allowed sort columns
+    const allowedSortColumns = ['investment_date', 'startup_name', 'investment_amount', 'created_at'];
+    const sortColumn = allowedSortColumns.includes(sort_by) ? sort_by : 'investment_date';
+    const sortDir = sort_order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+    const investments = await dbAll(
+      `SELECT 
+
+        i.*,
+        COALESCE(SUM(u.additional_amount), 0) as total_additional_investment,
+        COUNT(u.update_id) as total_updates
+       FROM ${tableName('investments')} i
+       LEFT JOIN ${tableName('investment_updates')} u ON i.investment_id = u.investment_id
+       WHERE ${whereSql}
+       GROUP BY i.investment_id
+       ORDER BY ${sortColumn} ${sortDir}`,
+
+      params);
+
+    // Calculate metrics for each investment
+    const investmentsWithMetrics = investments.map(inv => {
+      const totalInvested = parseFloat(inv.investment_amount) + parseFloat(inv.total_additional_investment || 0);
+      const currentValue = inv.company_valuation && inv.equity_percentage 
+        ? (parseFloat(inv.company_valuation) * parseFloat(inv.equity_percentage) / 100)
+        : null;
+      const roi = currentValue ? ((currentValue - totalInvested) / totalInvested * 100).toFixed(2) : null;
+
+      return {
+        ...inv,
+        total_invested: totalInvested,
+        current_value: currentValue,
+        roi_percentage: roi
+      };
+    });
+
+    res.json({ success: true, investments: investmentsWithMetrics, total: investments.length });
+  } catch (error) {
+    console.error('List investments error:', error);
+    res.status(500).json({ error: 'Failed to fetch investments', details: error.message });
+  }
+});
+
+// Get single investment with details
+app.get('/api/investments/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const investment = await dbGet(
+      `SELECT * FROM ${tableName('investments')} WHERE investment_id=? AND user_id=? AND is_deleted=0`,
+
+      [id, req.user.id]);
+
+    if (!investment) {
+      return res.status(404).json({ error: 'Investment not found' });
+    }
+
+    // Get all updates for this investment
+    const updates = await dbAll(
+      `SELECT * FROM ${tableName('investment_updates')} WHERE investment_id=? ORDER BY update_date DESC`,
+
+      [id]);
+
+    // Calculate metrics
+    const totalAdditional = updates.reduce((sum, u) => sum + (parseFloat(u.additional_amount) || 0), 0);
+    const totalInvested = parseFloat(investment.investment_amount) + totalAdditional;
+    
+    // Get latest valuation and equity
+    const latestValuationUpdate = updates.find(u => u.new_valuation);
+    const latestEquityUpdate = updates.find(u => u.new_equity_percentage);
+    
+    const currentValuation = latestValuationUpdate ? parseFloat(latestValuationUpdate.new_valuation) : parseFloat(investment.company_valuation);
+    const currentEquity = latestEquityUpdate ? parseFloat(latestEquityUpdate.new_equity_percentage) : parseFloat(investment.equity_percentage);
+    
+    const currentValue = currentValuation && currentEquity ? (currentValuation * currentEquity / 100) : null;
+    const roi = currentValue ? ((currentValue - totalInvested) / totalInvested * 100).toFixed(2) : null;
+
+    res.json({
+      success: true,
+      investment: {
+        ...investment,
+        total_invested: totalInvested,
+        current_valuation: currentValuation,
+        current_equity_percentage: currentEquity,
+        current_value: currentValue,
+        roi_percentage: roi
+      },
+      updates
+    });
+  } catch (error) {
+    console.error('Get investment error:', error);
+    res.status(500).json({ error: 'Failed to fetch investment', details: error.message });
+  }
+});
+
+// Update investment
+app.put('/api/investments/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      startup_name,
+      investor_name,
+      funding_round,
+      investment_amount,
+      equity_percentage,
+      company_valuation,
+      investment_date,
+      investment_type,
+      notes,
+      status
+    } = req.body;
+
+    // Check if investment exists
+    const existing = await dbGet(
+      `SELECT investment_id FROM ${tableName('investments')} WHERE investment_id=? AND user_id=? AND is_deleted=0`,
+
+      [id, req.user.id]);
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Investment not found' });
+    }
+
+    await dbRun(
+      `UPDATE ${tableName('investments')} 
+
+       SET startup_name=?, investor_name=?, funding_round=?, investment_amount=?, 
+           equity_percentage=?, company_valuation=?, investment_date=?, 
+           investment_type=?, notes=?, status=?, updated_at=NOW()
+       WHERE investment_id=? AND user_id=?`,
+
+      [
+        startup_name,
+        investor_name,
+        funding_round,
+        investment_amount,
+        equity_percentage,
+        company_valuation,
+        investment_date,
+        investment_type,
+        notes,
+        status,
+        id,
+        req.user.id
+      ]);
+
+    const investment = await dbGet(
+      `SELECT * FROM ${tableName('investments')} WHERE investment_id=?`,
+
+      [id]);
+
+    res.json({ success: true, investment });
+  } catch (error) {
+    console.error('Update investment error:', error);
+    res.status(500).json({ error: 'Failed to update investment', details: error.message });
+  }
+});
+
+// Delete investment (soft delete)
+app.delete('/api/investments/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const existing = await dbGet(
+      `SELECT investment_id FROM ${tableName('investments')} WHERE investment_id=? AND user_id=? AND is_deleted=0`,
+
+      [id, req.user.id]);
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Investment not found' });
+    }
+
+    await dbRun(
+      `UPDATE ${tableName('investments')} SET is_deleted=1, updated_at=NOW() WHERE investment_id=? AND user_id=?`,
+
+      [id, req.user.id]);
+
+    res.json({ success: true, message: 'Investment deleted' });
+  } catch (error) {
+    console.error('Delete investment error:', error);
+    res.status(500).json({ error: 'Failed to delete investment', details: error.message });
+  }
+});
+
+// Add update to investment
+app.post('/api/investments/:id/updates', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      update_type,
+      additional_amount,
+      new_equity_percentage,
+      new_valuation,
+      roi_percentage,
+      notes,
+      update_date
+    } = req.body;
+
+    // Validation
+    if (!update_type || !update_date) {
+      return res.status(400).json({ error: 'update_type and update_date are required' });
+    }
+
+    // Check if investment exists and belongs to user
+    const investment = await dbGet(
+      `SELECT investment_id FROM ${tableName('investments')} WHERE investment_id=? AND user_id=? AND is_deleted=0`,
+
+      [id, req.user.id]);
+
+    if (!investment) {
+      return res.status(404).json({ error: 'Investment not found' });
+    }
+
+    const update_id = crypto.randomUUID();
+
+    await dbRun(
+      `INSERT INTO ${tableName('investment_updates')} 
+
+       (update_id, investment_id, update_type, additional_amount, new_equity_percentage, 
+        new_valuation, roi_percentage, notes, update_date, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+
+      [
+        update_id,
+        id,
+        update_type,
+        additional_amount || null,
+        new_equity_percentage || null,
+        new_valuation || null,
+        roi_percentage || null,
+        notes || null,
+        update_date
+      ]);
+
+    const update = await dbGet(
+      `SELECT * FROM ${tableName('investment_updates')} WHERE update_id=?`,
+
+      [update_id]);
+
+    res.json({ success: true, update });
+  } catch (error) {
+    console.error('Add investment update error:', error);
+    res.status(500).json({ error: 'Failed to add update', details: error.message });
+  }
+});
+
+// Get updates for an investment
+app.get('/api/investments/:id/updates', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if investment exists and belongs to user
+    const investment = await dbGet(
+      `SELECT investment_id FROM ${tableName('investments')} WHERE investment_id=? AND user_id=? AND is_deleted=0`,
+
+      [id, req.user.id]);
+
+    if (!investment) {
+      return res.status(404).json({ error: 'Investment not found' });
+    }
+
+    const updates = await dbAll(
+      `SELECT * FROM ${tableName('investment_updates')} WHERE investment_id=? ORDER BY update_date DESC`,
+
+      [id]);
+
+    res.json({ success: true, updates });
+  } catch (error) {
+    console.error('Get investment updates error:', error);
+    res.status(500).json({ error: 'Failed to fetch updates', details: error.message });
+  }
+});
+
+// Get investment metrics and analytics
+app.get('/api/investments/:id/metrics', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const investment = await dbGet(
+      `SELECT * FROM ${tableName('investments')} WHERE investment_id=? AND user_id=? AND is_deleted=0`,
+
+      [id, req.user.id]);
+
+    if (!investment) {
+      return res.status(404).json({ error: 'Investment not found' });
+    }
+
+    const updates = await dbAll(
+      `SELECT * FROM ${tableName('investment_updates')} WHERE investment_id=? ORDER BY update_date ASC`,
+
+      [id]);
+
+    // Calculate metrics over time
+    const timeline = [];
+    let cumulativeInvestment = parseFloat(investment.investment_amount);
+    let currentValuation = parseFloat(investment.company_valuation) || 0;
+    let currentEquity = parseFloat(investment.equity_percentage) || 0;
+
+    // Initial point
+    timeline.push({
+      date: investment.investment_date,
+      invested: cumulativeInvestment,
+      valuation: currentValuation,
+      equity: currentEquity,
+      value: currentValuation * currentEquity / 100,
+      roi: 0
+    });
+
+    // Process each update
+    updates.forEach(update => {
+      if (update.additional_amount) {
+        cumulativeInvestment += parseFloat(update.additional_amount);
+      }
+      if (update.new_valuation) {
+        currentValuation = parseFloat(update.new_valuation);
+      }
+      if (update.new_equity_percentage) {
+        currentEquity = parseFloat(update.new_equity_percentage);
+      }
+
+      const currentValue = currentValuation * currentEquity / 100;
+      const roi = ((currentValue - cumulativeInvestment) / cumulativeInvestment * 100);
+
+      timeline.push({
+        date: update.update_date,
+        invested: cumulativeInvestment,
+        valuation: currentValuation,
+        equity: currentEquity,
+        value: currentValue,
+        roi: roi.toFixed(2),
+        update_type: update.update_type
+      });
+    });
+
+    // Summary metrics
+    const summary = {
+      total_invested: cumulativeInvestment,
+      current_valuation: currentValuation,
+      current_equity: currentEquity,
+      current_value: currentValuation * currentEquity / 100,
+      total_roi: timeline.length > 0 ? timeline[timeline.length - 1].roi : 0,
+      investment_duration_days: Math.floor((new Date() - new Date(investment.investment_date)) / (1000 * 60 * 60 * 24)),
+      total_updates: updates.length
+    };
+
+    res.json({ success: true, summary, timeline });
+  } catch (error) {
+    console.error('Get investment metrics error:', error);
+    res.status(500).json({ error: 'Failed to calculate metrics', details: error.message });
+  }
+});
+
+// ===== NEWS ENDPOINTS =====
+// Alpha Vantage News API integration
+
+// Get market news from FMP
+app.get('/api/news', requireAuth, async (req, res) => {
+  try {
+    const { type = 'general', page = 0, limit = 20 } = req.query;
+    
+    const apiKey = process.env.FMP_API_KEY;
+    
+    if (!apiKey) {
+
+      return res.status(500).json({ 
+        error: 'API key not configured',
+        details: 'FMP_API_KEY environment variable is required' 
+      });
+    }
+
+    // Map news type to FMP endpoint
+    const newsTypeMap = {
+      'general': 'general-latest',
+      'press': 'press-releases-latest',
+      'stock': 'stock-latest',
+      'crypto': 'crypto-latest',
+      'forex': 'forex-latest'
+    };
+
+    const newsEndpoint = newsTypeMap[type] || 'general-latest';
+    const apiUrl = `https://financialmodelingprep.com/stable/news/${newsEndpoint}?page=${page}&limit=${limit}&apikey=${apiKey}`;
+
+
+    // Make request to FMP
+    const response = await axios.get(apiUrl, {
+      timeout: 15000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json'
+      }
+    });
+
+    // Check for error responses
+    if (response.status === 402) {
+      console.error('[api] FMP API key invalid or payment required');
+      return res.status(402).json({
+        error: 'API key invalid or payment required',
+        details: 'Please check your FMP API key or upgrade your plan'
+      });
+    }
+
+    // FMP returns array directly
+    const newsData = Array.isArray(response.data) ? response.data : [];
+
+
+
+    // Backup data logging removed for production security
+
+    // Return the news feed
+    res.json({
+      success: true,
+      type: type,
+      feed: newsData,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      count: newsData.length
+    });
+
+  } catch (error) {
+    console.error('\n========== [FMP ERROR] ==========');
+    if (error.response) {
+      console.error('========== [END FMP ERROR] ==========\n');
+      return res.status(error.response.status || 500).json({
+        error: `Failed to fetch ${type} news from FMP`,
+        details: error.response.data?.message || error.response.data?.error || error.message,
+        status: error.response.status,
+        endpoint: newsTypeMap[type]
+      });
+    }
+    
+    console.error('No response received from FMP');
+    console.error('========== [END FMP ERROR] ==========\n');
+    
+    res.status(500).json({ 
+      error: `Failed to fetch ${type} news`,
+      details: error.message,
+      endpoint: newsTypeMap[type]
+    });
+  }
+});
+
+// Get insider trading data from FMP
+app.get('/api/news/insider-trades', requireAuth, async (req, res) => {
+  try {
+    const { page = 0, limit = 100 } = req.query;
+    
+    const apiKey = process.env.FMP_API_KEY;
+    
+    if (!apiKey) {
+
+      return res.status(500).json({ 
+        error: 'API key not configured',
+        details: 'FMP_API_KEY environment variable is required' 
+      });
+    }
+
+    const apiUrl = `https://financialmodelingprep.com/stable/insider-trading/latest?page=${page}&limit=${limit}&apikey=${apiKey}`;
+
+
+    // Make request to FMP
+    const response = await axios.get(apiUrl, {
+      timeout: 15000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json'
+      }
+    });
+
+    // FMP returns array directly
+    const tradesData = Array.isArray(response.data) ? response.data : [];
+
+
+
+    // Log for backup data collection
+    
+
+    // Return the insider trades
+    res.json({
+      success: true,
+      trades: tradesData,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      count: tradesData.length
+    });
+
+  } catch (error) {
+    console.error('\n========== [FMP ERROR: INSIDER_TRADES] ==========');
+    console.error(`Error Message: ${error.message}`);
+    if (error.response) {
+      console.error(`HTTP Status: ${error.response.status}`);
+      console.error(`Status Text: ${error.response.statusText}`);
+      console.error(`Response Data:`, JSON.stringify(error.response.data));
+      console.error('========== [END FMP ERROR] ==========\n');
+      
+      return res.status(error.response.status || 500).json({ 
+        error: 'Failed to fetch insider trades from FMP',
+        details: error.response.data?.message || error.response.data?.error || error.message,
+        status: error.response.status
+      });
+    }
+    
+    console.error('No response received from FMP');
+    console.error('========== [END FMP ERROR] ==========\n');
+    
+    res.status(500).json({ 
+      error: 'Failed to fetch insider trades',
+      details: error.message 
+    });
+  }
+});
+
+// Get crowdfunding campaigns from FMP
+app.get('/api/news/crowdfunding', requireAuth, async (req, res) => {
+  try {
+    const { page = 0, limit = 100 } = req.query;
+    
+    const apiKey = process.env.FMP_API_KEY;
+    
+    if (!apiKey) {
+
+      return res.status(500).json({ 
+        error: 'API key not configured',
+        details: 'FMP_API_KEY environment variable is required' 
+      });
+    }
+
+    const apiUrl = `https://financialmodelingprep.com/stable/crowdfunding-offerings-latest?page=${page}&limit=${limit}&apikey=${apiKey}`;
+    
+        const response = await axios.get(apiUrl, {
+          timeout: 15000,
+          headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json'
+      }
+    });
+
+    const campaignsData = Array.isArray(response.data) ? response.data : [];
+
+    res.json({
+      success: true,
+      campaigns: campaignsData,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      count: campaignsData.length
+    });
+
+  } catch (error) {
+    console.error('\n========== [FMP ERROR: CROWDFUNDING] ==========');
+    console.error(`Error Message: ${error.message}`);
+    if (error.response) {
+      console.error(`HTTP Status: ${error.response.status}`);
+      console.error(`Status Text: ${error.response.statusText}`);
+      console.error(`Response Data:`, JSON.stringify(error.response.data));
+      console.error('========== [END FMP ERROR] ==========\n');
+      
+      return res.status(error.response.status || 500).json({ 
+        error: 'Failed to fetch crowdfunding campaigns from FMP',
+        details: error.response.data?.message || error.response.data?.error || error.message,
+        status: error.response.status
+      });
+    }
+    
+    console.error('========== [END FMP ERROR] ==========\n');
+    
+    res.status(500).json({ 
+      error: 'Failed to fetch crowdfunding campaigns',
+      details: error.message 
+    });
+  }
+});
+
+// Get equity offerings from FMP
+app.get('/api/news/equity-offerings', requireAuth, async (req, res) => {
+  try {
+    const { page = 0, limit = 100 } = req.query;
+    
+    const apiKey = process.env.FMP_API_KEY;
+    
+    if (!apiKey) {
+
+      return res.status(500).json({ 
+        error: 'API key not configured',
+        details: 'FMP_API_KEY environment variable is required' 
+      });
+    }
+
+    const apiUrl = `https://financialmodelingprep.com/stable/fundraising-latest?page=${page}&limit=${limit}&apikey=${apiKey}`;
+
+    const response = await axios.get(apiUrl, {
+      timeout: 15000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json'
+      }
+    });
+
+    const offeringsData = Array.isArray(response.data) ? response.data : [];
+
+    res.json({
+      success: true,
+      offerings: offeringsData,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      count: offeringsData.length
+    });
+
+  } catch (error) {
+    console.error('\n========== [FMP ERROR: EQUITY_OFFERINGS] ==========');
+    console.error(`Error Message: ${error.message}`);
+    if (error.response) {
+      console.error(`HTTP Status: ${error.response.status}`);
+      console.error(`Status Text: ${error.response.statusText}`);
+      console.error(`Response Data:`, JSON.stringify(error.response.data));
+      console.error('========== [END FMP ERROR] ==========\n');
+      
+      return res.status(error.response.status || 500).json({ 
+        error: 'Failed to fetch equity offerings from FMP',
+        details: error.response.data?.message || error.response.data?.error || error.message,
+        status: error.response.status
+      });
+    }
+    
+    console.error('========== [END FMP ERROR] ==========\n');
+    
+    res.status(500).json({ 
+      error: 'Failed to fetch equity offerings',
+      details: error.message 
+    });
+  }
+});
+
+// Get acquisition ownership from FMP
+app.get('/api/news/acquisition-ownership', requireAuth, async (req, res) => {
+  try {
+    const { symbol } = req.query;
+    
+    if (!symbol) {
+      return res.status(400).json({ 
+        error: 'Symbol parameter required',
+        details: 'Please provide a stock symbol (e.g., AAPL)'
+      });
+    }
+    
+    const apiKey = process.env.FMP_API_KEY;
+    
+    if (!apiKey) {
+
+      return res.status(500).json({ 
+        error: 'API key not configured',
+        details: 'FMP_API_KEY environment variable is required' 
+      });
+    }
+
+    const apiUrl = `https://financialmodelingprep.com/stable/acquisition-of-beneficial-ownership?symbol=${symbol.toUpperCase()}&apikey=${apiKey}`;
+
+    const response = await axios.get(apiUrl, {
+      timeout: 15000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json'
+      }
+    });
+
+    const ownershipData = Array.isArray(response.data) ? response.data : [];
+
+    res.json({
+      success: true,
+      symbol: symbol.toUpperCase(),
+      ownership: ownershipData,
+      count: ownershipData.length
+    });
+
+  } catch (error) {
+    console.error('\n========== [FMP ERROR: ACQUISITION_OWNERSHIP] ==========');
+    console.error(`Symbol: ${req.query.symbol}`);
+    console.error(`Error Message: ${error.message}`);
+    if (error.response) {
+      console.error(`HTTP Status: ${error.response.status}`);
+      console.error(`Status Text: ${error.response.statusText}`);
+      console.error(`Response Data:`, JSON.stringify(error.response.data));
+      console.error('========== [END FMP ERROR] ==========\n');
+      
+      return res.status(error.response.status || 500).json({ 
+        error: 'Failed to fetch acquisition ownership from FMP',
+        details: error.response.data?.message || error.response.data?.error || error.message,
+        status: error.response.status
+      });
+    }
+    
+    console.error('========== [END FMP ERROR] ==========\n');
+    
+    res.status(500).json({ 
+      error: 'Failed to fetch acquisition ownership',
+      details: error.message 
+    });
+  }
+});
+
+// Search symbols using FMP API
+app.get('/api/search/fmp', requireAuth, async (req, res) => {
+  try {
+    const { query } = req.query;
+    
+    if (!query) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Query parameter is required',
+        details: 'Please provide a search query'
+      });
+    }
+
+    const apiKey = process.env.FMP_API_KEY;
+    if (!apiKey) {
+      console.error('[FMP] No API key found in environment variables');
+      return res.status(500).json({ 
+        success: false, 
+        error: 'FMP API key not configured',
+        details: 'Contact administrator to configure FMP API key'
+      });
+    }
+
+    const apiUrl = `https://financialmodelingprep.com/stable/search-name?query=${encodeURIComponent(query)}&apikey=${apiKey}`;
+        
+        const response = await axios.get(apiUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'application/json'
+      },
+      timeout: 10000
+    });
+
+    const searchResults = Array.isArray(response.data) ? response.data : [];
+
+    res.json({
+      success: true,
+      query: query, 
+      results: searchResults, 
+      count: searchResults.length 
+    });
+
+  } catch (error) {
+    console.error('\n========== [FMP ERROR: SEARCH] ==========');
+    console.error(`Query: ${req.query.query}`);
+    console.error(`Error Message: ${error.message}`);
+    if (error.response) {
+      console.error(`HTTP Status: ${error.response.status}`);
+      console.error(`Status Text: ${error.response.statusText}`);
+      console.error(`Response Data:`, JSON.stringify(error.response.data));
+      console.error('========== [END FMP ERROR] ==========\n');
+      
+      if (error.response.status === 402) {
+        return res.status(402).json({ 
+          success: false, 
+          error: 'FMP API payment required',
+          details: 'API subscription expired or limit reached',
+          httpStatus: error.response.status,
+          statusText: error.response.statusText
+        });
+      }
+      
+      return res.status(error.response.status || 500).json({ 
+        success: false, 
+        error: 'FMP API error', 
+        details: error.response.data?.message || error.response.data?.error || error.message,
+        httpStatus: error.response.status,
+        statusText: error.response.statusText
+      });
+    }
+    
+    if (error.code === 'ECONNABORTED') {
+      return res.status(408).json({ 
+        success: false, 
+        error: 'Request timeout', 
+        details: 'FMP API request timed out after 10 seconds' 
+      });
+    }
+    
+    console.error('========== [END FMP ERROR] ==========\n');
+    
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Failed to search symbols', 
+      details: error.message
+    });
+  }
+});
+
+// Get company profile data
+app.get('/api/company/profile/:symbol', requireAuth, async (req, res) => {
+  try {
+    const { symbol } = req.params;
+    
+    if (!symbol) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Symbol parameter is required',
+        details: 'Please provide a stock symbol'
+      });
+    }
+
+    const apiKey = process.env.FMP_API_KEY;
+    if (!apiKey) {
+      console.error('[FMP] No API key found in environment variables');
+      return res.status(500).json({ 
+        success: false, 
+        error: 'FMP API key not configured',
+        details: 'Contact administrator to configure FMP API key'
+      });
+    }
+
+    const apiUrl = `https://financialmodelingprep.com/stable/profile?symbol=${symbol.toUpperCase()}&apikey=${apiKey}`;
+    
+    const response = await axios.get(apiUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json'
+      },
+      timeout: 10000
+    });
+
+    const profileData = Array.isArray(response.data) ? response.data : [];
+
+
+    res.json({ 
+      success: true, 
+      symbol: symbol.toUpperCase(), 
+      profile: profileData[0] || null,
+      count: profileData.length 
+    });
+
+  } catch (error) {
+    console.error('[FMP] Error fetching company profile:', error.message);
+    
+    if (error.response) {
+      return res.status(error.response.status || 500).json({ 
+        success: false, 
+        error: 'FMP API error', 
+        details: error.response.data || error.message
+      });
+    }
+    
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch company profile', 
+      details: error.message
+    });
+  }
+});
+
+// Get company financial data (income statement, balance sheet, key metrics)
+app.get('/api/company/financials/:symbol', requireAuth, async (req, res) => {
+  try {
+    const { symbol } = req.params;
+    
+    if (!symbol) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Symbol parameter is required'
+      });
+    }
+
+    const apiKey = process.env.FMP_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ 
+        success: false, 
+        error: 'FMP API key not configured'
+      });
+    }
+
+    // Fetch all financial data in parallel
+    const [incomeResponse, balanceResponse, metricsResponse] = await Promise.allSettled([
+      axios.get(`https://financialmodelingprep.com/stable/income-statement?symbol=${symbol.toUpperCase()}&apikey=${apiKey}`, {
+
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+        timeout: 10000
+      }),
+      axios.get(`https://financialmodelingprep.com/stable/balance-sheet-statement?symbol=${symbol.toUpperCase()}&apikey=${apiKey}`, {
+
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+        timeout: 10000
+      }),
+      axios.get(`https://financialmodelingprep.com/stable/key-metrics?symbol=${symbol.toUpperCase()}&apikey=${apiKey}`, {
+
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+        timeout: 10000
+      })
+    ]);
+
+    const incomeData = incomeResponse.status === 'fulfilled' ? incomeResponse.value.data : [];
+    const balanceData = balanceResponse.status === 'fulfilled' ? balanceResponse.value.data : [];
+    const metricsData = metricsResponse.status === 'fulfilled' ? metricsResponse.value.data : [];
+
+    res.json({ 
+      success: true, 
+      symbol: symbol.toUpperCase(),
+      incomeStatement: incomeData,
+      balanceSheet: balanceData,
+      keyMetrics: metricsData
+    });
+
+  } catch (error) {
+    console.error('[FMP] Error fetching financial data:', error.message);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch financial data', 
+      details: error.message
+    });
+  }
+});
+
+// Get company additional data (employees, market cap, executives, etc.)
+app.get('/api/company/additional/:symbol', requireAuth, async (req, res) => {
+  try {
+    const { symbol } = req.params;
+    
+    if (!symbol) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Symbol parameter is required'
+      });
+    }
+
+    const apiKey = process.env.FMP_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ 
+        success: false, 
+        error: 'FMP API key not configured'
+      });
+    }
+
+    // Fetch additional data in parallel
+    const [employeesResponse, marketCapResponse, executivesResponse, dividendsResponse] = await Promise.allSettled([
+      axios.get(`https://financialmodelingprep.com/stable/employee-count?symbol=${symbol.toUpperCase()}&apikey=${apiKey}`, {
+
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+        timeout: 10000
+      }),
+      axios.get(`https://financialmodelingprep.com/stable/market-capitalization?symbol=${symbol.toUpperCase()}&apikey=${apiKey}`, {
+
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+        timeout: 10000
+      }),
+      axios.get(`https://financialmodelingprep.com/stable/key-executives?symbol=${symbol.toUpperCase()}&apikey=${apiKey}`, {
+
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+        timeout: 10000
+      }),
+      axios.get(`https://financialmodelingprep.com/stable/dividends?symbol=${symbol.toUpperCase()}&apikey=${apiKey}`, {
+
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+        timeout: 10000
+      })
+    ]);
+
+    const employeesData = employeesResponse.status === 'fulfilled' ? employeesResponse.value.data : [];
+    const marketCapData = marketCapResponse.status === 'fulfilled' ? marketCapResponse.value.data : [];
+    const executivesData = executivesResponse.status === 'fulfilled' ? executivesResponse.value.data : [];
+    const dividendsData = dividendsResponse.status === 'fulfilled' ? dividendsResponse.value.data : [];
+
+    res.json({ 
+      success: true, 
+      symbol: symbol.toUpperCase(),
+      employees: employeesData,
+      marketCap: marketCapData,
+      executives: executivesData,
+      dividends: dividendsData
+    });
+
+  } catch (error) {
+    console.error('[FMP] Error fetching additional data:', error.message);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch additional data', 
+      details: error.message
+    });
+  }
+});
+
+// Get company news and press releases
+app.get('/api/company/news/:symbol', requireAuth, async (req, res) => {
+  try {
+    const { symbol } = req.params;
+    
+    if (!symbol) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Symbol parameter is required'
+      });
+    }
+
+    const apiKey = process.env.FMP_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ 
+        success: false, 
+        error: 'FMP API key not configured'
+      });
+    }
+
+    const pressReleasesUrl = `https://financialmodelingprep.com/stable/news/press-releases?symbols=${symbol.toUpperCase()}&apikey=${apiKey}`;
+
+    
+    const response = await axios.get(pressReleasesUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+      timeout: 10000
+    });
+
+    const newsData = Array.isArray(response.data) ? response.data : [];
+
+    res.json({ 
+      success: true, 
+      symbol: symbol.toUpperCase(),
+      pressReleases: newsData,
+      count: newsData.length
+    });
+
+      } catch (error) {
+    console.error('[FMP] Error fetching company news:', error.message);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch company news', 
+      details: error.message 
+    });
+  }
+});
+
+// Get trending topics
+app.get('/api/news/topics', requireAuth, async (req, res) => {
+  try {
+    res.json({
+      success: true,
+      topics: [
+        { value: 'blockchain', label: 'Blockchain' },
+        { value: 'earnings', label: 'Earnings' },
+        { value: 'ipo', label: 'IPO' },
+        { value: 'mergers_and_acquisitions', label: 'M&A' },
+        { value: 'financial_markets', label: 'Financial Markets' },
+        { value: 'economy_fiscal', label: 'Economy & Fiscal' },
+        { value: 'economy_monetary', label: 'Monetary Policy' },
+        { value: 'economy_macro', label: 'Macroeconomics' },
+        { value: 'energy_transportation', label: 'Energy & Transportation' },
+        { value: 'finance', label: 'Finance' },
+        { value: 'life_sciences', label: 'Life Sciences' },
+        { value: 'manufacturing', label: 'Manufacturing' },
+        { value: 'real_estate', label: 'Real Estate' },
+        { value: 'retail_wholesale', label: 'Retail & Wholesale' },
+        { value: 'technology', label: 'Technology' },
+        { value: 'startups', label: 'Startups' },
+        { value: 'venture_capital', label: 'Venture Capital' }
+      ]
+    });
+  } catch (error) {
+    console.error('[api] Topics fetch error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch topics' });
+  }
+});
+
 
 // ===== EMAIL ENDPOINTS =====
 // Email libraries are imported at the top of the file
@@ -1345,15 +3011,16 @@ app.get('/api/emails', requireAuth, async (req, res) => {
     // Prevent simultaneous IMAP connections
     const now = Date.now();
     if (activeImapConnection) {
-      console.log('[api] IMAP connection already active, rejecting request');
+
       return res.status(429).json({ error: 'Email fetch in progress, please wait' });
     }
     
     // Enforce cooldown between requests
     if (now - lastImapFetch < IMAP_COOLDOWN) {
       const waitTime = Math.ceil((IMAP_COOLDOWN - (now - lastImapFetch)) / 1000);
-      console.log(`[api] IMAP cooldown active, wait ${waitTime}s`);
+
       return res.status(429).json({ error: `Please wait ${waitTime} seconds before refreshing` });
+
     }
     
     activeImapConnection = true;
@@ -1369,12 +3036,12 @@ app.get('/api/emails', requireAuth, async (req, res) => {
     imap = new Imap(config.imap);
     const emails = [];
     
-    console.log('[api] Starting IMAP connection...');
+
     
     // Set overall timeout for the entire operation
     const timeoutPromise = new Promise((_, reject) => {
       timeoutId = setTimeout(() => {
-        console.log('[api] IMAP operation timeout - forcing disconnect');
+
         if (imap) {
           try { imap.end(); } catch (e) {}
         }
@@ -1399,6 +3066,7 @@ app.get('/api/emails', requireAuth, async (req, res) => {
         
         const start = Math.max(1, totalMessages - limit + 1);
         const fetchRange = `${start}:${totalMessages}`;
+
         
         const fetch = imap.seq.fetch(fetchRange, {
           bodies: '',
@@ -1407,7 +3075,7 @@ app.get('/api/emails', requireAuth, async (req, res) => {
         
         let processedCount = 0;
         const totalToFetch = totalMessages - start + 1;
-        console.log(`[api] Fetching ${totalToFetch} emails from ${start} to ${totalMessages}`);
+
         
         fetch.on('message', (msg, seqno) => {
           let emailData = { id: seqno, attachments: [], buffers: [] };
@@ -1466,7 +3134,9 @@ app.get('/api/emails', requireAuth, async (req, res) => {
               if (parsed.attachments && parsed.attachments.length > 0) {
                 emailData.attachments = parsed.attachments.map((att, idx) => {
                   const filename = att.filename || `attachment_${idx}`;
+
                   const attachmentKey = `${emailData.uid}-${filename}`;
+
                   
                   // Store attachment content in memory
                   emailAttachments.set(attachmentKey, {
@@ -1480,6 +3150,7 @@ app.get('/api/emails', requireAuth, async (req, res) => {
                     type: att.contentType,
                     size: att.size,
                     downloadUrl: `/api/emails/attachment/${emailData.uid}/${encodeURIComponent(filename)}`
+
                   };
                 });
               }
@@ -1498,7 +3169,7 @@ app.get('/api/emails', requireAuth, async (req, res) => {
             
             emails.push(emailData);
             processedCount++;
-            console.log(`[api] Processed email ${processedCount}/${totalToFetch} - ${emailData.subject || 'No subject'}`);
+
           });
         });
         
@@ -1513,11 +3184,11 @@ app.get('/api/emails', requireAuth, async (req, res) => {
         });
         
         fetch.once('end', () => {
-          console.log(`[api] Fetch complete, waiting for email parsing...`);
+
           
           // Wait a moment for async parsing to complete
           setTimeout(() => {
-            console.log(`[api] Parsing complete. Total emails processed: ${emails.length}`);
+
             
             // Format and send response immediately, then close connection
             if (!res.headersSent) {
@@ -1545,14 +3216,15 @@ app.get('/api/emails', requireAuth, async (req, res) => {
                       type: a.type,
                       size: a.size,
                       downloadUrl: a.downloadUrl || `/api/emails/attachment/${email.uid}/${encodeURIComponent(a.filename || a)}`
+
                     })),
                     isRead: email.isRead
                   };
                 });
                 
-                console.log(`[api] Sending response with ${formattedEmails.length} emails`);
-                res.json(formattedEmails.reverse());
-                console.log(`[api] Response sent successfully`);
+
+                res.json(formattedEmails);
+
                 
                 // Clear timeout and connection flag
                 if (timeoutId) clearTimeout(timeoutId);
@@ -1580,7 +3252,7 @@ app.get('/api/emails', requireAuth, async (req, res) => {
     
     imap.once('end', () => {
       // Just cleanup - response already sent in fetch.once('end')
-      console.log(`[api] IMAP connection fully closed`);
+
       if (timeoutId) clearTimeout(timeoutId);
       activeImapConnection = null;
     });
@@ -1636,10 +3308,13 @@ app.post('/api/emails/send', requireAuth, async (req, res) => {
     
     const mailOptions = {
       from: `"${userEmail} via PitchLense" <${config.smtp.auth.user}>`,
+
       to: to,
       subject: subject,
       text: `[Sent by: ${userEmail}]\n\n${body}`,
+
       html: `<p style="color: #666; font-size: 12px; border-bottom: 1px solid #ddd; padding-bottom: 8px; margin-bottom: 12px;"><strong>Sent by:</strong> ${userEmail} via PitchLense</p>${body.replace(/\n/g, '<br>')}`
+
     };
     
     if (replyTo) {
@@ -1696,7 +3371,7 @@ app.get('/api/emails/settings', requireAuth, async (req, res) => {
 });
 
 // Analyze email with PitchLense AI
-app.post('/api/emails/analyze', requireAuth, async (req, res) => {
+app.post('/api/emails/analyze', requireAuth, checkContentModeration, async (req, res) => {
   try {
     const userId = req.user.id;
     const { emailId, emailContent, attachments } = req.body;
@@ -1705,7 +3380,7 @@ app.post('/api/emails/analyze', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Email content required' });
     }
     
-    console.log(`[api] POST /api/emails/analyze user=${userId} emailId=${emailId}`);
+
     
     // Extract text content (strip HTML if present)
     const textContent = emailContent.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -1714,6 +3389,7 @@ app.post('/api/emails/analyze', requireAuth, async (req, res) => {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
     
     const prompt = `Analyze the following email and extract startup/company information:
+
 
 Email Content:
 ${textContent}
@@ -1729,6 +3405,7 @@ Extract the following information in JSON format:
 If any field is not found or unclear, use "Not Found" for that field.
 Return ONLY valid JSON, no markdown or explanation.`;
 
+
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
@@ -1738,6 +3415,7 @@ Return ONLY valid JSON, no markdown or explanation.`;
     try {
       // Remove markdown code blocks if present
       const jsonText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
       extractedData = JSON.parse(jsonText);
     } catch (parseError) {
       console.error('Error parsing Gemini response:', parseError);
@@ -1754,7 +3432,7 @@ Return ONLY valid JSON, no markdown or explanation.`;
         extractedData.launch_date === 'N/A') {
       const today = new Date();
       extractedData.launch_date = today.toISOString().split('T')[0]; // YYYY-MM-DD format
-      console.log(`[api] No launch date found, using today's date: ${extractedData.launch_date}`);
+
     }
     
     // Default values for other fields if not found
@@ -1788,19 +3466,22 @@ app.post('/api/emails/create-report', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Startup name, founder name, and launch date are required' });
     }
     
-    console.log(`[api] Creating report from email analysis: ${startup_name}`);
-    console.log(`[api] Received attachmentUrls:`, attachmentUrls);
+
+
     
     const report_id = crypto.randomUUID();
     const report_name = `${startup_name} - Email`;
+
     const report_path = GCS_BUCKET ? `gs://${GCS_BUCKET}/runs/${report_id}.json` : null;
+
     
     // Create the report in database
     await dbRun(
       `INSERT INTO ${tableName('reports')} (report_id, user_id, report_name, startup_name, founder_name, launch_date, status, is_delete, is_pinned, report_path, total_files, created_at)
+
        VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, 0, ?, ?, NOW())`,
-      [report_id, userId, report_name, startup_name, founder_name, launch_date, report_path, attachmentUrls?.length || 0]
-    );
+
+      [report_id, userId, report_name, startup_name, founder_name, launch_date, report_path, attachmentUrls?.length || 0]);
     
     // Background processing: upload attachments and trigger Cloud Run
     // Capture variables in closure
@@ -1813,18 +3494,18 @@ app.post('/api/emails/create-report', requireAuth, async (req, res) => {
       try {
         const createdUploads = [];
         
-        console.log(`[bg] start email report processing: report_id=${_report_id} startup=${_startup_name} attachments=${_attachmentUrls?.length || 0}`);
+
         
         // Process attachments if available
         if (_attachmentUrls && _attachmentUrls.length > 0) {
-          console.log(`[bg] processing ${_attachmentUrls.length} attachments, GCS_BUCKET=${!!GCS_BUCKET}`);
+
           
           if (!GCS_BUCKET) {
-            console.warn(`[bg] GCS_BUCKET not set, cannot upload attachments`);
+
           } else {
             for (let i = 0; i < _attachmentUrls.length; i++) {
               const attUrl = _attachmentUrls[i];
-              console.log(`[bg] processing attachment URL: ${attUrl}`);
+
               
               // Download attachment content from memory
               const parts = attUrl.split('/');
@@ -1832,27 +3513,30 @@ app.post('/api/emails/create-report', requireAuth, async (req, res) => {
               const filename = decodeURIComponent(parts[parts.length - 1]);
               const attachmentKey = `${uid}-${filename}`;
               
-              console.log(`[bg] looking for attachment key: ${attachmentKey} (total in memory: ${emailAttachments.size})`);
+              
+              
+
               
               const attachment = emailAttachments.get(attachmentKey);
               if (attachment) {
                 const objectPath = `uploads/${_report_id}/${attachment.filename}`;
-                console.log(`[bg] uploading attachment ${i+1}/${_attachmentUrls.length} -> ${objectPath}`);
+
+
                 
                 const gcsPath = await gcsSaveBytes(
                   GCS_BUCKET, 
                   objectPath, 
                   attachment.content, 
-                  attachment.contentType || 'application/octet-stream'
-                );
+                  attachment.contentType || 'application/octet-stream');
                 
               await dbRun(
                 `INSERT INTO ${tableName('uploads')} (file_id, user_id, report_id, filename, file_format, upload_path, created_at)
+
                  VALUES (?, ?, ?, ?, ?, ?, NOW())`,
-                [crypto.randomUUID(), _userId, _report_id, attachment.filename, 'pitch deck', gcsPath]
-              );
               
-              console.log(`[bg] successfully uploaded attachment: ${attachment.filename} -> ${gcsPath}`);
+                [crypto.randomUUID(), _userId, _report_id, attachment.filename, 'pitch deck', gcsPath]);
+              
+
               
               createdUploads.push({
                 filetype: 'pitch deck',
@@ -1866,23 +3550,21 @@ app.post('/api/emails/create-report', requireAuth, async (req, res) => {
             }
           }
         } else {
-          console.log(`[bg] no attachments to process`);
+
         }
         
         // Trigger Cloud Run job (ALWAYS trigger if configured, even without attachments)
         if (CLOUD_RUN_URL) {
           if (!GCS_BUCKET) {
-            console.warn(`[bg] GCS_BUCKET not set, skipping Cloud Run trigger`);
+
           } else {
             const destination_gcs = `gs://${GCS_BUCKET}/runs/${_report_id}.json`;
+
             const payload = { 
               company_name: _startup_name,
               uploads: createdUploads, 
               destination_gcs
             };
-            
-            console.log(`[bg] triggering cloud-run for email report: company=${_startup_name} uploads=${createdUploads.length} url=${CLOUD_RUN_URL}`);
-            console.log(`[bg] cloud-run payload:`, JSON.stringify(payload, null, 2));
             
             axios.post(CLOUD_RUN_URL, payload, { 
               timeout: 10000,
@@ -1891,22 +3573,27 @@ app.post('/api/emails/create-report', requireAuth, async (req, res) => {
               }
             })
               .then((resp) => {
-                console.log(`[bg] cloud-run request successful: status=${resp.status} report_id=${_report_id}`);
+
               })
               .catch((err) => {
                 console.error(`[bg] cloud-run request error for report_id=${_report_id}:`, err?.response ? `${err.response.status} ${JSON.stringify(err.response.data)}` : (err?.message || err));
+
               });
           }
         } else {
-          console.log(`[bg] Cloud Run not configured (CLOUD_RUN_URL not set)`);
+          
+
         }
       } catch (err) {
         console.error(`[bg] email report processing failed for report_id=${_report_id}:`, err);
+
         try { await dbRun(`UPDATE ${tableName('reports')} SET status='failed' WHERE report_id=?`, [_report_id]); } catch {}
+
       }
     });
     
     const report = await dbGet(`SELECT * FROM ${tableName('reports')} WHERE report_id=?`, [report_id]);
+
     res.json({ success: true, report });
     
   } catch (error) {
@@ -1920,6 +3607,7 @@ app.get('/api/emails/attachment/:uid/:filename', requireAuth, async (req, res) =
   try {
     const { uid, filename } = req.params;
     const attachmentKey = `${uid}-${decodeURIComponent(filename)}`;
+
     
     const attachment = emailAttachments.get(attachmentKey);
     
@@ -1930,6 +3618,7 @@ app.get('/api/emails/attachment/:uid/:filename', requireAuth, async (req, res) =
     // Set headers for download
     res.setHeader('Content-Type', attachment.contentType || 'application/octet-stream');
     res.setHeader('Content-Disposition', `attachment; filename="${attachment.filename}"`);
+
     
     // Send the file content
     res.send(attachment.content);
@@ -1962,9 +3651,458 @@ app.post('/api/emails/test-connection', requireAuth, async (req, res) => {
   }
 });
 
+// ==================== WHISPER NETWORK TRACKER ====================
+// Get Product Hunt trending products
+app.get('/api/whisper-network/producthunt', requireAuth, async (req, res) => {
+  try {
+
+    
+    // Use Product Hunt API or scraping alternative
+    // For now, using a public endpoint (Product Hunt doesn't have free API anymore)
+    // Alternative: Use GitHub trending or manually curated list
+    
+    const products = [
+      {
+        name: 'Example AI Tool',
+        tagline: 'Revolutionary AI-powered productivity tool',
+        description: 'Helps teams collaborate better with AI assistance',
+        votes: 450,
+        topics: ['AI', 'Productivity', 'SaaS'],
+        url: 'https://producthunt.com',
+        thumbnail: '/static/logo.svg'
+      }
+    ];
+    
+    // In production, you would fetch from Product Hunt API or alternative sources
+    res.json({ products, source: 'Product Hunt' });
+    
+  } catch (error) {
+    console.error('Product Hunt API error:', error);
+    res.status(500).json({ error: 'Failed to fetch Product Hunt data' });
+  }
+});
+
+// Get GitHub trending repositories
+app.get('/api/whisper-network/github', requireAuth, async (req, res) => {
+  try {
+
+    
+    // Fetch from GitHub trending API
+    const response = await fetch('https://api.github.com/search/repositories?q=created:>2024-01-01&sort=stars&order=desc&per_page=20', {
+      headers: {
+        'User-Agent': 'PitchLense-WhisperNetwork',
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`GitHub API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    const repos = data.items.map(repo => ({
+      name: repo.full_name,
+      description: repo.description,
+      stars: repo.stargazers_count,
+      forks: repo.forks_count,
+      language: repo.language,
+      topics: repo.topics || [],
+      url: repo.html_url,
+      created: repo.created_at,
+      updated: repo.updated_at,
+      owner: repo.owner.login
+    }));
+    
+
+    res.json({ repos, source: 'GitHub' });
+    
+  } catch (error) {
+    console.error('GitHub API error:', error);
+    res.status(500).json({ error: 'Failed to fetch GitHub data', details: error.message });
+  }
+});
+
+// Get Hacker News top stories
+app.get('/api/whisper-network/hackernews', requireAuth, async (req, res) => {
+  try {
+
+    
+    // Fetch top stories from Hacker News API
+    const topStoriesResponse = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json');
+    const topStoryIds = await topStoriesResponse.json();
+    
+    // Fetch details for top 20 stories
+    const storyPromises = topStoryIds.slice(0, 20).map(async (id) => {
+      const response = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
+
+      return response.json();
+    });
+    
+    const stories = await Promise.all(storyPromises);
+    
+    // Filter and format stories
+    const formattedStories = stories
+      .filter(story => story && story.type === 'story')
+      .map(story => ({
+        id: story.id,
+        title: story.title,
+        url: story.url,
+        score: story.score,
+        by: story.by,
+        time: story.time,
+        descendants: story.descendants || 0
+      }));
+    
+
+    res.json({ stories: formattedStories, source: 'Hacker News' });
+    
+  } catch (error) {
+    console.error('Hacker News API error:', error);
+    res.status(500).json({ error: 'Failed to fetch Hacker News data', details: error.message });
+  }
+});
+
+// Get aggregated top signals
+app.get('/api/whisper-network/top-signals', requireAuth, async (req, res) => {
+  try {
+
+    
+    const signals = [];
+    
+    // Fetch GitHub trending
+    try {
+      const githubResponse = await fetch('https://api.github.com/search/repositories?q=created:>2024-10-01&sort=stars&order=desc&per_page=10', {
+        headers: {
+          'User-Agent': 'PitchLense-WhisperNetwork',
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      
+      if (githubResponse.ok) {
+        const githubData = await githubResponse.json();
+        githubData.items.slice(0, 5).forEach(repo => {
+          signals.push({
+            name: repo.full_name,
+            description: repo.description || 'No description provided',
+            metric: repo.stargazers_count,
+            metricLabel: 'stars',
+            source: 'GitHub',
+            momentum: repo.stargazers_count > 1000 ? 'high' : repo.stargazers_count > 100 ? 'medium' : 'low',
+            momentumLabel: repo.stargazers_count > 1000 ? '🔥 High Momentum' : repo.stargazers_count > 100 ? '⚡ Rising' : '📈 Emerging',
+            icon: '⭐',
+            url: repo.html_url
+          });
+        });
+      }
+    } catch (error) {
+      console.error('GitHub signal error:', error);
+    }
+    
+    // Fetch Hacker News trending
+    try {
+      const hnTopResponse = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json');
+      const hnTopIds = await hnTopResponse.json();
+      
+      const hnStoryPromises = hnTopIds.slice(0, 5).map(async (id) => {
+        const response = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
+
+        return response.json();
+      });
+      
+      const hnStories = await Promise.all(hnStoryPromises);
+      
+      hnStories.filter(s => s && s.type === 'story').forEach(story => {
+        signals.push({
+          name: story.title,
+          description: `${story.descendants || 0} comments, ${story.score || 0} points on Hacker News`,
+
+          metric: story.score || 0,
+          metricLabel: 'points',
+          source: 'Hacker News',
+          momentum: story.score > 300 ? 'high' : story.score > 100 ? 'medium' : 'low',
+          momentumLabel: story.score > 300 ? '🔥 Viral' : story.score > 100 ? '⚡ Trending' : '📈 Rising',
+          icon: '💬',
+          url: story.url || `https://news.ycombinator.com/item?id=${story.id}`
+
+        });
+      });
+    } catch (error) {
+      console.error('HN signal error:', error);
+    }
+    
+    // Sort by momentum score (convert metric to comparable score)
+    signals.sort((a, b) => {
+      const scoreA = a.momentum === 'high' ? 1000 : a.momentum === 'medium' ? 100 : 10;
+      const scoreB = b.momentum === 'high' ? 1000 : b.momentum === 'medium' ? 100 : 10;
+      return (scoreB + b.metric) - (scoreA + a.metric);
+    });
+    
+
+    res.json({ signals: signals.slice(0, 10) });
+    
+  } catch (error) {
+    console.error('Top signals aggregation error:', error);
+    res.status(500).json({ error: 'Failed to aggregate signals', details: error.message });
+  }
+});
+
+// ==================== FOUNDER DNA ANALYSIS ====================
+// Analyze founder profile from LinkedIn PDF
+app.post('/api/founder-dna/analyze', requireAuth, upload.single('pdf'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No PDF file uploaded' });
+    }
+
+    const pdfBuffer = req.file.buffer;
+    const base64Data = pdfBuffer.toString('base64');
+
+
+    // Comprehensive prompt for detailed founder analysis
+    const systemPrompt = `You are an elite venture capital analyst specializing in early-stage startup founder evaluation. Your task is to analyze the provided LinkedIn profile PDF and generate a comprehensive, data-driven evaluation of the founder's potential.
+
+
+Your output MUST be valid JSON. Do not include markdown formatting.
+
+JSON Schema:
+{
+  "overallScore": "Integer 0-100 representing overall founder quality",
+  "overallRating": "String: 'Exceptional Founder', 'Strong Founder', 'Moderate Potential', 'High Risk', or 'Not Recommended'",
+  "overallSummary": "One sentence overall assessment",
+  "summary": "2-3 sentences executive summary highlighting key qualifications and fit",
+  "scores": [
+    {
+      "competency": "Technical Expertise",
+      "score": "0-100 based on technical skills, engineering background, product development",
+      "justification": "Detailed explanation with specific evidence from profile"
+    },
+    {
+      "competency": "Leadership & Management",
+      "score": "0-100 based on team leadership, people management, org building",
+      "justification": "Detailed explanation with specific evidence"
+    },
+    {
+      "competency": "Domain Expertise",
+      "score": "0-100 based on years in industry, depth of knowledge, market understanding",
+      "justification": "Detailed explanation with specific evidence"
+    },
+    {
+      "competency": "Entrepreneurial Experience",
+      "score": "0-100 based on previous startups, 0-to-1 experience, risk-taking",
+      "justification": "Detailed explanation with specific evidence"
+    },
+    {
+      "competency": "Network & Social Capital",
+      "score": "0-100 based on connections, prestigious companies, advisors, ecosystem access",
+      "justification": "Detailed explanation with specific evidence"
+    },
+    {
+      "competency": "Execution & Track Record",
+      "score": "0-100 based on proven results, shipped products, revenue generation, exits",
+      "justification": "Detailed explanation with specific evidence"
+    }
+  ],
+  "detailedKPIs": [
+    {
+      "icon": "📊",
+      "metric": "Years of Experience",
+      "value": "Extract total professional years",
+      "description": "Total years in the workforce"
+    },
+    {
+      "icon": "🎓",
+      "metric": "Education Level",
+      "value": "Highest degree (e.g., 'PhD', 'Masters', 'Bachelors')",
+      "description": "Academic credentials"
+    },
+    {
+      "icon": "🏢",
+      "metric": "Top-Tier Companies",
+      "value": "Count of FAANG/unicorn experience",
+      "description": "Experience at elite tech companies"
+    },
+    {
+      "icon": "🚀",
+      "metric": "Startups Founded",
+      "value": "Number of previous ventures",
+      "description": "Entrepreneurial attempts"
+    },
+    {
+      "icon": "💼",
+      "metric": "Leadership Roles",
+      "value": "Count of VP+ or Director+ positions",
+      "description": "Senior management experience"
+    },
+    {
+      "icon": "🔧",
+      "metric": "Technical Skills",
+      "value": "Count of technical competencies listed",
+      "description": "Breadth of technical knowledge"
+    },
+    {
+      "icon": "🌐",
+      "metric": "Network Size",
+      "value": "LinkedIn connections if visible",
+      "description": "Professional network reach"
+    },
+    {
+      "icon": "📈",
+      "metric": "Career Growth",
+      "value": "High/Medium/Low based on progression",
+      "description": "Career trajectory analysis"
+    },
+    {
+      "icon": "🏆",
+      "metric": "Achievements",
+      "value": "Count of notable accomplishments",
+      "description": "Awards, patents, publications"
+    }
+  ],
+  "keyStrengths": [
+    "Specific strength with concrete evidence",
+    "Another key strength with data points",
+    "Third strength highlighting unique advantage",
+    "Fourth strength relevant to startup success",
+    "Fifth strength showing founder potential"
+  ],
+  "potentialRisks": [
+    "Specific red flag or concern with reasoning",
+    "Another risk factor or gap in experience",
+    "Third area of concern for investors",
+    "Fourth potential challenge or weakness"
+  ],
+  "investmentRecommendation": "3-4 sentences final recommendation for investors. Be specific about what stage, sector, and type of startup this founder is best suited for. Include any conditions or caveats."
+}
+
+Scoring Guidelines:
+- 90-100: Exceptional, top 1% founders (e.g., repeat successful founder, FAANG exec turned founder)
+- 75-89: Strong founder with multiple positive signals
+- 60-74: Solid potential with some gaps or unknowns
+- 45-59: Moderate risk, missing key experience
+- 0-44: High risk, significant concerns
+
+Be honest and data-driven. Identify both strengths and weaknesses. Consider: education, work experience, technical skills, leadership roles, startup experience, domain expertise, career progression, achievements, network quality, and any unique factors.`;
+
+
+    // Call Gemini API
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    
+    const result = await model.generateContent({
+      contents: [{
+        role: 'user',
+        parts: [
+          { text: 'Analyze this founder LinkedIn profile PDF and provide comprehensive evaluation in the specified JSON format.' },
+          {
+            inlineData: {
+              mimeType: 'application/pdf',
+              data: base64Data
+            }
+          }
+        ]
+      }],
+      systemInstruction: {
+        parts: [{ text: systemPrompt }]
+      }
+    });
+
+    const response = result.response;
+    let analysisText = response.text();
+    
+    // Clean response
+    analysisText = analysisText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+    
+    let analysisData;
+    try {
+      analysisData = JSON.parse(analysisText);
+    } catch (parseError) {
+      console.error('Failed to parse Gemini response:', parseError);
+      console.error('Raw response:', analysisText);
+      return res.status(500).json({ 
+        error: 'Failed to parse AI response',
+        details: 'The AI returned invalid JSON format'
+      });
+    }
+
+
+
+    res.json({
+      success: true,
+      analysis: analysisData,
+      fileName: req.file.originalname
+    });
+
+  } catch (error) {
+    console.error('Founder DNA analysis error:', error);
+    res.status(500).json({ 
+      error: 'Analysis failed', 
+      details: error.message 
+    });
+  }
+});
+
 // Fallback to index.html for root
 app.get('*', (_req, res) => {
   res.sendFile(path.join(staticDir, 'index.html'));
+});
+
+// ==================== MEETING ASSISTANT ====================
+const uploadMeeting = multer({ limits: { fileSize: 100 * 1024 * 1024 } });
+
+app.post('/api/meeting-assistant/analyze', requireAuth, uploadMeeting.single('video'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No video file uploaded' });
+
+    const base64 = req.file.buffer.toString('base64');
+
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+
+    // Run two LLM calls in parallel
+    const transcriptPrompt = {
+      contents: [{
+        role: 'user',
+        parts: [
+          { text: 'Transcribe the following meeting video. Return plain text transcript with timestamps every ~60 seconds if possible.' },
+          { inlineData: { mimeType: req.file.mimetype || 'video/mp4', data: base64 } }
+        ]
+      }]
+    };
+
+    const summaryPrompt = {
+      contents: [{
+        role: 'user',
+        parts: [
+          { text: 'Summarize this meeting video. Provide: summary (<=150 words), key takeaways (bulleted 5-7), decisions (bulleted), action items with owners if present, and follow-ups. Output strict JSON with keys: summary, keyTakeaways, decisions, actionItems, followUps.' },
+          { inlineData: { mimeType: req.file.mimetype || 'video/mp4', data: base64 } }
+        ]
+      }]
+    };
+
+    const [transcribeResp, summaryResp] = await Promise.all([
+      model.generateContent(transcriptPrompt),
+      model.generateContent(summaryPrompt)
+    ]);
+
+    const transcriptText = transcribeResp.response.text();
+    let summaryJsonText = summaryResp.response.text().replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+
+    let parsed;
+    try { parsed = JSON.parse(summaryJsonText); } 
+    catch(e) { parsed = { summary: summaryJsonText, keyTakeaways: [], decisions: [], actionItems: [], followUps: [] }; }
+
+    res.json({
+      success: true,
+      transcript: transcriptText,
+      summary: parsed.summary || '',
+      keyTakeaways: parsed.keyTakeaways || [],
+      decisions: parsed.decisions || [],
+      actionItems: parsed.actionItems || [],
+      followUps: parsed.followUps || []
+    });
+  } catch (error) {
+    console.error('Meeting assistant error:', error);
+    res.status(500).json({ error: 'Failed to analyze meeting', details: error.message });
+  }
 });
 
 // Initialize database and start server
@@ -1974,8 +4112,8 @@ async function startServer() {
     await checkTables();
     
     app.listen(PORT, () => {
-      console.log(`🚀 PitchLense server running at http://localhost:${PORT}`);
-      console.log(`📊 Connected to MySQL database: ${dbConfig.database}`);
+
+
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);
@@ -1985,23 +4123,30 @@ async function startServer() {
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
-  console.log('\n🛑 Shutting down server...');
+
   if (db) {
     await db.end();
-    console.log('📊 Database connection closed');
+
   }
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-  console.log('\n🛑 Shutting down server...');
+
   if (db) {
     await db.end();
-    console.log('📊 Database connection closed');
+
   }
   process.exit(0);
 });
 
 startServer();
+
+
+
+
+
+
+
 
 

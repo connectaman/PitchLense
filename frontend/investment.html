@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PitchLense — Investments</title>
+    <link rel="icon" type="image/svg+xml" href="/static/logo.svg" />
+    <script>
+      tailwind.config = { theme: { extend: { colors: { background:'#1E1E21', surface:'#2E3137', text:'#ffffff', secondary:'#cfd4dd', accent:'#f1d85b' }}}}
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="bg-background text-text font-sans antialiased overflow-x-hidden bg-solid">
+    <div class="h-screen flex flex-col p-3 gap-3">
+      <header class="h-16 bg-[#2E3137] border border-white/10 rounded-[22px] flex items-center justify-between px-6 mobile-header">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-accent grid place-items-center"><img src="/static/logo.svg" class="w-5 h-5"/></div>
+          <div class="text-base font-semibold">PitchLense</div>
+        </div>
+        <div class="flex items-center gap-3">
+          <button id="addInvestmentBtn" class="px-4 py-2 bg-[#FFF27A] text-[#1E1E21] font-semibold rounded-full hover:opacity-90 transition-opacity flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add Investment
+          </button>
+          <div id="userProfileIcon" class="w-9 h-9 rounded-full border border-white/10 bg-[#FFF27A] grid place-items-center text-[#1E1E21] relative group">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.31 0-6 2.69-6 6h12c0-3.31-2.69-6-6-6Z"/>
+            </svg>
+            <div id="userEmailTooltip" class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+              <span id="userEmailText">Loading...</span>
+              <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-[#1E1E21]"></div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="grid flex-1 min-h-0 mobile-navbar" style="grid-template-columns: 84px 1fr; gap:12px;">
+        <aside id="pitchlense-navbar" class="bg-[#2C2F34] border border-white/10 rounded-[18px] flex flex-col items-center py-4 gap-3">
+          <nav class="flex flex-col gap-2 text-white/80 w-full items-center">
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10" href="/create-report.html" title="Create">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10" href="/view-report.html" title="Reports">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <line x1="9" y1="17" x2="9" y2="11"/>
+                <line x1="13" y1="17" x2="13" y2="7"/>
+                <line x1="17" y1="17" x2="17" y2="13"/>
+              </svg>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/market.html" title="Market">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 3v18h18"/>
+                <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+              </svg>
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                Market Data
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg bg-white/10 hover:bg-white/10" href="/investment.html" title="Investments">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="1" x2="12" y2="23"></line>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+              </svg>
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                Investments
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/search.html" title="Search">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                Search Symbols
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/news.html" title="News">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
+                <line x1="7" y1="8" x2="17" y2="8"/>
+                <line x1="7" y1="12" x2="17" y2="12"/>
+                <line x1="7" y1="16" x2="13" y2="16"/>
+              </svg>
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                Market News
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/extension.html" title="Extension">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+              </svg>
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                Extension
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="/email.html" title="Email">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                Email Client
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+            <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="https://youtu.be/XUuLeXaEIdI" target="_blank" title="How to use PitchLense">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+              </svg>
+              <div class="absolute left-full ml-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                How to use PitchLense
+                <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
+              </div>
+            </a>
+          </nav>
+          <div class="flex-1"></div>
+          <button id="signoutBtn" class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 text-white/80" title="Sign out">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </button>
+        </aside>
+
+        <main id="mainContent" class="flex-1 overflow-y-auto p-4 mobile-main">
+          <!-- Investments List View -->
+          <div id="investmentsList">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-2xl font-bold">My Investments</h2>
+              <div class="flex items-center gap-3">
+                <input id="searchInput" type="text" placeholder="Search investments..." class="px-4 py-2 bg-[#1E1E21] border border-white/10 rounded-full text-sm text-white/80 outline-none focus:border-accent w-64" />
+                <select id="statusFilter" class="px-4 py-2 bg-[#1E1E21] border border-white/10 rounded-full text-sm text-white/80 outline-none focus:border-accent">
+                  <option value="">All Status</option>
+                  <option value="Active">Active</option>
+                  <option value="Exited">Exited</option>
+                  <option value="Written-off">Written-off</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Summary KPIs -->
+            <div id="summaryKPIs" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6"></div>
+
+            <!-- Investments Grid -->
+            <div id="investmentsGrid" class="grid gap-4 mobile-cards" style="grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));"></div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden min-h-[60vh] grid place-items-center">
+              <div class="text-center">
+                <div class="mx-auto w-20 h-20 rounded-2xl bg-white/5 border border-white/10 grid place-items-center mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white/70">
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                  </svg>
+                </div>
+                <div class="text-lg font-semibold">No Investments Yet</div>
+                <div class="text-sm text-white/60 mt-1">Start tracking your startup investments</div>
+                <button class="mt-4 px-5 py-2 rounded-full bg-[#FFF27A] text-[#1E1E21] font-semibold border border-white/15" onclick="document.getElementById('addInvestmentBtn').click()">Add First Investment</button>
+              </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="hidden min-h-[60vh] grid place-items-center">
+              <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFF27A] mx-auto mb-4"></div>
+                <div class="text-lg font-semibold text-white">Loading Investments...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Investment Detail View -->
+          <div id="investmentDetail" class="hidden">
+            <button id="backToList" class="mb-4 px-4 py-2 bg-[#2E3137] border border-white/10 rounded-full hover:bg-white/10 transition-colors flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+              Back to Investments
+            </button>
+
+            <div id="detailContent"></div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- Add/Edit Investment Modal -->
+    <div id="investmentModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-[#2E3137] border border-white/10 rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+          <h3 id="modalTitle" class="text-xl font-bold text-white">Add Investment</h3>
+          <button id="closeModal" class="text-white/60 hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <form id="investmentForm" class="space-y-4">
+          <input type="hidden" id="investment_id" />
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-white/80 mb-2">Startup Name *</label>
+              <input type="text" id="startup_name" required class="w-full px-4 py-2 bg-[#1E1E21] border border-white/10 rounded-lg text-white outline-none focus:border-accent" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-white/80 mb-2">Investor Name</label>
+              <input type="text" id="investor_name" class="w-full px-4 py-2 bg-[#1E1E21] border border-white/10 rounded-lg text-white outline-none focus:border-accent" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-white/80 mb-2">Funding Round</label>
+              <select id="funding_round" class="w-full px-4 py-2 bg-[#1E1E21] border border-white/10 rounded-lg text-white outline-none focus:border-accent">
+                <option value="">Select Round</option>
+                <option value="Pre-Seed">Pre-Seed</option>
+                <option value="Seed">Seed</option>
+                <option value="Series A">Series A</option>
+                <option value="Series B">Series B</option>
+                <option value="Series C">Series C</option>
+                <option value="Series D">Series D</option>
+                <option value="Series E+">Series E+</option>
+                <option value="Bridge">Bridge</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-white/80 mb-2">Investment Type</label>
+              <select id="investment_type" class="w-full px-4 py-2 bg-[#1E1E21] border border-white/10 rounded-lg text-white outline-none focus:border-accent">
+                <option value="Equity">Equity</option>
+                <option value="Convertible Note">Convertible Note</option>
+                <option value="SAFE">SAFE</option>
+                <option value="Loan">Loan</option>
+                <option value="Credit Line">Credit Line</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-white/80 mb-2">Investment Amount ($) *</label>
+              <input type="number" id="investment_amount" required step="0.01" class="w-full px-4 py-2 bg-[#1E1E21] border border-white/10 rounded-lg text-white outline-none focus:border-accent" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-white/80 mb-2">Equity Percentage (%)</label>
+              <input type="number" id="equity_percentage" step="0.01" class="w-full px-4 py-2 bg-[#1E1E21] border border-white/10 rounded-lg text-white outline-none focus:border-accent" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-white/80 mb-2">Company Valuation ($)</label>
+              <input type="number" id="company_valuation" step="0.01" class="w-full px-4 py-2 bg-[#1E1E21] border border-white/10 rounded-lg text-white outline-none focus:border-accent" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-white/80 mb-2">Investment Date *</label>
+              <input type="date" id="investment_date" required class="w-full px-4 py-2 bg-[#1E1E21] border border-white/10 rounded-lg text-white outline-none focus:border-accent" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-white/80 mb-2">Status</label>
+            <select id="status" class="w-full px-4 py-2 bg-[#1E1E21] border border-white/10 rounded-lg text-white outline-none focus:border-accent">
+              <option value="Active">Active</option>
+              <option value="Exited">Exited</option>
+              <option value="Written-off">Written-off</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-white/80 mb-2">Notes</label>
+            <textarea id="notes" rows="3" class="w-full px-4 py-2 bg-[#1E1E21] border border-white/10 rounded-lg text-white outline-none focus:border-accent resize-none"></textarea>
+          </div>
+
+          <div class="flex justify-end gap-3 mt-6">
+            <button type="button" id="cancelBtn" class="px-6 py-2 bg-[#1E1E21] border border-white/10 rounded-lg text-white hover:bg-white/10 transition-colors">
+              Cancel
+            </button>
+            <button type="submit" class="px-6 py-2 bg-[#FFF27A] text-[#1E1E21] font-semibold rounded-lg hover:opacity-90 transition-opacity">
+              Save Investment
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Add Update Modal -->
+    <div id="updateModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-[#2E3137] border border-white/10 rounded-xl p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-bold text-white">Add Update</h3>
+          <button id="closeUpdateModal" class="text-white/60 hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <form id="updateForm" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-white/80 mb-2">Update Type *</label>
+            <select id="update_type" required class="w-full px-4 py-2 bg-[#1E1E21] border border-white/10 rounded-lg text-white outline-none focus:border-accent">
+              <option value="">Select Type</option>
+              <option value="Additional Funding">Additional Funding</option>
+              <option value="Valuation Change">Valuation Change</option>
+              <option value="Equity Change">Equity Change</option>
+              <option value="Milestone Achieved">Milestone Achieved</option>
+              <option value="Exit Event">Exit Event</option>
+              <option value="General Update">General Update</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-white/80 mb-2">Additional Amount ($)</label>
+            <input type="number" id="additional_amount" step="0.01" class="w-full px-4 py-2 bg-[#1E1E21] border border-white/10 rounded-lg text-white outline-none focus:border-accent" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-white/80 mb-2">New Valuation ($)</label>
+              <input type="number" id="new_valuation" step="0.01" class="w-full px-4 py-2 bg-[#1E1E21] border border-white/10 rounded-lg text-white outline-none focus:border-accent" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-white/80 mb-2">New Equity (%)</label>
+              <input type="number" id="new_equity_percentage" step="0.01" class="w-full px-4 py-2 bg-[#1E1E21] border border-white/10 rounded-lg text-white outline-none focus:border-accent" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-white/80 mb-2">Update Date *</label>
+            <input type="date" id="update_date" required class="w-full px-4 py-2 bg-[#1E1E21] border border-white/10 rounded-lg text-white outline-none focus:border-accent" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-white/80 mb-2">Notes</label>
+            <textarea id="update_notes" rows="3" class="w-full px-4 py-2 bg-[#1E1E21] border border-white/10 rounded-lg text-white outline-none focus:border-accent resize-none"></textarea>
+          </div>
+
+          <div class="flex justify-end gap-3 mt-6">
+            <button type="button" id="cancelUpdateBtn" class="px-6 py-2 bg-[#1E1E21] border border-white/10 rounded-lg text-white hover:bg-white/10 transition-colors">
+              Cancel
+            </button>
+            <button type="submit" class="px-6 py-2 bg-[#FFF27A] text-[#1E1E21] font-semibold rounded-lg hover:opacity-90 transition-opacity">
+              Add Update
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="/static/investment.js"></script>
+    
+    <!-- Circular Footer -->
+    <footer class="fixed bottom-4 right-4 z-50">
+      <div class="footer-expanded bg-[#2E3137] border border-white/10 rounded-[22px] px-4 py-3 mb-2 opacity-0 transform translate-y-2 pointer-events-none transition-all duration-300 ease-out">
+        <div class="flex items-center justify-center gap-2 text-sm text-white/80 whitespace-nowrap overflow-x-auto">
+          <span>Created with</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="#ef4444"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <span>by</span>
+          <a href="https://amanulla.in/" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Aman Ulla</a>
+          <span>,</span>
+          <a href="#" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Srinivas Alva</a>
+          <span class="text-white/40">|</span>
+          <a href="https://vision.hack2skill.com/event/genaiexchangehackathon/?utm_source=hack2skill&utm_medium=homepage#overview" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors">Hack2Skill‑Google Hackathon</a>
+        </div>
+      </div>
+      
+      <div class="footer-circle w-12 h-12 bg-[#2E3137] border border-white/10 rounded-full flex items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-all duration-300 ease-out shadow-lg hover:shadow-xl">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#ef4444" class="transition-transform duration-300 ease-out">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
+        </svg>
+      </div>
+    </footer>
+    <script src="/static/navbar.js"></script>
+  </body>
+</html>
+
+
