@@ -424,7 +424,7 @@ app.use((req, res, next) => {
     "img-src 'self' data: https: blob:; " +
     "connect-src 'self' https:; " +
     "frame-src 'self' https://www.youtube.com https://youtube.com https://*.youtube.com https://*.ytimg.com https://storage.googleapis.com; " +
-    "media-src 'self' https://www.youtube.com https://youtube.com; " +
+    "media-src 'self' blob: https://www.youtube.com https://youtube.com; " +
     "object-src 'none'; " +
     "base-uri 'self';";
   
@@ -432,9 +432,151 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static frontend from ../frontend
-const staticDir = path.join(__dirname, '..', 'frontend');
-app.use(express.static(staticDir));
+// API Routes - Must be defined BEFORE static file middleware
+
+// Feedback API endpoint
+app.post('/api/feedback', requireAuth, async (req, res) => {
+  try {
+    console.log('Feedback API - Request body:', req.body);
+    console.log('Feedback API - User:', req.user);
+    
+    const {
+      report_id,
+      overall_feedback,
+      risk_indicator_feedback,
+      got_what_looking_for,
+      content_quality,
+      scores_satisfaction,
+      copilot_feedback,
+      ecosystem_feedback,
+      feedback_note
+    } = req.body;
+
+    // Validate required fields
+    if (!report_id || !overall_feedback || !risk_indicator_feedback || !got_what_looking_for || 
+        !content_quality || !scores_satisfaction || !copilot_feedback || !ecosystem_feedback) {
+      return res.status(400).json({ error: 'Missing required feedback fields' });
+    }
+
+    // Validate rating values (1-5)
+    const ratings = [overall_feedback, risk_indicator_feedback, got_what_looking_for, 
+                    content_quality, scores_satisfaction, copilot_feedback, ecosystem_feedback];
+    for (const rating of ratings) {
+      if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+        return res.status(400).json({ error: 'All ratings must be integers between 1 and 5' });
+      }
+    }
+
+    // Verify user has access to this report
+    console.log('Feedback API - Checking report access:', {
+      report_id,
+      user_id: req.user.id,
+      tableName: tableName('reports')
+    });
+    
+    const report = await dbGet(
+      `SELECT report_id FROM ${tableName('reports')} WHERE report_id=? AND user_id=? AND is_delete=0`,
+      [report_id, req.user.id]
+    );
+
+    console.log('Feedback API - Report query result:', report);
+
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found or access denied' });
+    }
+
+    // Generate feedback ID
+    const feedback_id = crypto.randomUUID();
+
+    // Insert feedback into database
+    const insertQuery = `
+      INSERT INTO ${tableName('feedback')} (
+        feedback_id, report_id, user_id, overall_feedback, risk_indicator_feedback,
+        got_what_looking_for, content_quality, scores_satisfaction, copilot_feedback,
+        ecosystem_feedback, feedback_note, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+    `;
+
+    const insertParams = [
+      feedback_id,
+      report_id,
+      req.user.id,
+      overall_feedback,
+      risk_indicator_feedback,
+      got_what_looking_for,
+      content_quality,
+      scores_satisfaction,
+      copilot_feedback,
+      ecosystem_feedback,
+      feedback_note || null
+    ];
+
+    await dbRun(insertQuery, insertParams);
+
+    res.json({
+      success: true,
+      message: 'Feedback submitted successfully',
+      feedback_id: feedback_id
+    });
+
+  } catch (error) {
+    console.error('Feedback submission error:', error);
+    res.status(500).json({ 
+      error: 'Failed to submit feedback', 
+      details: error.message 
+    });
+  }
+});
+
+// Get feedback for a report (admin or report owner)
+app.get('/api/feedback/:report_id', requireAuth, async (req, res) => {
+  try {
+    console.log('GET /api/feedback/:report_id - Request received');
+    console.log('Report ID:', req.params.report_id);
+    console.log('User:', req.user);
+    
+    const { report_id } = req.params;
+
+    // Verify user has access to this report
+    const report = await dbGet(
+      `SELECT report_id FROM ${tableName('reports')} WHERE report_id=? AND user_id=? AND is_delete=0`,
+      [report_id, req.user.id]
+    );
+
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found or access denied' });
+    }
+
+    // Check if feedback exists for this report and user
+    const existingFeedback = await dbGet(
+      `SELECT * FROM ${tableName('feedback')} WHERE report_id=? AND user_id=?`,
+      [report_id, req.user.id]
+    );
+    
+    console.log('Feedback API - Existing feedback:', existingFeedback);
+
+    if (existingFeedback) {
+      res.json({
+        success: true,
+        exists: true,
+        feedback: existingFeedback
+      });
+    } else {
+      res.json({
+        success: true,
+        exists: false,
+        feedback: null
+      });
+    }
+
+  } catch (error) {
+    console.error('Get feedback error:', error);
+    res.status(500).json({ 
+      error: 'Failed to retrieve feedback', 
+      details: error.message 
+    });
+  }
+});
 
 // Enhanced JSON parsing with better error handling
 app.use(express.json({ 
@@ -454,6 +596,767 @@ app.use(express.json({
 // Request logging removed for production security
 
 app.use(cookieParser());
+
+// Serve static frontend files BEFORE API routes
+const staticDir = path.join(__dirname, '..', 'frontend');
+app.use(express.static(staticDir));
+
+// Content moderation endpoint for co-pilot chat
+app.post('/api/content-moderate', async (req, res) => {
+  try {
+    console.log('Content moderation endpoint called');
+    console.log('Request body:', req.body);
+    
+    const { content } = req.body;
+    
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({ 
+        error: 'Content is required',
+        safe: false 
+      });
+    }
+    
+    console.log('Content to moderate:', content);
+    
+    // Use the existing content moderation function
+    const moderationResult = await moderateContent(content);
+    
+    console.log('Moderation result:', moderationResult);
+    
+    res.json({
+      safe: moderationResult.safe,
+      violations: moderationResult.violations || [],
+      reason: moderationResult.reason,
+      contentLength: moderationResult.contentLength
+    });
+    
+  } catch (error) {
+    console.error('Content moderation endpoint error:', error);
+    res.status(500).json({ 
+      error: 'Content moderation failed', 
+      safe: false,
+      details: error.message 
+    });
+  }
+});
+
+// Follow-up questions generation endpoint
+app.post('/api/reports/follow-up-questions', requireAuth, async (req, res) => {
+  try {
+    console.log('Follow-up questions endpoint called');
+    console.log('Request body:', req.body);
+    
+    const { report_id } = req.body;
+    
+    if (!report_id) {
+      return res.status(400).json({ 
+        error: 'Report ID is required' 
+      });
+    }
+
+    // Verify user has access to this report and get report info
+    const report = await dbGet(
+      `SELECT report_id, status, report_path FROM ${tableName('reports')} WHERE report_id=? AND user_id=? AND is_delete=0`,
+      [report_id, req.user.id]
+    );
+
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found or access denied' });
+    }
+
+    // Check if report is completed
+    if (report.status !== 'success') {
+      return res.status(400).json({ error: 'Report is not completed yet' });
+    }
+
+    // If no report_path, return error
+    if (!report.report_path) {
+      return res.status(404).json({ error: 'Report data not found' });
+    }
+
+    // Fetch the report data from GCS (same as /api/reports/:id/data)
+    let analysis;
+    try {
+      const parsed = parseGsUri(report.report_path);
+      if (!parsed) throw new Error('Invalid report path');
+      
+      const client = getGcsClient();
+      const file = client.bucket(parsed.bucket).file(parsed.object);
+      const [data] = await file.download();
+      analysis = JSON.parse(data.toString());
+    } catch (fetchError) {
+      console.error(`[api] Failed to fetch report data for ${report_id}:`, fetchError?.message || fetchError);
+      return res.status(500).json({ error: 'Failed to fetch report data' });
+    }
+
+    // Extract all analyses and recommendations
+    const analysesAndRecommendations = [];
+    
+    if (analysis.startup_analysis && analysis.startup_analysis.analyses) {
+      Object.values(analysis.startup_analysis.analyses).forEach(category => {
+        if (category.indicators) {
+          category.indicators.forEach(indicator => {
+            if (indicator.description && indicator.recommendation) {
+              analysesAndRecommendations.push({
+                category: category.category_name || 'Unknown',
+                indicator: indicator.indicator || 'Unknown',
+                description: indicator.description,
+                recommendation: indicator.recommendation,
+                riskLevel: indicator.risk_level || 'unknown',
+                score: indicator.score || 0
+              });
+            }
+          });
+        }
+      });
+    }
+
+    if (analysesAndRecommendations.length === 0) {
+      return res.status(400).json({ error: 'No analysis data available to generate questions' });
+    }
+
+    // Generate follow-up questions using LLM
+    const prompt = `Based on the following startup analysis and recommendations, generate 12-15 insightful follow-up questions that an investor should ask the founder during a meeting or video call to get better clarity and deeper insights. Focus on questions that address the key risks, opportunities, and areas that need clarification.
+
+Analysis and Recommendations:
+${analysesAndRecommendations.map(item => `
+Category: ${item.category}
+Indicator: ${item.indicator}
+Risk Level: ${item.riskLevel} (Score: ${item.score}/10)
+Description: ${item.description}
+Recommendation: ${item.recommendation}
+`).join('\n---\n')}
+
+Please generate questions that are:
+1. Specific and actionable
+2. Focused on areas that need clarification
+3. Designed to validate assumptions
+4. Help assess execution capability
+5. Cover market, team, product, financial, and operational aspects
+
+Return only the questions as a JSON array of strings, no other text.`;
+
+    console.log('Generating follow-up questions with prompt length:', prompt.length);
+
+    // Use the same LLM calling pattern as other endpoints
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const llmResponse = response.text();
+
+    console.log('LLM response for follow-up questions:', llmResponse);
+
+    let questions;
+    try {
+      // Try to parse as JSON array
+      questions = JSON.parse(llmResponse);
+      
+      // Ensure it's an array
+      if (!Array.isArray(questions)) {
+        throw new Error('Response is not an array');
+      }
+      
+      // Ensure all items are strings
+      questions = questions.filter(q => typeof q === 'string' && q.trim().length > 0);
+      
+    } catch (parseError) {
+      console.error('Error parsing LLM response as JSON:', parseError);
+      
+      // Fallback: try to extract questions from text response
+      const lines = llmResponse.split('\n').filter(line => line.trim().length > 0);
+      questions = lines
+        .filter(line => line.includes('?') && line.trim().length > 20)
+        .map(line => line.replace(/^\d+\.\s*/, '').replace(/^-\s*/, '').replace(/^\*\s*/, '').trim())
+        .filter(q => q.length > 0);
+    }
+
+    if (!questions || questions.length === 0) {
+      return res.status(500).json({ error: 'Failed to generate valid follow-up questions' });
+    }
+
+    // Limit to 15 questions maximum
+    questions = questions.slice(0, 15);
+
+    console.log('Generated follow-up questions:', questions);
+
+    res.json({
+      success: true,
+      questions: questions,
+      count: questions.length
+    });
+
+  } catch (error) {
+    console.error('Follow-up questions generation error:', error);
+    res.status(500).json({ 
+      error: 'Failed to generate follow-up questions', 
+      details: error.message 
+    });
+  }
+});
+
+// Follow-up queries save endpoint
+app.post('/api/reports/follow-up-queries', requireAuth, async (req, res) => {
+  try {
+    console.log('Follow-up queries endpoint called');
+    console.log('Request body:', req.body);
+    
+    const { report_id, questions } = req.body;
+    
+    if (!report_id) {
+      return res.status(400).json({ 
+        error: 'Report ID is required' 
+      });
+    }
+
+    if (!questions || !Array.isArray(questions) || questions.length === 0) {
+      return res.status(400).json({ 
+        error: 'Questions array is required' 
+      });
+    }
+
+    // Verify user has access to this report
+    const report = await dbGet(
+      `SELECT report_id FROM ${tableName('reports')} WHERE report_id=? AND user_id=? AND is_delete=0`,
+      [report_id, req.user.id]
+    );
+
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found or access denied' });
+    }
+
+    // Generate unique ID for the follow-up query
+    const queryId = crypto.randomUUID();
+
+    // Prepare file paths for GCS
+    const bucketName = process.env.BUCKET || 'pitchlense-object-storage';
+    const followupPath = `queries/${queryId}.json`;
+    const videoPath = `videos/${queryId}.mp4`;
+    const transcriptPath = `transcripts/${queryId}.json`;
+
+    // Prepare follow-up data
+    const followupData = {
+      questions: questions,
+      generated_at: new Date().toISOString(),
+      total_questions: questions.length,
+      report_id: report_id
+    };
+
+    // Save questions to GCS
+    try {
+      const client = getGcsClient();
+      const bucket = client.bucket(bucketName);
+      
+      // Upload questions JSON to GCS
+      const followupFile = bucket.file(followupPath);
+      await followupFile.save(JSON.stringify(followupData, null, 2), {
+        metadata: {
+          contentType: 'application/json',
+          metadata: {
+            reportId: report_id,
+            queryId: queryId,
+            totalQuestions: questions.length.toString()
+          }
+        }
+      });
+
+      console.log('Follow-up questions saved to GCS:', followupPath);
+    } catch (gcsError) {
+      console.error('Failed to save to GCS:', gcsError);
+      return res.status(500).json({ 
+        error: 'Failed to save questions to storage', 
+        details: gcsError.message 
+      });
+    }
+
+    // Insert follow-up query record with GCS paths
+    await dbRun(
+      `INSERT INTO ${tableName('follow_queries')} (id, report_id, followup_path, video_path, transcript_path) VALUES (?, ?, ?, ?, ?)`,
+      [queryId, report_id, `gs://${bucketName}/${followupPath}`, `gs://${bucketName}/${videoPath}`, `gs://${bucketName}/${transcriptPath}`]
+    );
+
+    console.log('Follow-up query saved:', queryId);
+
+    res.json({
+      success: true,
+      query_id: queryId,
+      message: 'Follow-up queries saved successfully',
+      total_questions: questions.length
+    });
+
+  } catch (error) {
+    console.error('Follow-up queries save error:', error);
+    res.status(500).json({ 
+      error: 'Failed to save follow-up queries', 
+      details: error.message 
+    });
+  }
+});
+
+// Get follow-up questions by ID (public endpoint for video page)
+app.get('/api/follow-up-queries/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get follow-up query from database
+    const query = await dbGet(
+      `SELECT * FROM ${tableName('follow_queries')} WHERE id=?`,
+      [id]
+    );
+
+    if (!query) {
+      return res.status(404).json({ error: 'Follow-up query not found' });
+    }
+
+    // Parse questions from followup_path (GCS JSON)
+    let questions = [];
+    if (query.followup_path) {
+      try {
+        const parsed = parseGsUri(query.followup_path);
+        if (parsed) {
+          const client = getGcsClient();
+          const file = client.bucket(parsed.bucket).file(parsed.object);
+          const [data] = await file.download();
+          const followupData = JSON.parse(data.toString());
+          questions = followupData.questions || [];
+        }
+      } catch (error) {
+        console.error('Error loading questions from GCS:', error);
+      }
+    }
+
+    // Parse transcript from transcript_path (GCS JSON)
+    let transcript = '';
+    let answers = [];
+    if (query.transcript_path) {
+      try {
+        const parsed = parseGsUri(query.transcript_path);
+        if (parsed) {
+          const client = getGcsClient();
+          const file = client.bucket(parsed.bucket).file(parsed.object);
+          const [data] = await file.download();
+          const transcriptData = JSON.parse(data.toString());
+          transcript = transcriptData.transcript || '';
+          answers = transcriptData.answers || [];
+        }
+      } catch (error) {
+        console.error('Error loading transcript from GCS:', error);
+      }
+    }
+
+    res.json({
+      success: true,
+      questions: questions,
+      answers: answers,
+      transcript: transcript,
+      video_path: query.video_path,
+      total_questions: questions.length,
+      has_video: query.video_path && query.video_path !== `gs://${process.env.BUCKET || 'pitchlense-object-storage'}/videos/${id}.mp4`,
+      has_transcript: query.transcript_path && query.transcript_path !== `gs://${process.env.BUCKET || 'pitchlense-object-storage'}/transcripts/${id}.json`
+    });
+
+  } catch (error) {
+    console.error('Error loading follow-up questions:', error);
+    res.status(500).json({ 
+      error: 'Failed to load follow-up questions', 
+      details: error.message 
+    });
+  }
+});
+
+// Get all follow-up queries for a report
+app.get('/api/reports/:report_id/follow-up-queries', requireAuth, async (req, res) => {
+  try {
+    const { report_id } = req.params;
+    
+    // Verify user has access to this report
+    const report = await dbGet(
+      `SELECT report_id FROM ${tableName('reports')} WHERE report_id=? AND user_id=? AND is_delete=0`,
+      [report_id, req.user.id]
+    );
+
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found or access denied' });
+    }
+
+    // Get all follow-up queries for this report
+    const queries = await dbAll(
+      `SELECT id, report_id, followup_path, video_path, transcript_path, created_at, updated_at 
+       FROM ${tableName('follow_queries')} 
+       WHERE report_id=? 
+       ORDER BY created_at DESC`,
+      [report_id]
+    );
+
+    // Process each query to get question count and check if video/transcript exists
+    const processedQueries = await Promise.all(queries.map(async (query) => {
+      let questionCount = 0;
+      let hasVideo = false;
+      let hasTranscript = false;
+
+      // Get question count from followup_path
+      if (query.followup_path) {
+        try {
+          const parsed = parseGsUri(query.followup_path);
+          if (parsed) {
+            const client = getGcsClient();
+            const file = client.bucket(parsed.bucket).file(parsed.object);
+            const [data] = await file.download();
+            const followupData = JSON.parse(data.toString());
+            questionCount = followupData.questions ? followupData.questions.length : 0;
+          }
+        } catch (error) {
+          console.error('Error loading questions for query:', query.id, error);
+        }
+      }
+
+      // Check if video exists
+      if (query.video_path && query.video_path !== `gs://${process.env.BUCKET || 'pitchlense-object-storage'}/videos/${query.id}.mp4`) {
+        hasVideo = true;
+      }
+
+      // Check if transcript exists
+      if (query.transcript_path && query.transcript_path !== `gs://${process.env.BUCKET || 'pitchlense-object-storage'}/transcripts/${query.id}.json`) {
+        hasTranscript = true;
+      }
+
+      return {
+        id: query.id,
+        report_id: query.report_id,
+        question_count: questionCount,
+        has_video: hasVideo,
+        has_transcript: hasTranscript,
+        created_at: query.created_at,
+        updated_at: query.updated_at
+      };
+    }));
+
+    res.json({
+      success: true,
+      queries: processedQueries,
+      total_count: processedQueries.length
+    });
+
+  } catch (error) {
+    console.error('Error fetching follow-up queries:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch follow-up queries', 
+      details: error.message 
+    });
+  }
+});
+
+// Serve video file for follow-up queries
+app.get('/api/follow-up-queries/:id/video', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get follow-up query from database
+    const query = await dbGet(
+      `SELECT video_path FROM ${tableName('follow_queries')} WHERE id=?`,
+      [id]
+    );
+
+    if (!query || !query.video_path) {
+      return res.status(404).json({ error: 'Video not found' });
+    }
+
+    // Parse GCS path
+    const parsed = parseGsUri(query.video_path);
+    if (!parsed) {
+      return res.status(404).json({ error: 'Invalid video path' });
+    }
+
+    // Get video file from GCS
+    const client = getGcsClient();
+    const file = client.bucket(parsed.bucket).file(parsed.object);
+    
+    // Check if file exists
+    const [exists] = await file.exists();
+    if (!exists) {
+      return res.status(404).json({ error: 'Video file not found' });
+    }
+
+    // Set appropriate headers for video streaming
+    res.setHeader('Content-Type', 'video/webm');
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+
+    // Stream the video file
+    const stream = file.createReadStream();
+    stream.pipe(res);
+
+    stream.on('error', (error) => {
+      console.error('Error streaming video:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Error streaming video' });
+      }
+    });
+
+  } catch (error) {
+    console.error('Error serving video:', error);
+    res.status(500).json({ 
+      error: 'Failed to serve video', 
+      details: error.message 
+    });
+  }
+});
+
+// Send email invite for video recording
+app.post('/api/follow-up-queries/send-email-invite', async (req, res) => {
+  try {
+    console.log('Email invite endpoint called');
+    
+    const { email, videoLink, queryId } = req.body;
+
+    if (!email || !videoLink) {
+      return res.status(400).json({ error: 'Email and video link are required' });
+    }
+
+    // Create HTML email template
+    const htmlTemplate = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>PitchLense Video Follow-up</title>
+        <style>
+            body {
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f8f9fa;
+            }
+            .container {
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+            }
+            .header {
+                background: linear-gradient(135deg, #1E1E21 0%, #2E3137 100%);
+                color: white;
+                padding: 30px;
+                text-align: center;
+            }
+            .logo {
+                width: 60px;
+                height: 60px;
+                margin: 0 auto 20px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .logo img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+            }
+            .content {
+                padding: 40px 30px;
+            }
+            .title {
+                font-size: 28px;
+                font-weight: 700;
+                color: #1E1E21;
+                margin-bottom: 20px;
+                text-align: center;
+            }
+            .subtitle {
+                font-size: 18px;
+                color: #666;
+                margin-bottom: 30px;
+                text-align: center;
+            }
+            .cta-button {
+                display: inline-block;
+                background: linear-gradient(135deg, #f1d85b 0%, #e6c547 100%);
+                color: #1E1E21;
+                padding: 16px 32px;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: 600;
+                font-size: 16px;
+                text-align: center;
+                margin: 30px 0;
+                transition: transform 0.2s;
+            }
+            .cta-button:hover {
+                transform: translateY(-2px);
+            }
+            .features {
+                background: #f8f9fa;
+                border-radius: 8px;
+                padding: 25px;
+                margin: 30px 0;
+            }
+            .feature {
+                display: flex;
+                align-items: center;
+                margin-bottom: 15px;
+            }
+            .feature-icon {
+                width: 24px;
+                height: 24px;
+                background: #f1d85b;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 15px;
+                font-size: 14px;
+                color: #1E1E21;
+                font-weight: bold;
+                line-height: 1;
+                flex-shrink: 0;
+            }
+            .footer {
+                background: #1E1E21;
+                color: white;
+                padding: 30px;
+                text-align: center;
+            }
+            .footer-text {
+                font-size: 14px;
+                color: #cfd4dd;
+                margin-bottom: 15px;
+            }
+            .link {
+                color: #f1d85b;
+                text-decoration: none;
+            }
+            .link:hover {
+                text-decoration: underline;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <div class="logo">
+                    <img src="https://www.pitchlense.com/static/logo.svg" alt="PitchLense Logo">
+                </div>
+                <h1 style="margin: 0; font-size: 24px;">PitchLense</h1>
+                <p style="margin: 10px 0 0; opacity: 0.8;">AI-Powered Startup Analysis</p>
+            </div>
+            
+            <div class="content">
+                <h2 class="title">Record Your Video Follow-up</h2>
+                <p class="subtitle">Share your insights and answer follow-up questions through video</p>
+                
+                <p>Hello!</p>
+                
+                <p>You've been invited to record a video follow-up response for a startup analysis. This is a great opportunity to provide additional insights and answer specific questions about your startup.</p>
+                
+                <div style="text-align: center;">
+                    <a href="${videoLink}" class="cta-button">🎥 Record Your Video</a>
+                </div>
+                
+                <div class="features">
+                    <h3 style="margin-top: 0; color: #1E1E21;">What to expect:</h3>
+                    <div class="feature">
+                        <div class="feature-icon">✓</div>
+                        <span>Easy-to-use video recording interface</span>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">✓</div>
+                        <span>Pre-loaded questions for your response</span>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">✓</div>
+                        <span>Automatic transcription and analysis</span>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">✓</div>
+                        <span>Secure video storage and processing</span>
+                    </div>
+                </div>
+                
+                <p><strong>Instructions:</strong></p>
+                <ol>
+                    <li>Click the "Record Your Video" button above</li>
+                    <li>Allow camera and microphone access when prompted</li>
+                    <li>Review the questions on the right side of the screen</li>
+                    <li>Click "Start Recording" and answer the questions</li>
+                    <li>Click "Stop Recording" when finished</li>
+                    <li>Click "Submit Video" to send your response</li>
+                </ol>
+                
+                <p>Your video will be automatically processed to extract a transcript and analyze your responses to each question.</p>
+                
+                <p>If you have any questions or need assistance, please don't hesitate to reach out.</p>
+                
+                <p>Best regards,<br>The PitchLense Team</p>
+            </div>
+            
+            <div class="footer">
+                <p class="footer-text">This email was sent because you were invited to participate in a PitchLense video follow-up session.</p>
+                <p class="footer-text">
+                    <a href="${videoLink}" class="link">Direct Link: ${videoLink}</a>
+                </p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+
+    // Send email using existing email functionality
+    const emailData = {
+      to: email,
+      subject: 'PitchLense Video Follow-up - Record Your Response',
+      html: htmlTemplate,
+      text: `Record your video follow-up response at: ${videoLink}`
+    };
+
+    // Use the existing email sending logic from the email client
+    try {
+      // Check if email password is configured
+      if (!process.env.EMAIL_PASSWORD) {
+        return res.status(400).json({ error: 'Email server not configured. Please set EMAIL_PASSWORD in .env file.' });
+      }
+      
+      const config = getEmailConfig();
+      const transporter = nodemailer.createTransport(config.smtp);
+      
+      const mailOptions = {
+        from: `"PitchLense Team" <${config.smtp.auth.user}>`,
+        to: email,
+        subject: emailData.subject,
+        html: emailData.html,
+        text: emailData.text
+      };
+      
+      const info = await transporter.sendMail(mailOptions);
+      console.log('Email invitation sent successfully:', info.messageId);
+      
+      res.json({
+        success: true,
+        message: 'Email invitation sent successfully',
+        email: email,
+        videoLink: videoLink,
+        messageId: info.messageId
+      });
+      
+    } catch (emailError) {
+      console.error('Error sending email:', emailError);
+      return res.status(500).json({ 
+        error: 'Failed to send email', 
+        details: emailError.message 
+      });
+    }
+
+  } catch (error) {
+    console.error('Email invite error:', error);
+    res.status(500).json({ 
+      error: 'Failed to send email invite', 
+      details: error.message 
+    });
+  }
+});
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'pitchlense-web', ts: new Date().toISOString() });
@@ -524,7 +1427,6 @@ const moderateContent = async (content) => {
       // Check for specific harmful categories
       const harmfulCategories = [
         'Adult',
-        'Medical',
         'Violence',
         'Racy',
         'Derogatory',
@@ -532,7 +1434,6 @@ const moderateContent = async (content) => {
         'Sensitive Subjects',
         'Religion & Belief',
         'Politics',
-        'Finance',
         'Legal',
         'Death, Harm & Tragedy',
         'War & Conflict',
@@ -859,8 +1760,8 @@ app.post('/api/qna/ask', requireAuth, checkLLMRateLimit, async (req, res) => {
     // Save chat to database
     const chatId = crypto.randomUUID();
     await dbRun(
-      `INSERT INTO ${tableName('chats')} (chat_id, report_id, user_id, user_message, ai_response, confidence_score, warnings, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
-      [chatId, report_id, req.user.id, question, aiResponse, confidenceScore, JSON.stringify(warnings)]);
+      `INSERT INTO ${tableName('chats')} (chat_id, report_id, user_id, user_message, ai_response, created_at) VALUES (?, ?, ?, ?, ?, NOW())`,
+      [chatId, report_id, req.user.id, question, aiResponse]);
 
     // Cache the response for future requests
     responseCache.set(cacheKey, {
@@ -4049,6 +4950,190 @@ app.get('*', (_req, res) => {
 // ==================== MEETING ASSISTANT ====================
 const uploadMeeting = multer({ limits: { fileSize: 100 * 1024 * 1024 } });
 
+// Submit video for follow-up query
+app.post('/api/follow-up-queries/submit-video', uploadMeeting.single('video'), async (req, res) => {
+  try {
+    console.log('Video submission endpoint called');
+    
+    const { followupId } = req.body;
+    const videoFile = req.file;
+
+    if (!followupId) {
+      return res.status(400).json({ error: 'Follow-up ID is required' });
+    }
+
+    if (!videoFile) {
+      return res.status(400).json({ error: 'Video file is required' });
+    }
+
+    // Verify follow-up query exists
+    const query = await dbGet(
+      `SELECT * FROM ${tableName('follow_queries')} WHERE id=?`,
+      [followupId]
+    );
+
+    if (!query) {
+      return res.status(404).json({ error: 'Follow-up query not found' });
+    }
+
+    // Generate unique ID for this submission
+    const submissionId = crypto.randomUUID();
+    const bucketName = process.env.BUCKET || 'pitchlense-object-storage';
+    
+    // Upload video to GCS
+    const videoPath = `videos/${submissionId}.webm`;
+    const transcriptPath = `transcripts/${submissionId}.json`;
+
+    try {
+      const client = getGcsClient();
+      const bucket = client.bucket(bucketName);
+      
+      // Upload video file
+      const videoFile_gcs = bucket.file(videoPath);
+      await videoFile_gcs.save(videoFile.buffer, {
+        metadata: {
+          contentType: 'video/webm',
+          metadata: {
+            followupId: followupId,
+            submissionId: submissionId
+          }
+        }
+      });
+
+      console.log('Video uploaded to GCS:', videoPath);
+
+      // Process video with Gemini for transcript and answers
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+      
+      // Load questions from followup data
+      let questions = [];
+      if (query.followup_path) {
+        try {
+          const parsed = parseGsUri(query.followup_path);
+          if (parsed) {
+            const file = client.bucket(parsed.bucket).file(parsed.object);
+            const [data] = await file.download();
+            const followupData = JSON.parse(data.toString());
+            questions = followupData.questions || [];
+          }
+        } catch (error) {
+          console.error('Error loading questions:', error);
+        }
+      }
+
+      // Create prompt for Gemini
+      const prompt = `Analyze this video and provide:
+1. A complete transcript of what the person says
+2. Answers to each of the following questions based on the video content
+
+Questions:
+${questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}
+
+IMPORTANT INSTRUCTIONS:
+- Return ONLY valid JSON without any markdown formatting, code blocks, or additional text
+- For each question, provide an answer ONLY if the question is directly addressed in the video
+- If a question is NOT answered or addressed in the video, use exactly "Not Addressed / Answered" as the answer
+- Do NOT make up or infer answers that are not explicitly provided in the video
+- Be thorough and extract all relevant information from the video
+
+Expected JSON format:
+{
+  "transcript": "Complete transcript of the video",
+  "answers": [
+    {"question": "Question 1", "answer": "Answer based on video content or 'Not Addressed / Answered'"},
+    {"question": "Question 2", "answer": "Answer based on video content or 'Not Addressed / Answered'"}
+  ]
+}
+
+Return only the JSON object.`;
+
+      // Process video with Gemini
+      const result = await model.generateContent([
+        prompt,
+        {
+          inlineData: {
+            mimeType: 'video/webm',
+            data: videoFile.buffer.toString('base64')
+          }
+        }
+      ]);
+
+      const response = await result.response;
+      const llmResponse = response.text();
+
+      // Parse Gemini response - handle markdown code blocks
+      let transcriptData;
+      try {
+        // Clean the response by removing markdown code blocks
+        let cleanResponse = llmResponse.trim();
+        
+        // Remove ```json and ``` markers if present
+        if (cleanResponse.startsWith('```json')) {
+          cleanResponse = cleanResponse.substring(7); // Remove ```json
+        } else if (cleanResponse.startsWith('```')) {
+          cleanResponse = cleanResponse.substring(3); // Remove ```
+        }
+        
+        if (cleanResponse.endsWith('```')) {
+          cleanResponse = cleanResponse.substring(0, cleanResponse.length - 3); // Remove trailing ```
+        }
+        
+        cleanResponse = cleanResponse.trim();
+        
+        transcriptData = JSON.parse(cleanResponse);
+      } catch (parseError) {
+        console.error('Error parsing Gemini response:', parseError);
+        console.error('Raw response:', llmResponse);
+        
+        // If JSON parsing fails completely, throw an error to prevent success response
+        throw new Error(`Failed to parse Gemini response: ${parseError.message}. Raw response: ${llmResponse.substring(0, 200)}...`);
+      }
+
+      // Save transcript to GCS
+      const transcriptFile = bucket.file(transcriptPath);
+      await transcriptFile.save(JSON.stringify(transcriptData, null, 2), {
+        metadata: {
+          contentType: 'application/json',
+          metadata: {
+            followupId: followupId,
+            submissionId: submissionId
+          }
+        }
+      });
+
+      console.log('Transcript saved to GCS:', transcriptPath);
+
+      // Update follow-up query with actual paths
+      await dbRun(
+        `UPDATE ${tableName('follow_queries')} SET video_path=?, transcript_path=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`,
+        [`gs://${bucketName}/${videoPath}`, `gs://${bucketName}/${transcriptPath}`, followupId]
+      );
+
+      res.json({
+        success: true,
+        message: 'Video submitted and processed successfully',
+        submission_id: submissionId,
+        video_path: `gs://${bucketName}/${videoPath}`,
+        transcript_path: `gs://${bucketName}/${transcriptPath}`
+      });
+
+    } catch (gcsError) {
+      console.error('GCS or Gemini processing error:', gcsError);
+      return res.status(500).json({ 
+        error: 'Failed to process video', 
+        details: gcsError.message 
+      });
+    }
+
+  } catch (error) {
+    console.error('Video submission error:', error);
+    res.status(500).json({ 
+      error: 'Failed to submit video', 
+      details: error.message 
+    });
+  }
+});
+
 app.post('/api/meeting-assistant/analyze', requireAuth, uploadMeeting.single('video'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No video file uploaded' });
@@ -4112,8 +5197,9 @@ async function startServer() {
     await checkTables();
     
     app.listen(PORT, () => {
-
-
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`📁 Serving frontend from: ${staticDir}`);
+      console.log(`🔗 API endpoints available at: http://localhost:${PORT}/api/`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);
@@ -4123,21 +5209,84 @@ async function startServer() {
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
-
   if (db) {
     await db.end();
-
   }
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-
   if (db) {
     await db.end();
-
   }
   process.exit(0);
+});
+
+// Static middleware moved to be defined before API routes
+
+// Serve index.html for root and other HTML routes
+app.get('/', (req, res) => {
+  res.sendFile(path.join(staticDir, 'index.html'));
+});
+
+app.get('/auth.html', (req, res) => {
+  res.sendFile(path.join(staticDir, 'auth.html'));
+});
+
+app.get('/create-report.html', (req, res) => {
+  res.sendFile(path.join(staticDir, 'create-report.html'));
+});
+
+app.get('/view-report.html', (req, res) => {
+  res.sendFile(path.join(staticDir, 'view-report.html'));
+});
+
+app.get('/report.html', (req, res) => {
+  res.sendFile(path.join(staticDir, 'report.html'));
+});
+
+app.get('/video.html', (req, res) => {
+  res.sendFile(path.join(staticDir, 'video.html'));
+});
+
+app.get('/email.html', (req, res) => {
+  res.sendFile(path.join(staticDir, 'email.html'));
+});
+
+app.get('/investment.html', (req, res) => {
+  res.sendFile(path.join(staticDir, 'investment.html'));
+});
+
+app.get('/market.html', (req, res) => {
+  res.sendFile(path.join(staticDir, 'market.html'));
+});
+
+app.get('/news.html', (req, res) => {
+  res.sendFile(path.join(staticDir, 'news.html'));
+});
+
+app.get('/networking.html', (req, res) => {
+  res.sendFile(path.join(staticDir, 'networking.html'));
+});
+
+app.get('/whisper-network.html', (req, res) => {
+  res.sendFile(path.join(staticDir, 'whisper-network.html'));
+});
+
+app.get('/meeting-assistant.html', (req, res) => {
+  res.sendFile(path.join(staticDir, 'meeting-assistant.html'));
+});
+
+app.get('/founder-dna.html', (req, res) => {
+  res.sendFile(path.join(staticDir, 'founder-dna.html'));
+});
+
+app.get('/extension.html', (req, res) => {
+  res.sendFile(path.join(staticDir, 'extension.html'));
+});
+
+app.get('/search.html', (req, res) => {
+  res.sendFile(path.join(staticDir, 'search.html'));
 });
 
 startServer();

@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PitchLense - Video Follow-up</title>
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg" />
+  <meta name="description" content="Record your follow-up video response for PitchLense" />
+  
+  <!-- Tailwind Play CDN with custom theme -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            background: '#1E1E21',
+            surface: '#2E3137',
+            muted: '#2E3137',
+            text: '#ffffff',
+            secondary: '#cfd4dd',
+            accent: '#f1d85b',
+            accent2: '#78e6d0'
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif']
+          },
+          boxShadow: {
+            card: '0 10px 30px rgba(0,0,0,0.35)'
+          }
+        }
+      }
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Base styles -->
+  <link rel="stylesheet" href="./styles.css" />
+  
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-background text-text font-sans antialiased selection:bg-accent selection:text-white h-screen overflow-hidden">
+  <div class="h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-surface border-b border-white/10 px-6 py-4 flex-shrink-0">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <img src="/static/logo.svg" class="w-8 h-8" alt="PitchLense">
+          <h1 class="text-xl font-bold text-white">PitchLense Video Follow-up</h1>
+        </div>
+        <div class="text-sm">
+          <a href="#" class="text-white/60 hover:text-accent transition-colors" title="Drop email to connectamanulla@gmail.com">
+            Facing issue?
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex min-h-0">
+      <!-- Video Section (60%) -->
+      <div class="w-3/5 p-6 min-w-0">
+        <div class="h-full flex flex-col">
+          <!-- Video Container -->
+          <div class="flex-1 bg-surface border border-white/10 rounded-lg p-6 mb-4 min-h-0">
+            <div class="h-full flex flex-col">
+              <!-- Video Preview -->
+              <div class="flex-1 bg-black rounded-lg mb-4 flex items-center justify-center relative overflow-hidden">
+                <video id="videoPreview" autoplay muted class="w-full h-full object-contain hidden"></video>
+                <div id="videoPlaceholder" class="text-center text-white/60">
+                  <svg class="w-16 h-16 mx-auto mb-4 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                  </svg>
+                  <p class="text-lg">Camera Preview</p>
+                  <p class="text-sm">Select a camera to start</p>
+                </div>
+                
+                <!-- Audio Level Indicator -->
+                <div id="audioLevelIndicator" class="absolute bottom-4 left-4 hidden">
+                  <div class="bg-black/70 rounded-lg p-2">
+                    <div class="flex items-center gap-2">
+                      <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                      </svg>
+                      <div class="flex items-center gap-1">
+                        <div id="audioBar1" class="w-1 h-2 bg-green-400 rounded"></div>
+                        <div id="audioBar2" class="w-1 h-3 bg-green-400 rounded"></div>
+                        <div id="audioBar3" class="w-1 h-4 bg-green-400 rounded"></div>
+                        <div id="audioBar4" class="w-1 h-5 bg-green-400 rounded"></div>
+                        <div id="audioBar5" class="w-1 h-6 bg-green-400 rounded"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Controls -->
+              <div class="space-y-4">
+                <!-- Device Selection Row -->
+                <div class="grid grid-cols-2 gap-4">
+                  <!-- Camera Selection -->
+                  <div class="flex flex-col gap-2">
+                    <label class="text-white font-medium text-sm">Camera:</label>
+                    <select id="cameraSelect" class="bg-[#1E1E21] border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-accent">
+                      <option value="">Select Camera...</option>
+                    </select>
+                  </div>
+
+                  <!-- Audio Selection -->
+                  <div class="flex flex-col gap-2">
+                    <label class="text-white font-medium text-sm">Audio:</label>
+                    <select id="audioSelect" class="bg-[#1E1E21] border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-accent">
+                      <option value="">Select Audio Device...</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Recording Controls -->
+                <div class="flex items-center justify-center gap-4">
+                  <button id="startRecording" class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <svg class="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                    Start Recording
+                  </button>
+                  
+                  <button id="stopRecording" class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium hidden">
+                    <svg class="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
+                      <rect x="6" y="6" width="12" height="12" rx="2"/>
+                    </svg>
+                    Stop Recording
+                  </button>
+                  
+                  <button id="submitVideo" class="px-6 py-3 bg-accent text-[#1E1E21] rounded-lg hover:bg-accent/80 transition-colors font-medium hidden">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                    Submit Video
+                  </button>
+                  
+                  <!-- Post-Recording Controls -->
+                  <div id="postRecordingControls" class="flex items-center justify-center gap-4 hidden">
+                    <button id="replayVideo" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                      <svg class="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                      Replay Video
+                    </button>
+                    
+                    <button id="reshootVideo" class="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium">
+                      <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                      </svg>
+                      Reshoot
+                    </button>
+                    
+                    <button id="submitFinalVideo" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                      <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                      </svg>
+                      Submit Video
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Recording Status -->
+                <div id="recordingStatus" class="text-center text-white/70 hidden">
+                  <div class="flex items-center justify-center gap-2">
+                    <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                    <span>Recording...</span>
+                    <span id="recordingTime">00:00</span>
+                  </div>
+                </div>
+
+                <!-- Upload Progress -->
+                <div id="uploadProgress" class="hidden">
+                  <div class="bg-[#1E1E21] border border-white/20 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-white font-medium">Uploading Video...</span>
+                      <span id="uploadPercentage" class="text-white/60">0%</span>
+                    </div>
+                    <div class="w-full bg-white/10 rounded-full h-2">
+                      <div id="uploadBar" class="bg-accent h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Processing Loader -->
+                <div id="processingLoader" class="hidden">
+                  <div class="bg-[#1E1E21] border border-white/20 rounded-lg p-6 text-center">
+                    <div class="flex items-center justify-center mb-4">
+                      <div class="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mr-3"></div>
+                      <span class="text-white font-medium">Processing Video...</span>
+                    </div>
+                    <p class="text-white/70 text-sm mb-2">Analyzing video with AI</p>
+                    <p class="text-white/60 text-xs">Generating transcript and answers to questions</p>
+                  </div>
+                </div>
+
+                <!-- Completion Message -->
+                <div id="completionMessage" class="hidden">
+                  <div class="bg-green-900/20 border border-green-500/30 rounded-lg p-6 text-center">
+                    <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-white mb-2">Video Submitted Successfully!</h3>
+                    <p class="text-white/70 mb-4">Your video has been processed and analyzed. The transcript and answers have been saved.</p>
+                    <div class="space-y-3">
+                      <p class="text-white/60 text-sm">You can now safely close this tab:</p>
+                      <div class="flex flex-col sm:flex-row gap-2 justify-center">
+                        <button onclick="closeTab()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                          Try Auto Close
+                        </button>
+                        <button onclick="showCloseInstructions()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                          Manual Close Instructions
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Questions Section (40%) -->
+      <div class="w-2/5 bg-surface border-l border-white/10 p-6 flex flex-col min-w-0">
+        <h2 class="text-lg font-semibold text-white mb-4 flex-shrink-0">Follow-up Questions</h2>
+        <div id="questionsContainer" class="space-y-3 overflow-y-auto flex-1 min-h-0">
+          <!-- Questions will be loaded here -->
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Welcome Popup -->
+  <div id="welcomePopup" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div class="bg-[#2E3137] border border-white/10 rounded-lg p-6 max-w-2xl mx-4 shadow-lg">
+      <div class="text-center">
+        <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style="background-color: #f1d85b;">
+          <svg class="w-8 h-8 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+          </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-white mb-4">Welcome to PitchLense Video Follow-up</h2>
+        <div class="text-left text-white/80 space-y-4 mb-6">
+          <p><strong>📹 Video Recording:</strong> Use the left side to record your video response</p>
+          <p><strong>❓ Questions:</strong> Review the follow-up questions on the right side</p>
+          <p><strong>🎯 Instructions:</strong></p>
+          <ol class="list-decimal list-inside space-y-2 ml-4">
+            <li>Select your camera from the dropdown</li>
+            <li>Select your audio device from the dropdown</li>
+            <li>Review all questions on the right</li>
+            <li>Click "Start Recording" when ready</li>
+            <li>Answer each question clearly and accurately</li>
+            <li>Click "Stop Recording" when finished</li>
+            <li>Click "Submit Video" to upload and process</li>
+          </ol>
+          <p class="text-accent font-medium">💡 Tip: Speak clearly and ensure good lighting for best results!</p>
+        </div>
+        <button onclick="closeWelcomePopup()" class="px-6 py-2 text-black rounded-lg transition-colors font-medium" style="background-color: #f1d85b;" onmouseover="this.style.backgroundColor='#e6c547'" onmouseout="this.style.backgroundColor='#f1d85b'">
+          Got it, let's start!
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global variables
+    let mediaRecorder;
+    let recordedChunks = [];
+    let recordingStartTime;
+    let recordingTimer;
+    let stream;
+    let audioContext;
+    let analyser;
+    let microphone;
+    let animationFrame;
+
+    // DOM elements
+    const videoPreview = document.getElementById('videoPreview');
+    const videoPlaceholder = document.getElementById('videoPlaceholder');
+    const cameraSelect = document.getElementById('cameraSelect');
+    const audioSelect = document.getElementById('audioSelect');
+    const startRecording = document.getElementById('startRecording');
+    const stopRecording = document.getElementById('stopRecording');
+    const submitVideo = document.getElementById('submitVideo');
+    const recordingStatus = document.getElementById('recordingStatus');
+    const recordingTime = document.getElementById('recordingTime');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const uploadBar = document.getElementById('uploadBar');
+    const uploadPercentage = document.getElementById('uploadPercentage');
+    const processingLoader = document.getElementById('processingLoader');
+    const completionMessage = document.getElementById('completionMessage');
+    const questionsContainer = document.getElementById('questionsContainer');
+
+    // Get follow-up ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const followupId = urlParams.get('id');
+
+    if (!followupId) {
+      alert('Invalid follow-up ID');
+      window.location.href = '/';
+    }
+
+    // Initialize page
+    async function initialize() {
+      await loadQuestions();
+      await setupCamera();
+    }
+
+    // Load questions from follow-up query
+    async function loadQuestions() {
+      try {
+        const response = await fetch(`/api/follow-up-queries/${followupId}`, {
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to load questions');
+        }
+
+        const data = await response.json();
+        const questions = data.questions || [];
+
+        questionsContainer.innerHTML = questions.map((question, index) => `
+          <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-2">
+            <div class="flex items-start gap-2">
+              <span class="bg-accent text-[#1E1E21] text-xs font-bold px-1.5 py-0.5 rounded-full flex-shrink-0">${index + 1}</span>
+              <p class="text-white text-xs leading-relaxed">${question}</p>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error loading questions:', error);
+        questionsContainer.innerHTML = '<p class="text-white/60">Failed to load questions</p>';
+      }
+    }
+
+    // Setup camera and audio devices
+    async function setupCamera() {
+      try {
+        // Request permissions first to get proper device labels
+        await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        const audioDevices = devices.filter(device => device.kind === 'audioinput');
+
+        console.log('Available video devices:', videoDevices);
+        console.log('Available audio devices:', audioDevices);
+
+        // Setup camera dropdown
+        cameraSelect.innerHTML = '<option value="">Select Camera...</option>';
+        videoDevices.forEach((device, index) => {
+          const option = document.createElement('option');
+          option.value = device.deviceId;
+          // Use device label or create a more descriptive name
+          const deviceName = device.label || `Camera ${index + 1}`;
+          option.textContent = deviceName;
+          cameraSelect.appendChild(option);
+        });
+
+        // Setup audio dropdown
+        audioSelect.innerHTML = '<option value="">Select Audio Device...</option>';
+        audioDevices.forEach((device, index) => {
+          const option = document.createElement('option');
+          option.value = device.deviceId;
+          // Use device label or create a more descriptive name
+          const deviceName = device.label || `Audio Device ${index + 1}`;
+          option.textContent = deviceName;
+          audioSelect.appendChild(option);
+        });
+
+        // Auto-select first devices if available
+        if (videoDevices.length > 0) {
+          cameraSelect.value = videoDevices[0].deviceId;
+        }
+        if (audioDevices.length > 0) {
+          audioSelect.value = audioDevices[0].deviceId;
+        }
+
+        // Start camera if we have a video device selected
+        if (videoDevices.length > 0) {
+          await startCamera();
+        }
+
+        cameraSelect.addEventListener('change', startCamera);
+        audioSelect.addEventListener('change', startCamera);
+      } catch (error) {
+        console.error('Error setting up devices:', error);
+        // Fallback: try without permissions
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoDevices = devices.filter(device => device.kind === 'videoinput');
+          const audioDevices = devices.filter(device => device.kind === 'audioinput');
+
+          // Setup camera dropdown
+          cameraSelect.innerHTML = '<option value="">Select Camera...</option>';
+          videoDevices.forEach((device, index) => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.textContent = device.label || `Camera ${index + 1}`;
+            cameraSelect.appendChild(option);
+          });
+
+          // Setup audio dropdown
+          audioSelect.innerHTML = '<option value="">Select Audio Device...</option>';
+          audioDevices.forEach((device, index) => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.textContent = device.label || `Audio Device ${index + 1}`;
+            audioSelect.appendChild(option);
+          });
+
+          if (videoDevices.length > 0) {
+            cameraSelect.value = videoDevices[0].deviceId;
+          }
+          if (audioDevices.length > 0) {
+            audioSelect.value = audioDevices[0].deviceId;
+          }
+
+          cameraSelect.addEventListener('change', startCamera);
+          audioSelect.addEventListener('change', startCamera);
+        } catch (fallbackError) {
+          console.error('Fallback device setup failed:', fallbackError);
+        }
+      }
+    }
+
+    // Start camera
+    async function startCamera() {
+      const videoDeviceId = cameraSelect.value;
+      const audioDeviceId = audioSelect.value;
+      
+      if (!videoDeviceId) return;
+
+      try {
+        // Stop existing stream
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+
+        // Prepare constraints
+        const constraints = {
+          video: {
+            deviceId: { exact: videoDeviceId },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: 'user'
+          }
+        };
+
+        // Add audio constraints if audio device is selected
+        if (audioDeviceId) {
+          constraints.audio = {
+            deviceId: { exact: audioDeviceId }
+          };
+        } else {
+          constraints.audio = true; // Use default audio device
+        }
+
+        // Start new stream with selected devices
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+        videoPreview.srcObject = stream;
+        videoPreview.classList.remove('hidden');
+        videoPlaceholder.classList.add('hidden');
+        startRecording.disabled = false;
+        
+        // Setup audio level monitoring
+        setupAudioLevelMonitoring(stream);
+      } catch (error) {
+        console.error('Error starting camera:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Camera Access Failed',
+          text: 'Failed to access camera. Please check permissions.',
+          confirmButtonColor: '#f1d85b',
+          confirmButtonText: 'OK'
+        });
+      }
+    }
+
+    // Start recording
+    function startRecordingVideo() {
+      if (!stream) return;
+
+      recordedChunks = [];
+      mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'video/webm;codecs=vp9,opus'
+      });
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordedChunks.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        recordedVideoBlob = blob;
+        
+        // Update video preview to show recorded video (but don't auto-play)
+        videoPreview.src = url;
+        videoPreview.srcObject = null;
+        videoPreview.muted = false; // Unmute for playback
+        
+        // Ensure the video element is visible
+        videoPreview.classList.remove('hidden');
+        
+        // Don't auto-play - let user decide with replay button
+      };
+
+      mediaRecorder.start();
+      recordingStartTime = Date.now();
+      startRecordingTimer();
+      
+      startRecording.classList.add('hidden');
+      stopRecording.classList.remove('hidden');
+      recordingStatus.classList.remove('hidden');
+    }
+
+    // Stop recording
+    function stopRecordingVideo() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        clearInterval(recordingTimer);
+        
+        stopRecording.classList.add('hidden');
+        recordingStatus.classList.add('hidden');
+        
+        // Show post-recording controls instead of auto-playing
+        document.getElementById('postRecordingControls').classList.remove('hidden');
+      }
+    }
+
+    // Start recording timer
+    function startRecordingTimer() {
+      recordingTimer = setInterval(() => {
+        const elapsed = Date.now() - recordingStartTime;
+        const minutes = Math.floor(elapsed / 60000);
+        const seconds = Math.floor((elapsed % 60000) / 1000);
+        recordingTime.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      }, 1000);
+    }
+
+    // Setup audio level monitoring
+    function setupAudioLevelMonitoring(stream) {
+      try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        microphone = audioContext.createMediaStreamSource(stream);
+        
+        analyser.fftSize = 256;
+        microphone.connect(analyser);
+        
+        const audioLevelIndicator = document.getElementById('audioLevelIndicator');
+        audioLevelIndicator.classList.remove('hidden');
+        
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        
+        function updateAudioLevel() {
+          analyser.getByteFrequencyData(dataArray);
+          
+          // Calculate average volume
+          let sum = 0;
+          for (let i = 0; i < dataArray.length; i++) {
+            sum += dataArray[i];
+          }
+          const average = sum / dataArray.length;
+          const normalizedLevel = average / 255;
+          
+          // Update visual bars
+          const bars = ['audioBar1', 'audioBar2', 'audioBar3', 'audioBar4', 'audioBar5'];
+          bars.forEach((barId, index) => {
+            const bar = document.getElementById(barId);
+            const threshold = (index + 1) / 5;
+            if (normalizedLevel >= threshold) {
+              bar.style.backgroundColor = normalizedLevel > 0.8 ? '#ef4444' : '#10b981';
+            } else {
+              bar.style.backgroundColor = '#374151';
+            }
+          });
+          
+          animationFrame = requestAnimationFrame(updateAudioLevel);
+        }
+        
+        updateAudioLevel();
+      } catch (error) {
+        console.error('Error setting up audio monitoring:', error);
+      }
+    }
+
+    // Replay recorded video
+    function replayVideo() {
+      if (videoPreview.src) {
+        videoPreview.currentTime = 0;
+        videoPreview.play();
+      }
+    }
+
+    // Reshoot video
+    function reshootVideo() {
+      // Reset recording state
+      recordedChunks = [];
+      recordedVideoBlob = null;
+      
+      // Hide post-recording controls
+      document.getElementById('postRecordingControls').classList.add('hidden');
+      
+      // Show start recording button
+      startRecording.classList.remove('hidden');
+      
+      // Reset video preview to show camera feed
+      if (currentStream) {
+        videoPreview.srcObject = currentStream;
+        videoPreview.muted = true;
+      } else {
+        // If no stream, show placeholder
+        videoPreview.classList.add('hidden');
+        document.getElementById('videoPlaceholder').classList.remove('hidden');
+      }
+      
+      // Stop audio monitoring
+      if (audioContext) {
+        audioContext.close();
+        audioContext = null;
+      }
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+      document.getElementById('audioLevelIndicator').classList.add('hidden');
+    }
+
+    // Submit final video
+    async function submitFinalVideo() {
+      if (!recordedVideoBlob) {
+        Swal.fire({
+          icon: 'error',
+          title: 'No Video',
+          text: 'No recorded video found. Please record a video first.',
+          confirmButtonColor: '#f1d85b',
+          confirmButtonText: 'OK'
+        });
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('video', recordedVideoBlob, 'followup-video.webm');
+      formData.append('followupId', followupId);
+
+      // Hide post-recording controls and show upload progress
+      document.getElementById('postRecordingControls').classList.add('hidden');
+      uploadProgress.classList.remove('hidden');
+
+      try {
+        const response = await fetch('/api/follow-up-queries/submit-video', {
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to submit video');
+        }
+
+        // Hide upload progress and show processing loader
+        uploadProgress.classList.add('hidden');
+        processingLoader.classList.remove('hidden');
+
+        const data = await response.json();
+        
+        // Check if the response indicates success
+        if (data.success && data.message) {
+          // Hide processing loader and show completion message
+          processingLoader.classList.add('hidden');
+          completionMessage.classList.remove('hidden');
+        } else {
+          // Handle unexpected response format
+          throw new Error(data.error || 'Unexpected response format');
+        }
+        
+      } catch (error) {
+        console.error('Error submitting video:', error);
+        
+        // Determine error message based on the error
+        let errorTitle = 'Upload Failed';
+        let errorText = 'Failed to submit video. Please try again.';
+        
+        if (error.message.includes('parse Gemini response')) {
+          errorTitle = 'Processing Failed';
+          errorText = 'The video was uploaded but failed to process with AI. Please try again.';
+        } else if (error.message.includes('Failed to submit video')) {
+          errorTitle = 'Upload Failed';
+          errorText = 'Failed to upload video to server. Please check your connection and try again.';
+        }
+        
+        Swal.fire({
+          icon: 'error',
+          title: errorTitle,
+          text: errorText,
+          confirmButtonColor: '#f1d85b',
+          confirmButtonText: 'OK'
+        });
+        
+        uploadProgress.classList.add('hidden');
+        processingLoader.classList.add('hidden');
+        document.getElementById('postRecordingControls').classList.remove('hidden');
+      }
+    }
+
+    // Submit video (legacy function for backward compatibility)
+    async function submitVideoToServer() {
+      return submitFinalVideo();
+    }
+
+    // Close welcome popup
+    function closeWelcomePopup() {
+      const popup = document.getElementById('welcomePopup');
+      popup.classList.add('hidden');
+    }
+
+    // Close tab
+    function closeTab() {
+      // Try to close the tab (only works if opened by JavaScript)
+      window.close();
+      
+      // If window.close() doesn't work, show a message to the user
+      setTimeout(() => {
+        showCloseInstructions();
+      }, 100);
+    }
+
+    // Show close instructions
+    function showCloseInstructions() {
+      Swal.fire({
+        icon: 'info',
+        title: 'How to Close This Tab',
+        html: `
+          <div class="text-left space-y-3">
+            <p class="text-gray-700">You can close this tab using any of these methods:</p>
+            <div class="space-y-2">
+              <div class="flex items-center gap-2">
+                <span class="bg-gray-200 px-2 py-1 rounded text-sm font-mono">Ctrl + W</span>
+                <span class="text-sm text-gray-600">(Windows/Linux)</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="bg-gray-200 px-2 py-1 rounded text-sm font-mono">Cmd + W</span>
+                <span class="text-sm text-gray-600">(Mac)</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="bg-gray-200 px-2 py-1 rounded text-sm font-mono">Click the X</span>
+                <span class="text-sm text-gray-600">(On the tab)</span>
+              </div>
+            </div>
+            <p class="text-sm text-gray-600 mt-3">Your video has been successfully submitted and processed!</p>
+          </div>
+        `,
+        confirmButtonColor: '#f1d85b',
+        confirmButtonText: 'Got it!',
+        allowOutsideClick: false,
+        allowEscapeKey: false
+      });
+    }
+
+    // Event listeners
+    startRecording.addEventListener('click', startRecordingVideo);
+    stopRecording.addEventListener('click', stopRecordingVideo);
+    submitVideo.addEventListener('click', submitVideoToServer);
+    
+    // Post-recording controls event listeners
+    document.getElementById('replayVideo').addEventListener('click', replayVideo);
+    document.getElementById('reshootVideo').addEventListener('click', reshootVideo);
+    document.getElementById('submitFinalVideo').addEventListener('click', submitFinalVideo);
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', initialize);
+  </script>
+</body>
+</html>

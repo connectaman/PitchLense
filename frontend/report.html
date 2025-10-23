@@ -98,6 +98,60 @@
         color: #f1d85b;
         text-decoration: underline;
       }
+      
+      /* Star Rating Styles */
+      .star-rating {
+        display: flex;
+        gap: 4px;
+      }
+      
+      .star {
+        font-size: 24px;
+        color: #4a5568;
+        cursor: pointer;
+        transition: color 0.2s ease;
+        user-select: none;
+      }
+      
+      .star:hover,
+      .star.active {
+        color: #f1d85b;
+      }
+      
+      .star.rated {
+        color: #f1d85b;
+      }
+      
+      /* Fix SVG color inheritance issues */
+      svg {
+        color: inherit;
+      }
+      
+      /* Override SVG colors in specific contexts where they should be dark on yellow backgrounds */
+      .bg-accent svg,
+      button[class*="bg-accent"] svg,
+      .bg-accent/20 svg {
+        color: #1E1E21 !important;
+      }
+      
+      /* Fix specific elements with accent backgrounds */
+      .w-10.h-10.rounded-full.bg-accent svg,
+      .w-8.h-8.rounded-full.bg-accent svg {
+        color: #1E1E21 !important;
+      }
+      
+      /* Keep SVG colors as intended in navigation and other areas */
+      nav svg,
+      .sidebar svg,
+      .navigation svg {
+        color: currentColor;
+      }
+      
+      /* Ensure SVGs in yellow buttons are dark */
+      button.bg-accent svg,
+      a.bg-accent svg {
+        color: #1E1E21 !important;
+      }
       .markdown-content a:hover {
         color: #f1d85b;
         opacity: 0.8;
@@ -217,7 +271,7 @@
     <div id="app" class="h-screen flex flex-col p-3 gap-3 hidden overflow-hidden">
       <header class="h-16 bg-[#2E3137] border border-white/10 rounded-[22px] flex items-center justify-between px-6 mobile-header">
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full bg-accent grid place-items-center"><img src="/static/logo.svg" class="w-5 h-5"/></div>
+          <div class="w-8 h-8 rounded-full grid place-items-center"><img src="/static/logo.svg" class="w-5 h-5"/></div>
           <div class="text-base font-semibold">PitchLense</div>
         </div>
         <div class="flex items-center gap-3">
@@ -377,6 +431,9 @@
             <button id="uploadedFilesTab" class="tab-button px-4 py-2 text-sm font-medium rounded-lg transition-colors ml-2" data-tab="files">
               Uploaded Files
             </button>
+            <button id="followUpTab" class="tab-button px-4 py-2 text-sm font-medium rounded-lg transition-colors ml-2" data-tab="followup">
+              Ask Follow Up
+            </button>
             <!-- Share Button with Dropdown -->
             <div class="relative ml-auto">
               <button id="shareButton" class="w-9 h-9 grid place-items-center rounded-full bg-[#FFF27A] border border-white/10 text-[#1E1E21] hover:bg-accent/80 transition-colors" title="Share">
@@ -421,6 +478,12 @@
               </div>
             </div>
             
+            <button id="toggleFeedbackForm" class="tab-button px-4 py-2 text-sm font-medium rounded-lg transition-colors mr-2 flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+              Feedback
+            </button>
             <button id="documentationTab" class="tab-button px-4 py-2 text-sm font-medium rounded-lg transition-colors ml-2 flex items-center gap-2" data-tab="documentation">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -665,6 +728,100 @@
           </div>
         </section>
           </div>
+
+          <!-- Follow Up Questions Tab -->
+          <div id="followUpContent" class="tab-content hidden h-full overflow-hidden">
+            <section class="p-2 h-full">
+              <div class="flex h-full gap-4">
+                <!-- Main Content Area -->
+                <div class="flex-1 h-full">
+                  <div class="card p-4 h-full flex flex-col">
+                    <div class="flex items-center justify-between mb-4">
+                      <h3 class="text-lg font-semibold text-white">Follow-Up Questions for Founder</h3>
+                      <div class="flex gap-2">
+                        <button id="generateFollowUpBtn" class="px-4 py-2 bg-accent text-[#1E1E21] rounded-lg hover:bg-accent/80 transition-colors text-sm font-medium">
+                          Generate New Questions
+                        </button>
+                        <button id="askFounderBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium hidden">
+                          Ask Founder for Follow Up
+                        </button>
+                      </div>
+                    </div>
+                    <p class="text-white/70 text-sm mb-6">View existing follow-up queries or generate new questions based on the analysis.</p>
+                    
+                    <!-- Existing Follow-up Queries -->
+                    <div id="existingFollowUpQueries" class="flex-1 overflow-y-auto">
+                      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="followUpQueriesGrid">
+                        <!-- Follow-up query cards will be populated here -->
+                      </div>
+                      
+                      <!-- Empty State for existing queries -->
+                      <div id="noExistingQueries" class="hidden flex items-center justify-center py-12 text-white/70">
+                        <div class="text-center">
+                          <div class="text-4xl mb-4">📝</div>
+                          <h4 class="text-lg font-medium text-white mb-2">No Follow-up Queries Yet</h4>
+                          <p class="text-sm">Generate your first set of follow-up questions to get started.</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Loading State -->
+                    <div id="followUpLoading" class="hidden flex items-center justify-center py-8">
+                      <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
+                        <span class="text-white/70">Generating follow-up questions...</span>
+                      </div>
+                    </div>
+                    
+                    <!-- Questions Table -->
+                    <div id="followUpQuestions" class="hidden flex-1 overflow-y-auto">
+                      <div class="bg-[#1E1E21] border border-white/10 rounded-lg overflow-hidden">
+                        <table class="w-full">
+                          <thead class="bg-[#2E3137] border-b border-white/10">
+                            <tr>
+                              <th class="px-4 py-3 text-left text-sm font-medium text-white">#</th>
+                              <th class="px-4 py-3 text-left text-sm font-medium text-white">Follow-Up Questions</th>
+                              <th class="px-4 py-3 text-center text-sm font-medium text-white">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody id="followUpQuestionsBody" class="divide-y divide-white/10">
+                            <!-- Questions will be populated here -->
+                          </tbody>
+                        </table>
+                        
+                        <!-- Add New Question Button -->
+                        <div class="flex justify-center py-4 border-t border-white/10">
+                          <button onclick="addNewQuestion()" class="flex items-center gap-2 px-4 py-2 bg-accent text-[#1E1E21] rounded-lg hover:bg-accent/80 transition-colors text-sm font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            Add New Question
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Error State -->
+                    <div id="followUpError" class="hidden text-center py-8">
+                      <div class="text-red-400 mb-4">Failed to generate follow-up questions</div>
+                      <button id="retryFollowUp" class="px-4 py-2 bg-accent text-[#1E1E21] rounded-lg hover:bg-accent/80 transition-colors">
+                        Try Again
+                      </button>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="followUpEmpty" class="flex items-center justify-center py-8 text-white/70">
+                      <div class="text-center">
+                        <div class="text-4xl mb-4">❓</div>
+                        <div class="text-lg mb-2">No questions generated yet</div>
+                        <div class="text-sm">Click "Generate Questions" to create follow-up questions based on your analysis</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
         </div>
 
           <!-- Dependency Tab -->
@@ -720,6 +877,136 @@
             </section>
           </div>
       </main>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden">
+      <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-[#2E3137] border border-white/10 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+          <!-- Modal Header -->
+          <div class="flex items-center justify-between p-6 border-b border-white/10">
+            <h2 class="text-xl font-semibold text-white">Report Feedback</h2>
+            <button id="closeFeedbackModal" class="text-white/60 hover:text-white transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Modal Content -->
+          <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+            <p class="text-white/70 text-sm mb-6">Help us improve by sharing your experience with this report. Your feedback is valuable to us!</p>
+            
+            <!-- Feedback Rating Categories -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <!-- Overall Feedback -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-white">Overall Feedback</label>
+                <div class="flex items-center gap-2 star-rating" data-category="overall_feedback">
+                  <span class="star" data-rating="1">★</span>
+                  <span class="star" data-rating="2">★</span>
+                  <span class="star" data-rating="3">★</span>
+                  <span class="star" data-rating="4">★</span>
+                  <span class="star" data-rating="5">★</span>
+                </div>
+              </div>
+              
+              <!-- Risk Indicator Feedback -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-white">Risk Indicator Feedback</label>
+                <div class="flex items-center gap-2 star-rating" data-category="risk_indicator_feedback">
+                  <span class="star" data-rating="1">★</span>
+                  <span class="star" data-rating="2">★</span>
+                  <span class="star" data-rating="3">★</span>
+                  <span class="star" data-rating="4">★</span>
+                  <span class="star" data-rating="5">★</span>
+                </div>
+              </div>
+              
+              <!-- Did you get what you were looking for -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-white">Did you get what you were looking for?</label>
+                <div class="flex items-center gap-2 star-rating" data-category="got_what_looking_for">
+                  <span class="star" data-rating="1">★</span>
+                  <span class="star" data-rating="2">★</span>
+                  <span class="star" data-rating="3">★</span>
+                  <span class="star" data-rating="4">★</span>
+                  <span class="star" data-rating="5">★</span>
+                </div>
+              </div>
+              
+              <!-- Quality of Content Generation -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-white">Quality of Content Generation</label>
+                <div class="flex items-center gap-2 star-rating" data-category="content_quality">
+                  <span class="star" data-rating="1">★</span>
+                  <span class="star" data-rating="2">★</span>
+                  <span class="star" data-rating="3">★</span>
+                  <span class="star" data-rating="4">★</span>
+                  <span class="star" data-rating="5">★</span>
+                </div>
+              </div>
+              
+              <!-- Satisfaction on the Scores -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-white">Satisfaction on the Scores</label>
+                <div class="flex items-center gap-2 star-rating" data-category="scores_satisfaction">
+                  <span class="star" data-rating="1">★</span>
+                  <span class="star" data-rating="2">★</span>
+                  <span class="star" data-rating="3">★</span>
+                  <span class="star" data-rating="4">★</span>
+                  <span class="star" data-rating="5">★</span>
+                </div>
+              </div>
+              
+              <!-- Copilot Feedback -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-white">Copilot Feedback</label>
+                <div class="flex items-center gap-2 star-rating" data-category="copilot_feedback">
+                  <span class="star" data-rating="1">★</span>
+                  <span class="star" data-rating="2">★</span>
+                  <span class="star" data-rating="3">★</span>
+                  <span class="star" data-rating="4">★</span>
+                  <span class="star" data-rating="5">★</span>
+                </div>
+              </div>
+              
+              <!-- Ecosystem Feedback -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-white">Ecosystem Feedback</label>
+                <div class="flex items-center gap-2 star-rating" data-category="ecosystem_feedback">
+                  <span class="star" data-rating="1">★</span>
+                  <span class="star" data-rating="2">★</span>
+                  <span class="star" data-rating="3">★</span>
+                  <span class="star" data-rating="4">★</span>
+                  <span class="star" data-rating="5">★</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Optional Feedback Note -->
+            <div class="space-y-2 mb-6">
+              <label class="text-sm font-medium text-white">Additional Comments (Optional)</label>
+              <textarea 
+                id="feedbackNote" 
+                placeholder="Share any additional thoughts or suggestions..."
+                class="w-full p-3 bg-[#1E1E21] border border-white/10 rounded-lg text-white placeholder-white/50 resize-none focus:outline-none focus:border-accent"
+                rows="3"
+              ></textarea>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex gap-3 justify-end">
+              <button id="cancelFeedback" class="px-6 py-2 bg-[#2E3137] border border-white/10 text-white rounded-lg hover:bg-[#3a3d44] transition-colors">
+                Cancel
+              </button>
+              <button id="submitFeedback" class="px-6 py-2 bg-accent text-[#1E1E21] rounded-lg hover:opacity-80 transition-opacity font-medium">
+                Submit Feedback
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Documentation Modal -->
@@ -1260,6 +1547,7 @@
       </div>
     </div>
 
+
       <!-- Circular Footer with Heart Icon -->
       <footer class="fixed bottom-4 right-4 z-50">
         <!-- Expanded Footer Content (Hidden by default) -->
@@ -1296,6 +1584,7 @@
         </div>
       </footer>
     </div>
+
 
     <script>
       // Global variables
@@ -1355,6 +1644,8 @@
               targetContent = document.getElementById('qnaContent');
             } else if (targetTab === 'dependency') {
               targetContent = document.getElementById('dependencyContent');
+            } else if (targetTab === 'followup') {
+              targetContent = document.getElementById('followUpContent');
             } else {
               targetContent = document.getElementById(`${targetTab}AnalysisContent`);
             }
@@ -4132,6 +4423,50 @@
           const message = chatInput.value.trim();
           if (!message) return;
 
+          // Step 1: Check content moderation first
+          try {
+            const moderationResponse = await fetch('/api/content-moderate', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                content: message
+              })
+            });
+
+            if (!moderationResponse.ok) {
+              const errorData = await moderationResponse.json();
+              throw new Error(errorData.error || 'Content moderation failed');
+            }
+
+            const moderationResult = await moderationResponse.json();
+            
+            if (!moderationResult.safe) {
+              // Content is inappropriate - show moderation message
+              addMessage(message, true);
+              chatInput.value = '';
+              
+              // Show content moderation warning as bot response
+              let moderationMessage = "I'm sorry, but I cannot respond to that message. ";
+              
+              if (moderationResult.violations && moderationResult.violations.length > 0) {
+                const violations = moderationResult.violations.map(v => v.category).join(', ');
+                moderationMessage += `Your message contains inappropriate content: ${violations}. `;
+              }
+              
+              moderationMessage += "Please rephrase your question using professional language appropriate for business communication.";
+              
+              addMessage(moderationMessage, false);
+              return;
+            }
+          } catch (moderationError) {
+            console.error('Content moderation error:', moderationError);
+            // If moderation fails, continue with the message (fail-safe approach)
+          }
+
+          // Step 2: Content is safe - proceed with normal flow
           // Add user message
           addMessage(message, true);
           chatInput.value = '';
@@ -4181,8 +4516,10 @@
               })
             });
 
-            // Remove loading indicator
-            chatMessages.removeChild(loadingDiv);
+            // Remove loading indicator if it still exists
+            if (loadingDiv && loadingDiv.parentNode) {
+              chatMessages.removeChild(loadingDiv);
+            }
 
             if (!response.ok) {
               const errorData = await response.json();
@@ -4193,8 +4530,10 @@
             addMessage(data.response);
 
           } catch (error) {
-            // Remove loading indicator
-            chatMessages.removeChild(loadingDiv);
+            // Remove loading indicator if it still exists
+            if (loadingDiv && loadingDiv.parentNode) {
+              chatMessages.removeChild(loadingDiv);
+            }
             addMessage(`Sorry, I encountered an error: ${error.message}`);
           }
         }
@@ -4968,6 +5307,1435 @@
           window.location.href='/auth.html';
         });
       }
+
+      // Feedback Form Functionality
+      function initializeFeedbackForm() {
+        const toggleBtn = document.getElementById('toggleFeedbackForm');
+        const feedbackModal = document.getElementById('feedbackModal');
+        const closeBtn = document.getElementById('closeFeedbackModal');
+        const cancelBtn = document.getElementById('cancelFeedback');
+        const submitBtn = document.getElementById('submitFeedback');
+        const feedbackNote = document.getElementById('feedbackNote');
+
+        // Store feedback ratings
+        const feedbackRatings = {};
+
+        // Populate modal with existing feedback data
+        function populateExistingFeedback(feedback) {
+          // Clear existing ratings
+          Object.keys(feedbackRatings).forEach(key => delete feedbackRatings[key]);
+          
+          // Set feedback ratings
+          const categories = [
+            'overall_feedback',
+            'risk_indicator_feedback', 
+            'got_what_looking_for',
+            'content_quality',
+            'scores_satisfaction',
+            'copilot_feedback',
+            'ecosystem_feedback'
+          ];
+          
+          categories.forEach(category => {
+            if (feedback[category]) {
+              feedbackRatings[category] = feedback[category];
+            }
+          });
+          
+          // Set feedback note
+          const feedbackNote = document.getElementById('feedbackNote');
+          if (feedbackNote && feedback.feedback_note) {
+            feedbackNote.value = feedback.feedback_note;
+          }
+          
+          console.log('Populated existing feedback:', feedback);
+        }
+
+        // Reset feedback form to start fresh
+        function resetFeedbackForm() {
+          // Clear existing ratings
+          Object.keys(feedbackRatings).forEach(key => delete feedbackRatings[key]);
+          
+          // Clear feedback note
+          const feedbackNote = document.getElementById('feedbackNote');
+          if (feedbackNote) {
+            feedbackNote.value = '';
+          }
+          
+          console.log('Reset feedback form for fresh start');
+        }
+
+        // Initialize star ratings
+        function initializeStarRatings() {
+          const starRatings = document.querySelectorAll('.star-rating');
+          
+          starRatings.forEach(ratingContainer => {
+            const category = ratingContainer.getAttribute('data-category');
+            const stars = ratingContainer.querySelectorAll('.star');
+            
+            // Set initial state based on existing feedback
+            const existingRating = feedbackRatings[category] || 0;
+            stars.forEach((s, i) => {
+              if (i < existingRating) {
+                s.classList.add('rated');
+              } else {
+                s.classList.remove('rated', 'active');
+              }
+            });
+            
+            stars.forEach((star, index) => {
+              star.addEventListener('click', () => {
+                const rating = index + 1;
+                feedbackRatings[category] = rating;
+                
+                // Update star display
+                stars.forEach((s, i) => {
+                  if (i < rating) {
+                    s.classList.add('rated');
+                    s.classList.remove('active');
+                  } else {
+                    s.classList.remove('rated', 'active');
+                  }
+                });
+              });
+              
+              star.addEventListener('mouseenter', () => {
+                stars.forEach((s, i) => {
+                  if (i <= index) {
+                    s.classList.add('active');
+                  } else {
+                    s.classList.remove('active');
+                  }
+                });
+              });
+            });
+            
+            ratingContainer.addEventListener('mouseleave', () => {
+              const currentRating = feedbackRatings[category] || 0;
+              stars.forEach((s, i) => {
+                if (i < currentRating) {
+                  s.classList.add('rated');
+                } else {
+                  s.classList.remove('rated', 'active');
+                }
+              });
+            });
+          });
+        }
+
+        // Check for existing feedback and open modal
+        async function openFeedbackModal() {
+          try {
+            // Get current report ID from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const reportId = urlParams.get('report_id');
+            
+            if (!reportId) {
+              Swal.fire({
+                title: 'Error',
+                text: 'Report ID not found. Please refresh the page and try again.',
+                icon: 'error',
+                confirmButtonColor: '#f1d85b',
+                confirmButtonText: 'OK'
+              });
+              return;
+            }
+
+            // Check for existing feedback
+            const response = await fetch(`/api/feedback/${reportId}`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
+
+            console.log('Feedback check response status:', response.status);
+            console.log('Feedback check response headers:', response.headers);
+
+            if (response.ok) {
+              // Check if response is JSON
+              const contentType = response.headers.get('content-type');
+              if (contentType && contentType.includes('application/json')) {
+                const result = await response.json();
+                
+                if (result.exists && result.feedback) {
+                  // Existing feedback found - populate modal with existing data
+                  populateExistingFeedback(result.feedback);
+                } else {
+                  // No existing feedback - start fresh
+                  resetFeedbackForm();
+                }
+              } else {
+                // Response is not JSON, likely an error page
+                const responseText = await response.text();
+                console.error('Non-JSON response:', responseText);
+                throw new Error('Server returned non-JSON response');
+              }
+              
+              // Open the modal
+              if (feedbackModal) {
+                feedbackModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                
+                // Ensure main content stays visible
+                const mainContent = document.getElementById('app');
+                if (mainContent) {
+                  mainContent.classList.remove('hidden');
+                }
+                
+                initializeStarRatings();
+              }
+            } else {
+              const errorText = await response.text();
+              console.error('Error response:', errorText);
+              throw new Error(`Failed to check existing feedback: ${response.status}`);
+            }
+          } catch (error) {
+            console.error('Error checking existing feedback:', error);
+            
+            // Fallback: open modal with fresh form if API call fails
+            resetFeedbackForm();
+            
+            if (feedbackModal) {
+              feedbackModal.classList.remove('hidden');
+              document.body.style.overflow = 'hidden';
+              
+              // Ensure main content stays visible
+              const mainContent = document.getElementById('app');
+              if (mainContent) {
+                mainContent.classList.remove('hidden');
+              }
+              
+              initializeStarRatings();
+            }
+            
+            // Show warning but don't block the user
+            Swal.fire({
+              title: 'Warning',
+              text: 'Could not load existing feedback. You can still submit new feedback.',
+              icon: 'warning',
+              confirmButtonColor: '#f1d85b',
+              confirmButtonText: 'OK'
+            });
+          }
+        }
+
+        // Close feedback modal
+        function closeFeedbackModal() {
+          if (feedbackModal) {
+            feedbackModal.classList.add('hidden');
+            document.body.style.overflow = '';
+            
+            // Ensure main content is visible and force it to show
+            const mainContent = document.getElementById('app');
+            if (mainContent) {
+              mainContent.classList.remove('hidden');
+              mainContent.style.display = 'flex'; // Force display
+              mainContent.style.visibility = 'visible'; // Ensure visibility
+            }
+            
+            // Also ensure the page loader is hidden
+            const pageLoader = document.getElementById('pageLoader');
+            if (pageLoader) {
+              pageLoader.classList.add('hidden');
+              pageLoader.style.display = 'none'; // Force hide
+            }
+            
+            // Reset form
+            resetFeedbackForm();
+            
+            // Reset star ratings
+            document.querySelectorAll('.star').forEach(star => {
+              star.classList.remove('rated', 'active');
+            });
+          }
+        }
+
+        // Toggle feedback modal
+        if (toggleBtn) {
+          toggleBtn.addEventListener('click', openFeedbackModal);
+        }
+
+        // Close feedback modal
+        if (closeBtn) {
+          closeBtn.addEventListener('click', closeFeedbackModal);
+        }
+
+        // Cancel feedback form
+        if (cancelBtn) {
+          cancelBtn.addEventListener('click', closeFeedbackModal);
+        }
+
+        // Submit feedback
+        if (submitBtn) {
+          submitBtn.addEventListener('click', async () => {
+            // Validate that all ratings are provided
+            const requiredFields = [
+              'overall_feedback',
+              'risk_indicator_feedback', 
+              'got_what_looking_for',
+              'content_quality',
+              'scores_satisfaction',
+              'copilot_feedback',
+              'ecosystem_feedback'
+            ];
+            
+            const missingFields = requiredFields.filter(field => !feedbackRatings[field]);
+            
+            if (missingFields.length > 0) {
+              Swal.fire({
+                title: 'Incomplete Feedback',
+                text: 'Please provide ratings for all categories before submitting.',
+                icon: 'warning',
+                confirmButtonColor: '#f1d85b',
+                confirmButtonText: 'OK'
+              });
+              return;
+            }
+
+            try {
+              // Get current report ID from URL parameters
+              const urlParams = new URLSearchParams(window.location.search);
+              const reportId = urlParams.get('report_id');
+              
+              if (!reportId) {
+                Swal.fire({
+                  title: 'Error',
+                  text: 'Report ID not found. Please refresh the page and try again.',
+                  icon: 'error',
+                  confirmButtonColor: '#f1d85b',
+                  confirmButtonText: 'OK'
+                });
+                return;
+              }
+              
+              const feedbackData = {
+                ...feedbackRatings,
+                feedback_note: feedbackNote.value.trim() || null
+              };
+
+              const response = await fetch('/api/feedback', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  report_id: reportId,
+                  ...feedbackData
+                })
+              });
+
+              if (response.ok) {
+                // Show success message and close modal
+                closeFeedbackModal();
+                
+                // Ensure main content is visible after successful submission
+                const mainContent = document.getElementById('app');
+                if (mainContent) {
+                  mainContent.classList.remove('hidden');
+                  mainContent.style.display = 'flex';
+                }
+                
+                // Hide page loader if it's showing
+                const pageLoader = document.getElementById('pageLoader');
+                if (pageLoader) {
+                  pageLoader.classList.add('hidden');
+                }
+                
+                Swal.fire({
+                  title: 'Feedback Submitted!',
+                  text: 'Thank you for your valuable feedback.',
+                  icon: 'success',
+                  confirmButtonColor: '#f1d85b',
+                  confirmButtonText: 'OK'
+                }).then(() => {
+                  // Additional check after SweetAlert closes
+                  if (mainContent) {
+                    mainContent.classList.remove('hidden');
+                    mainContent.style.display = 'flex';
+                  }
+                });
+              } else {
+                throw new Error('Failed to submit feedback');
+              }
+            } catch (error) {
+              console.error('Error submitting feedback:', error);
+              Swal.fire({
+                title: 'Error',
+                text: 'Failed to submit feedback. Please try again.',
+                icon: 'error',
+                confirmButtonColor: '#f1d85b',
+                confirmButtonText: 'OK'
+              });
+            }
+          });
+        }
+
+        // Close modal when clicking outside
+        if (feedbackModal) {
+          feedbackModal.addEventListener('click', (e) => {
+            if (e.target === feedbackModal) {
+              closeFeedbackModal();
+            }
+          });
+          
+          // Close modal with Escape key
+          document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !feedbackModal.classList.contains('hidden')) {
+              closeFeedbackModal();
+            }
+          });
+        }
+      }
+
+      // Initialize feedback form when DOM is loaded
+      document.addEventListener('DOMContentLoaded', initializeFeedbackForm);
+
+      // Follow-up Questions Tab Functions
+      function initializeFollowUpTab() {
+        const generateFollowUpBtn = document.getElementById('generateFollowUpBtn');
+        const askFounderBtn = document.getElementById('askFounderBtn');
+        const retryFollowUp = document.getElementById('retryFollowUp');
+
+        // Generate follow-up questions
+        if (generateFollowUpBtn) {
+          generateFollowUpBtn.addEventListener('click', generateFollowUpQuestions);
+        }
+
+        // Ask founder for follow up
+        if (askFounderBtn) {
+          askFounderBtn.addEventListener('click', askFounderForFollowUp);
+        }
+
+        // Retry follow-up questions
+        if (retryFollowUp) {
+          retryFollowUp.addEventListener('click', generateFollowUpQuestions);
+        }
+
+        // Load existing follow-up queries
+        loadExistingFollowUpQueries();
+      }
+
+      // Load existing follow-up queries
+      async function loadExistingFollowUpQueries() {
+        try {
+          const reportId = new URLSearchParams(window.location.search).get('report_id');
+          if (!reportId) return;
+
+          const response = await fetch(`/api/reports/${reportId}/follow-up-queries`, {
+            credentials: 'include'
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch follow-up queries');
+          }
+
+          const data = await response.json();
+          displayFollowUpQueries(data.queries);
+
+        } catch (error) {
+          console.error('Error loading follow-up queries:', error);
+        }
+      }
+
+      // Display follow-up queries as cards
+      function displayFollowUpQueries(queries) {
+        const grid = document.getElementById('followUpQueriesGrid');
+        const emptyState = document.getElementById('noExistingQueries');
+        const followUpEmpty = document.getElementById('followUpEmpty');
+
+        if (!queries || queries.length === 0) {
+          emptyState.classList.remove('hidden');
+          return;
+        }
+
+        emptyState.classList.add('hidden');
+        // Also hide the generated questions empty state when showing existing queries
+        if (followUpEmpty) {
+          followUpEmpty.classList.add('hidden');
+        }
+        
+        // Clear the grid and populate with query cards
+        grid.innerHTML = '';
+
+        queries.forEach(query => {
+          const card = createFollowUpQueryCard(query);
+          grid.appendChild(card);
+        });
+      }
+
+      // Create follow-up query card
+      function createFollowUpQueryCard(query) {
+        const card = document.createElement('div');
+        card.className = 'bg-[#1E1E21] border border-white/10 rounded-lg p-4 hover:border-white/20 transition-colors cursor-pointer';
+        card.onclick = () => openFollowUpQueryDetail(query.id);
+
+        const createdDate = new Date(query.created_at).toLocaleDateString();
+        const updatedDate = new Date(query.updated_at).toLocaleDateString();
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <div>
+                <h4 class="text-white font-medium">Follow-up Query</h4>
+                <p class="text-white/60 text-sm">${query.question_count} questions</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              ${query.has_video ? '<span class="w-2 h-2 bg-green-500 rounded-full" title="Video Available"></span>' : ''}
+              ${query.has_transcript ? '<span class="w-2 h-2 bg-blue-500 rounded-full" title="Transcript Available"></span>' : ''}
+            </div>
+          </div>
+          
+          <div class="space-y-2 text-sm text-white/70">
+            <div class="flex justify-between">
+              <span>Created:</span>
+              <span>${createdDate}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Updated:</span>
+              <span>${updatedDate}</span>
+            </div>
+          </div>
+          
+          <div class="mt-3 pt-3 border-t border-white/10">
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-white/60">Click to view details</span>
+              <svg class="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </div>
+          </div>
+        `;
+
+        return card;
+      }
+
+      // Open follow-up query detail view
+      async function openFollowUpQueryDetail(queryId) {
+        try {
+          // Show loading state
+          const loadingModal = createLoadingModal();
+          document.body.appendChild(loadingModal);
+
+          // Fetch follow-up query details
+          const response = await fetch(`/api/follow-up-queries/${queryId}`, {
+            credentials: 'include'
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch follow-up query details');
+          }
+
+          const queryData = await response.json();
+          
+          // Remove loading modal
+          document.body.removeChild(loadingModal);
+
+          // Show detail modal
+          showFollowUpQueryDetailModal(queryData, queryId);
+
+        } catch (error) {
+          console.error('Error opening follow-up query detail:', error);
+          // Remove loading modal if it exists
+          const loadingModal = document.getElementById('loadingModal');
+          if (loadingModal) {
+            document.body.removeChild(loadingModal);
+          }
+          showToast('Failed to load follow-up query details', 'red');
+        }
+      }
+
+      // Create loading modal
+      function createLoadingModal() {
+        const modal = document.createElement('div');
+        modal.id = 'loadingModal';
+        modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
+        modal.innerHTML = `
+          <div class="bg-[#2E3137] border border-white/10 rounded-lg p-6">
+            <div class="flex items-center gap-3">
+              <div class="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
+              <span class="text-white">Loading follow-up query details...</span>
+            </div>
+          </div>
+        `;
+        return modal;
+      }
+
+      // Show follow-up query detail modal
+      function showFollowUpQueryDetailModal(queryData, queryId) {
+        // Create modal overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
+        overlay.id = 'followUpDetailModal';
+        
+        // Create modal content
+        const modal = document.createElement('div');
+        modal.className = 'bg-[#2E3137] border border-white/10 rounded-lg w-full max-w-6xl h-full max-h-[90vh] flex flex-col';
+        modal.innerHTML = `
+          <div class="flex items-center justify-between p-4 border-b border-white/10">
+            <h3 class="text-xl font-semibold text-white">Follow-up Query Details</h3>
+            <button onclick="closeFollowUpDetailModal()" class="text-white/60 hover:text-white transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="flex-1 flex overflow-hidden">
+            <!-- Left Side - Video Player -->
+            <div class="w-1/2 border-r border-white/10 flex flex-col items-center justify-center">
+              <div class="p-4 w-full">
+                <h4 class="text-lg font-medium text-white mb-2 text-center">Video Response</h4>
+                <div id="videoContainer" class="bg-black rounded-lg overflow-hidden mx-auto max-w-md">
+                  <!-- Video player will be loaded here -->
+                </div>
+              </div>
+            </div>
+            
+            <!-- Right Side - Questions/Answers and Transcript -->
+            <div class="w-1/2 flex flex-col h-full min-h-0">
+              <div class="p-4 flex-1 flex flex-col min-h-0">
+                <div class="flex items-center justify-between mb-4 flex-shrink-0">
+                  <h4 class="text-lg font-medium text-white">Questions & Answers</h4>
+                  <div class="flex items-center gap-2">
+                    <button id="toggleTranscript" class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors">
+                      Show Transcript
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Questions/Answers Content -->
+                <div id="questionsAnswersContent" class="space-y-4 flex-1 overflow-y-auto min-h-0">
+                  <!-- Questions and answers will be populated here -->
+                </div>
+                
+                <!-- Transcript Content -->
+                <div id="transcriptContent" class="hidden flex-1 overflow-y-auto min-h-0">
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4 h-full">
+                    <h5 class="text-white font-medium mb-2">Full Transcript</h5>
+                    <p class="text-white/80 text-sm leading-relaxed" id="transcriptText">
+                      <!-- Transcript will be loaded here -->
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        
+        // Load video and content
+        loadFollowUpQueryContent(queryData, queryId);
+        
+        // Add event listener for toggle transcript button
+        const toggleBtn = document.getElementById('toggleTranscript');
+        if (toggleBtn) {
+          toggleBtn.addEventListener('click', toggleTranscript);
+        }
+        
+        // Close modal when clicking outside
+        overlay.addEventListener('click', (e) => {
+          if (e.target === overlay) {
+            closeFollowUpDetailModal();
+          }
+        });
+      }
+
+      // Load follow-up query content
+      async function loadFollowUpQueryContent(queryData, queryId) {
+        try {
+          // Load video if available
+          const videoContainer = document.getElementById('videoContainer');
+          if (queryData.video_path) {
+            await loadVideoPlayer(queryData.video_path, videoContainer, queryId);
+          } else {
+            videoContainer.innerHTML = `
+              <div class="flex items-center justify-center h-64 text-white/60">
+                <div class="text-center">
+                  <svg class="w-16 h-16 mx-auto mb-4 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                  </svg>
+                  <p class="text-lg">No Video Available</p>
+                  <p class="text-sm">Video response has not been recorded yet.</p>
+                </div>
+              </div>
+            `;
+          }
+
+          // Load questions and answers
+          const questionsAnswersContent = document.getElementById('questionsAnswersContent');
+          if (queryData.answers && queryData.answers.length > 0) {
+            displayQuestionsAndAnswers(queryData.answers, questionsAnswersContent);
+          } else if (queryData.questions && queryData.questions.length > 0) {
+            // If no answers but questions exist, show questions only
+            const questionsOnly = queryData.questions.map(q => ({ question: q, answer: 'No answer provided yet' }));
+            displayQuestionsAndAnswers(questionsOnly, questionsAnswersContent);
+          } else {
+            questionsAnswersContent.innerHTML = `
+              <div class="text-center text-white/60 py-8">
+                <p>No questions available</p>
+              </div>
+            `;
+          }
+
+          // Load transcript if available
+          if (queryData.transcript) {
+            document.getElementById('transcriptText').textContent = queryData.transcript;
+          } else {
+            document.getElementById('transcriptText').textContent = 'No transcript available';
+          }
+
+        } catch (error) {
+          console.error('Error loading follow-up query content:', error);
+        }
+      }
+
+      // Load video player
+      async function loadVideoPlayer(videoPath, container, queryId) {
+        try {
+          // Use the provided query ID
+          const videoQueryId = queryId || window.currentQueryId || 'unknown';
+          
+          container.innerHTML = `
+            <div class="relative group">
+              <video id="followUpVideo" class="w-full h-64 bg-black rounded-lg">
+                <source src="/api/follow-up-queries/${videoQueryId}/video" type="video/webm">
+                Your browser does not support the video tag.
+              </video>
+              
+              <!-- Custom Video Controls - Always Visible -->
+              <div id="customVideoControls" class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 rounded-b-lg opacity-100 transition-opacity duration-300">
+                <div class="flex items-center gap-4">
+                  <!-- Play/Pause Button -->
+                  <button id="playPauseBtn" class="text-white hover:text-accent transition-colors">
+                    <svg id="playIcon" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    <svg id="pauseIcon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                    </svg>
+                  </button>
+                  
+                  <!-- Restart Button -->
+                  <button id="restartBtn" class="text-white hover:text-accent transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                  </button>
+                  
+                  <!-- Volume Control -->
+                  <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                    </svg>
+                    <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="1" class="w-20">
+                  </div>
+                  
+                  <!-- Time Display -->
+                  <div class="flex items-center gap-2 text-white text-sm">
+                    <span id="currentTime">0:00</span>
+                    <span>/</span>
+                    <span id="duration">0:00</span>
+                  </div>
+                  
+                  <!-- Fullscreen Button -->
+                  <button id="fullscreenBtn" class="text-white hover:text-accent transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+
+          // Setup video controls
+          setupVideoControls();
+          
+          // Add CSS to ensure custom controls are always visible
+          const style = document.createElement('style');
+          style.textContent = `
+            #customVideoControls {
+              opacity: 1 !important;
+              visibility: visible !important;
+              display: flex !important;
+            }
+            #followUpVideo::-webkit-media-controls {
+              display: none !important;
+            }
+            #followUpVideo::-webkit-media-controls-enclosure {
+              display: none !important;
+            }
+          `;
+          document.head.appendChild(style);
+
+        } catch (error) {
+          console.error('Error loading video player:', error);
+          container.innerHTML = `
+            <div class="flex items-center justify-center h-64 text-white/60">
+              <div class="text-center">
+                <svg class="w-16 h-16 mx-auto mb-4 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-lg">Error Loading Video</p>
+                <p class="text-sm">Failed to load video player</p>
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      // Setup video controls
+      function setupVideoControls() {
+        const video = document.getElementById('followUpVideo');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const playIcon = document.getElementById('playIcon');
+        const pauseIcon = document.getElementById('pauseIcon');
+        const restartBtn = document.getElementById('restartBtn');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const currentTimeEl = document.getElementById('currentTime');
+        const durationEl = document.getElementById('duration');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+        if (!video || !playPauseBtn) return;
+
+        // Play/Pause functionality
+        playPauseBtn.addEventListener('click', () => {
+          if (video.paused) {
+            video.play();
+            playIcon.classList.add('hidden');
+            pauseIcon.classList.remove('hidden');
+          } else {
+            video.pause();
+            playIcon.classList.remove('hidden');
+            pauseIcon.classList.add('hidden');
+          }
+        });
+
+        // Video play/pause event listeners
+        video.addEventListener('play', () => {
+          playIcon.classList.add('hidden');
+          pauseIcon.classList.remove('hidden');
+        });
+
+        video.addEventListener('pause', () => {
+          playIcon.classList.remove('hidden');
+          pauseIcon.classList.add('hidden');
+        });
+
+        // Restart functionality
+        restartBtn.addEventListener('click', () => {
+          video.currentTime = 0;
+          video.play();
+        });
+
+        // Volume control
+        volumeSlider.addEventListener('input', (e) => {
+          video.volume = e.target.value;
+        });
+
+        // Fullscreen functionality
+        fullscreenBtn.addEventListener('click', () => {
+          if (video.requestFullscreen) {
+            video.requestFullscreen();
+          } else if (video.webkitRequestFullscreen) {
+            video.webkitRequestFullscreen();
+          } else if (video.mozRequestFullScreen) {
+            video.mozRequestFullScreen();
+          } else if (video.msRequestFullscreen) {
+            video.msRequestFullscreen();
+          }
+        });
+
+        // Time display updates
+        video.addEventListener('timeupdate', () => {
+          currentTimeEl.textContent = formatTime(video.currentTime);
+        });
+
+        video.addEventListener('loadedmetadata', () => {
+          durationEl.textContent = formatTime(video.duration);
+        });
+
+        // Set initial volume
+        video.volume = volumeSlider.value;
+      }
+
+      // Format time in MM:SS format
+      function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+      }
+
+      // Display questions and answers
+      function displayQuestionsAndAnswers(questions, container) {
+        container.innerHTML = '';
+        
+        questions.forEach((qa, index) => {
+          const qaElement = document.createElement('div');
+          qaElement.className = 'bg-[#1E1E21] border border-white/10 rounded-lg p-4';
+          qaElement.innerHTML = `
+            <div class="mb-3">
+              <div class="flex items-start gap-2 mb-2">
+                <span class="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0">${index + 1}</span>
+                <p class="text-accent text-sm">${qa.question}</p>
+              </div>
+            </div>
+            <div class="pl-8">
+              <p class="text-white text-sm">${qa.answer}</p>
+            </div>
+          `;
+          container.appendChild(qaElement);
+        });
+      }
+
+      // Close follow-up detail modal
+      function closeFollowUpDetailModal() {
+        const modal = document.getElementById('followUpDetailModal');
+        if (modal) {
+          document.body.removeChild(modal);
+        }
+      }
+
+      // Toggle transcript visibility
+      function toggleTranscript() {
+        const questionsContent = document.getElementById('questionsAnswersContent');
+        const transcriptContent = document.getElementById('transcriptContent');
+        const toggleBtn = document.getElementById('toggleTranscript');
+
+        if (transcriptContent.classList.contains('hidden')) {
+          transcriptContent.classList.remove('hidden');
+          questionsContent.classList.add('hidden');
+          toggleBtn.textContent = 'Show Q&A';
+        } else {
+          transcriptContent.classList.add('hidden');
+          questionsContent.classList.remove('hidden');
+          toggleBtn.textContent = 'Show Transcript';
+        }
+      }
+
+      // Generate follow-up questions
+      async function generateFollowUpQuestions() {
+        const loadingDiv = document.getElementById('followUpLoading');
+        const questionsDiv = document.getElementById('followUpQuestions');
+        const errorDiv = document.getElementById('followUpError');
+        const emptyDiv = document.getElementById('followUpEmpty');
+
+        // Show loading state
+        loadingDiv.classList.remove('hidden');
+        questionsDiv.classList.add('hidden');
+        errorDiv.classList.add('hidden');
+        emptyDiv.classList.add('hidden');
+        
+        // Hide existing queries section when generating new questions
+        const existingQueriesDiv = document.getElementById('existingFollowUpQueries');
+        if (existingQueriesDiv) {
+          existingQueriesDiv.classList.add('hidden');
+        }
+
+        try {
+          // Get current report ID from URL parameters
+          const urlParams = new URLSearchParams(window.location.search);
+          const reportId = urlParams.get('report_id');
+          
+          if (!reportId) {
+            throw new Error('Report ID not found');
+          }
+
+          // Call the API to generate follow-up questions
+          const response = await fetch('/api/reports/follow-up-questions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              report_id: reportId
+            })
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to generate follow-up questions');
+          }
+
+          const data = await response.json();
+          
+          // Hide loading and show questions
+          loadingDiv.classList.add('hidden');
+          questionsDiv.classList.remove('hidden');
+          
+          // Ensure existing queries section stays hidden when showing generated questions
+          const existingQueriesDiv = document.getElementById('existingFollowUpQueries');
+          if (existingQueriesDiv) {
+            existingQueriesDiv.classList.add('hidden');
+          }
+          
+          // Populate questions grid
+          populateFollowUpQuestions(data.questions);
+          
+          // Show the "Ask Founder for Follow Up" button when questions are generated
+          const askFounderBtn = document.getElementById('askFounderBtn');
+          if (askFounderBtn && data.questions && data.questions.length > 0) {
+            askFounderBtn.classList.remove('hidden');
+          }
+
+        } catch (error) {
+          console.error('Error generating follow-up questions:', error);
+          
+          // Hide loading and show error
+          loadingDiv.classList.add('hidden');
+          errorDiv.classList.remove('hidden');
+        }
+      }
+
+      // Populate follow-up questions table
+      function populateFollowUpQuestions(questions) {
+        const questionsBody = document.getElementById('followUpQuestionsBody');
+        
+        if (!questions || questions.length === 0) {
+          questionsBody.innerHTML = `
+            <tr>
+              <td colspan="3" class="px-4 py-8 text-center text-white/70">
+                No follow-up questions generated. Please try again.
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        questionsBody.innerHTML = questions.map((question, index) => `
+          <tr class="hover:bg-white/5 transition-colors">
+            <td class="px-4 py-3 text-sm text-white/70 font-medium">${index + 1}</td>
+            <td class="px-4 py-3 text-sm text-white leading-relaxed">${question}</td>
+            <td class="px-4 py-3 text-center">
+              <div class="flex items-center justify-center gap-2">
+                <button onclick="editQuestion(this)" class="p-1 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-md transition-colors" title="Edit question">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                </button>
+                <button onclick="deleteQuestion(this)" class="p-1 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-md transition-colors" title="Delete question">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      // Edit question in table
+      function editQuestion(button) {
+        const row = button.closest('tr');
+        const questionCell = row.querySelector('td:nth-child(2)');
+        const currentText = questionCell.textContent.trim();
+        
+        // Create input field
+        const input = document.createElement('textarea');
+        input.value = currentText;
+        input.className = 'w-full p-2 bg-[#2E3137] border border-white/20 rounded-md text-white text-sm resize-none focus:outline-none focus:border-accent';
+        input.rows = 2;
+        
+        // Replace cell content with input
+        questionCell.innerHTML = '';
+        questionCell.appendChild(input);
+        input.focus();
+        input.select();
+        
+        // Handle save on blur or Enter
+        const saveEdit = () => {
+          const newText = input.value.trim();
+          if (newText && newText !== currentText) {
+            questionCell.textContent = newText;
+            showToast('Question updated!', 'green');
+          } else if (newText) {
+            questionCell.textContent = newText;
+          } else {
+            questionCell.textContent = currentText; // Restore original if empty
+          }
+        };
+        
+        const cancelEdit = () => {
+          questionCell.textContent = currentText;
+        };
+        
+        input.addEventListener('blur', saveEdit);
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            saveEdit();
+          } else if (e.key === 'Escape') {
+            cancelEdit();
+          }
+        });
+      }
+
+      // Add new question to table
+      function addNewQuestion() {
+        const questionsBody = document.getElementById('followUpQuestionsBody');
+        const currentRowCount = questionsBody.querySelectorAll('tr').length;
+        
+        // Create new row
+        const newRow = document.createElement('tr');
+        newRow.className = 'hover:bg-white/5 transition-colors';
+        newRow.innerHTML = `
+          <td class="px-4 py-3 text-sm text-white/70 font-medium">${currentRowCount + 1}</td>
+          <td class="px-4 py-3 text-sm text-white leading-relaxed">
+            <textarea class="w-full p-2 bg-[#2E3137] border border-white/20 rounded-md text-white text-sm resize-none focus:outline-none focus:border-accent" rows="2" placeholder="Enter your question here..."></textarea>
+          </td>
+          <td class="px-4 py-3 text-center">
+            <div class="flex items-center justify-center gap-2">
+              <button onclick="saveNewQuestion(this)" class="p-1 text-green-400 hover:text-green-300 hover:bg-green-400/10 rounded-md transition-colors" title="Save question">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </button>
+              <button onclick="cancelNewQuestion(this)" class="p-1 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-md transition-colors" title="Cancel">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        `;
+        
+        questionsBody.appendChild(newRow);
+        
+        // Focus on the textarea
+        const textarea = newRow.querySelector('textarea');
+        textarea.focus();
+        
+        // Show the "Ask Founder for Follow Up" button when questions are present
+        const askFounderBtn = document.getElementById('askFounderBtn');
+        if (askFounderBtn) {
+          askFounderBtn.classList.remove('hidden');
+        }
+      }
+
+      // Save new question
+      function saveNewQuestion(button) {
+        const row = button.closest('tr');
+        const textarea = row.querySelector('textarea');
+        const questionText = textarea.value.trim();
+        
+        if (!questionText) {
+          showToast('Please enter a question!', 'red');
+          textarea.focus();
+          return;
+        }
+        
+        // Replace textarea with regular text
+        const questionCell = row.querySelector('td:nth-child(2)');
+        questionCell.textContent = questionText;
+        
+        // Replace action buttons with edit/delete
+        const actionCell = row.querySelector('td:nth-child(3)');
+        actionCell.innerHTML = `
+          <div class="flex items-center justify-center gap-2">
+            <button onclick="editQuestion(this)" class="p-1 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-md transition-colors" title="Edit question">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+            </button>
+            <button onclick="deleteQuestion(this)" class="p-1 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-md transition-colors" title="Delete question">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+            </button>
+          </div>
+        `;
+        
+        showToast('Question added successfully!', 'green');
+      }
+
+      // Cancel new question
+      function cancelNewQuestion(button) {
+        const row = button.closest('tr');
+        row.remove();
+        
+        // Hide the "Ask Founder for Follow Up" button if no questions remain
+        const remainingRows = document.querySelectorAll('#followUpQuestionsBody tr');
+        const askFounderBtn = document.getElementById('askFounderBtn');
+        if (askFounderBtn && remainingRows.length === 0) {
+          askFounderBtn.classList.add('hidden');
+        }
+      }
+
+      // Ask founder for follow up
+      async function askFounderForFollowUp() {
+        try {
+          // Get current report ID from URL parameters
+          const urlParams = new URLSearchParams(window.location.search);
+          const reportId = urlParams.get('report_id');
+          
+          if (!reportId) {
+            throw new Error('Report ID not found');
+          }
+
+          // Collect all questions from the table
+          const questionsBody = document.getElementById('followUpQuestionsBody');
+          const questionRows = questionsBody.querySelectorAll('tr');
+          
+          if (questionRows.length === 0) {
+            showToast('No questions available to send. Please generate or add questions first.', 'red');
+            return;
+          }
+
+          const questions = [];
+          questionRows.forEach((row, index) => {
+            const questionCell = row.querySelector('td:nth-child(2)');
+            if (questionCell) {
+              const questionText = questionCell.textContent.trim();
+              if (questionText) {
+                questions.push(questionText);
+              }
+            }
+          });
+
+          if (questions.length === 0) {
+            showToast('No valid questions found. Please add some questions first.', 'red');
+            return;
+          }
+
+          // Show loading state
+          const askFounderBtn = document.getElementById('askFounderBtn');
+          const originalText = askFounderBtn.textContent;
+          askFounderBtn.textContent = 'Saving...';
+          askFounderBtn.disabled = true;
+
+          // Call the API to save follow-up queries
+          const response = await fetch('/api/reports/follow-up-queries', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              report_id: reportId,
+              questions: questions
+            })
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to save follow-up queries');
+          }
+
+          const data = await response.json();
+          
+          // Show success popup
+          showSuccessPopup(data.query_id);
+
+        } catch (error) {
+          console.error('Error saving follow-up queries:', error);
+          showToast(`Failed to save follow-up queries: ${error.message}`, 'red');
+        } finally {
+          // Restore button state
+          const askFounderBtn = document.getElementById('askFounderBtn');
+          if (askFounderBtn) {
+            askFounderBtn.textContent = 'Ask Founder for Follow Up';
+            askFounderBtn.disabled = false;
+          }
+        }
+      }
+
+      // Show success popup for follow-up queries
+      function showSuccessPopup(queryId) {
+        // Store queryId globally for email function
+        window.currentQueryId = queryId;
+        
+        // Create popup overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
+        overlay.id = 'successPopupOverlay';
+        
+        // Create popup content
+        const popup = document.createElement('div');
+        popup.className = 'bg-[#2E3137] border border-white/10 rounded-lg p-6 max-w-md mx-4 shadow-lg';
+        popup.innerHTML = `
+          <div class="text-center">
+            <h3 class="text-xl font-semibold text-white mb-4">Follow-up Questions Sent!</h3>
+            
+            <!-- Video Link -->
+            <div class="bg-[#1E1E21] border border-white/10 rounded-md p-3 mb-4">
+              <p class="text-sm text-white/60 mb-2">Video Recording Link:</p>
+              <div class="flex items-center gap-2">
+                <input type="text" id="videoLink" value="${window.location.origin}/video.html?id=${queryId}" readonly class="flex-1 bg-[#2E3137] border border-white/20 rounded px-2 py-1 text-xs text-white">
+                <button onclick="copyVideoLink()" class="px-2 py-1 bg-accent text-[#1E1E21] rounded text-xs hover:bg-accent/80 transition-colors">
+                  Copy
+                </button>
+              </div>
+            </div>
+
+            <!-- Email Sharing -->
+            <div class="bg-[#1E1E21] border border-white/10 rounded-md p-3 mb-4">
+              <p class="text-sm text-white/60 mb-2">Share via Email:</p>
+              <div class="flex items-center gap-2 mb-2">
+                <input type="email" id="emailInput" placeholder="Founder's email" class="flex-1 bg-[#2E3137] border border-white/20 rounded px-2 py-1 text-xs text-white placeholder-white/40">
+                <button onclick="sendEmailInvite()" class="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors">
+                  Send
+                </button>
+              </div>
+            </div>
+            
+            <p class="text-white/60 text-sm mb-6">Share the video link with the founder to record their response.</p>
+            <button onclick="closeSuccessPopup()" class="px-6 py-2 bg-accent text-[#1E1E21] rounded-lg hover:bg-accent/80 transition-colors font-medium">
+              Got it!
+            </button>
+          </div>
+        `;
+        
+        overlay.appendChild(popup);
+        document.body.appendChild(overlay);
+        
+        // Close popup when clicking outside
+        overlay.addEventListener('click', (e) => {
+          if (e.target === overlay) {
+            closeSuccessPopup();
+          }
+        });
+        
+        // Close popup with Escape key
+        const handleEscape = (e) => {
+          if (e.key === 'Escape') {
+            closeSuccessPopup();
+          }
+        };
+        document.addEventListener('keydown', handleEscape);
+        
+        // Store the event listener for cleanup
+        overlay._escapeHandler = handleEscape;
+      }
+
+      // Copy video link to clipboard
+      function copyVideoLink() {
+        const videoLinkInput = document.getElementById('videoLink');
+        if (videoLinkInput) {
+          videoLinkInput.select();
+          document.execCommand('copy');
+          showToast('Video link copied to clipboard!', 'green');
+        }
+      }
+
+      // Send email invite
+      async function sendEmailInvite() {
+        const emailInput = document.getElementById('emailInput');
+        const videoLinkInput = document.getElementById('videoLink');
+        
+        if (!emailInput || !videoLinkInput) return;
+        
+        const email = emailInput.value.trim();
+        const videoLink = videoLinkInput.value;
+        
+        if (!email) {
+          showToast('Please enter an email address', 'red');
+          return;
+        }
+        
+        if (!email.includes('@')) {
+          showToast('Please enter a valid email address', 'red');
+          return;
+        }
+
+        try {
+          const response = await fetch('/api/follow-up-queries/send-email-invite', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              email: email,
+              videoLink: videoLink,
+              queryId: window.currentQueryId // Use the stored queryId
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to send email');
+          }
+
+          showToast('Email invitation sent successfully!', 'green');
+          emailInput.value = '';
+          
+        } catch (error) {
+          console.error('Error sending email:', error);
+          showToast('Failed to send email. Please try again.', 'red');
+        }
+      }
+
+      // Close success popup
+      function closeSuccessPopup() {
+        const overlay = document.getElementById('successPopupOverlay');
+        if (overlay) {
+          // Remove escape key listener
+          if (overlay._escapeHandler) {
+            document.removeEventListener('keydown', overlay._escapeHandler);
+          }
+          document.body.removeChild(overlay);
+        }
+      }
+
+      // Show toast notification
+      function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `fixed top-4 right-4 px-4 py-2 rounded-lg z-50 transition-opacity text-white ${
+          type === 'green' ? 'bg-green-500' : type === 'red' ? 'bg-red-500' : 'bg-blue-500'
+        }`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          setTimeout(() => {
+            document.body.removeChild(toast);
+          }, 300);
+        }, 2000);
+      }
+
+      // Delete question from table
+      function deleteQuestion(button) {
+        const row = button.closest('tr');
+        if (row) {
+          // Add fade out animation
+          row.style.opacity = '0';
+          row.style.transition = 'opacity 0.3s ease-out';
+          
+          setTimeout(() => {
+            row.remove();
+            
+            // Renumber remaining rows
+            const remainingRows = document.querySelectorAll('#followUpQuestionsBody tr');
+            remainingRows.forEach((row, index) => {
+              const numberCell = row.querySelector('td:first-child');
+              if (numberCell) {
+                numberCell.textContent = index + 1;
+              }
+            });
+            
+            showToast('Question deleted!', 'red');
+            
+            // Hide the "Ask Founder for Follow Up" button if no questions remain
+            const askFounderBtn = document.getElementById('askFounderBtn');
+            if (askFounderBtn && remainingRows.length === 0) {
+              askFounderBtn.classList.add('hidden');
+            }
+          }, 300);
+        }
+      }
+
+      // Initialize follow-up tab when DOM is loaded
+      document.addEventListener('DOMContentLoaded', initializeFollowUpTab);
     </script>
     <script src="/static/navbar.js"></script>
   </body>

@@ -213,6 +213,7 @@ DESCRIBE uploads;
 DESCRIBE chats;
 DESCRIBE investments;
 DESCRIBE investment_updates;
+DESCRIBE feedback;
 
 -- Check view
 SHOW CREATE VIEW investment_summary;
@@ -232,7 +233,57 @@ SELECT 'chats', COUNT(*) FROM chats
 UNION ALL
 SELECT 'investments', COUNT(*) FROM investments
 UNION ALL
-SELECT 'investment_updates', COUNT(*) FROM investment_updates;
+SELECT 'investment_updates', COUNT(*) FROM investment_updates
+UNION ALL
+SELECT 'feedback', COUNT(*) FROM feedback;
+
+-- ============================================
+-- Table: feedback
+-- Stores user feedback on reports with detailed ratings
+-- ============================================
+DROP TABLE IF EXISTS feedback;
+CREATE TABLE feedback (
+  feedback_id VARCHAR(36) PRIMARY KEY,
+  report_id VARCHAR(36) NOT NULL,
+  user_id VARCHAR(36) NOT NULL,
+  overall_feedback INT NOT NULL CHECK (overall_feedback >= 1 AND overall_feedback <= 5),
+  risk_indicator_feedback INT NOT NULL CHECK (risk_indicator_feedback >= 1 AND risk_indicator_feedback <= 5),
+  got_what_looking_for INT NOT NULL CHECK (got_what_looking_for >= 1 AND got_what_looking_for <= 5),
+  content_quality INT NOT NULL CHECK (content_quality >= 1 AND content_quality <= 5),
+  scores_satisfaction INT NOT NULL CHECK (scores_satisfaction >= 1 AND scores_satisfaction <= 5),
+  copilot_feedback INT NOT NULL CHECK (copilot_feedback >= 1 AND copilot_feedback <= 5),
+  ecosystem_feedback INT NOT NULL CHECK (ecosystem_feedback >= 1 AND ecosystem_feedback <= 5),
+  feedback_note TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_report_id (report_id),
+  INDEX idx_user_id (user_id),
+  INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Add foreign key constraints separately to avoid compatibility issues
+ALTER TABLE feedback ADD CONSTRAINT fk_feedback_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE feedback ADD CONSTRAINT fk_feedback_report_id FOREIGN KEY (report_id) REFERENCES reports(report_id) ON DELETE CASCADE;
+
+-- ============================================
+-- Table: follow_queries
+-- Stores follow-up queries sent to founders
+-- ============================================
+DROP TABLE IF EXISTS follow_queries;
+CREATE TABLE follow_queries (
+  id VARCHAR(36) PRIMARY KEY,
+  report_id VARCHAR(36) NOT NULL,
+  followup_path TEXT,
+  video_path TEXT,
+  transcript_path TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_report_id (report_id),
+  INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Add foreign key constraint for follow_queries (separate to avoid compatibility issues)
+-- ALTER TABLE follow_queries ADD CONSTRAINT fk_follow_queries_report_id FOREIGN KEY (report_id) REFERENCES reports(report_id) ON DELETE CASCADE;
 
 -- ============================================
 -- Notes:
@@ -244,4 +295,5 @@ SELECT 'investment_updates', COUNT(*) FROM investment_updates;
 -- 5. Timestamps use CURRENT_TIMESTAMP and ON UPDATE CURRENT_TIMESTAMP
 -- 6. The investment_summary view provides calculated metrics without duplicating data
 -- 7. DECIMAL(20, 2) supports values up to 999,999,999,999,999,999.99 (999 quadrillion)
+-- 8. Feedback table includes detailed 1-5 star ratings for comprehensive user feedback collection
 

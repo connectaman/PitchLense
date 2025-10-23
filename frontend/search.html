@@ -458,6 +458,10 @@
         let currentSearchTerm = '';
         let currentSymbol = '';
         let companyData = null;
+        let chartInstances = {
+            revenue: null,
+            balance: null
+        };
 
         // Top 10 companies for quick search
         const top10Companies = [
@@ -713,8 +717,6 @@
                 if (companyData.financials) availableData.push('Financials');
                 if (companyData.additional) availableData.push('Additional Data');
                 if (companyData.news) availableData.push('News');
-                
-                }`);
 
                 displayCompanyData();
 
@@ -884,6 +886,16 @@
         }
 
         function displayFinancialCharts() {
+            // Destroy existing charts before creating new ones
+            if (chartInstances.revenue) {
+                chartInstances.revenue.destroy();
+                chartInstances.revenue = null;
+            }
+            if (chartInstances.balance) {
+                chartInstances.balance.destroy();
+                chartInstances.balance = null;
+            }
+
             // Revenue Chart
             if (companyData.financials && companyData.financials.incomeStatement && companyData.financials.incomeStatement.length > 0) {
                 const reports = companyData.financials.incomeStatement.slice(0, 5);
@@ -892,7 +904,7 @@
                 const netIncome = reports.map(r => parseInt(r.netIncome) / 1000000000);
 
                 const ctx = document.getElementById('revenueChart').getContext('2d');
-                new Chart(ctx, {
+                chartInstances.revenue = new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: labels,
@@ -947,7 +959,7 @@
                 const liabilities = reports.map(r => parseInt(r.totalLiabilities) / 1000000000);
 
                 const ctx = document.getElementById('balanceChart').getContext('2d');
-                new Chart(ctx, {
+                chartInstances.balance = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: labels,
