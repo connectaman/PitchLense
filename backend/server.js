@@ -2471,6 +2471,7 @@ app.get('/api/reports/:id/data', requireAuth, async (req, res) => {
   }
 });
 
+
 // Get uploaded files for a report with public URLs
 app.get('/api/reports/:id/uploads', requireAuth, async (req, res) => {
   try {
@@ -5187,6 +5188,36 @@ app.post('/api/meeting-assistant/analyze', requireAuth, uploadMeeting.single('vi
   } catch (error) {
     console.error('Meeting assistant error:', error);
     res.status(500).json({ error: 'Failed to analyze meeting', details: error.message });
+  }
+});
+
+// Gemini TTS endpoint for AI voice generation
+app.post('/api/gemini-tts', async (req, res) => {
+  try {
+    const { text } = req.body;
+    
+    if (!text) {
+      return res.status(400).json({ error: 'Text is required' });
+    }
+
+    // For now, return a simple text response instead of audio
+    // This is a fallback until we can properly implement TTS
+    console.log('TTS Request:', text);
+    
+    // Create a simple audio file or use Web Speech API on frontend
+    // For now, we'll return a success response and handle TTS on frontend
+    res.json({ 
+      success: true, 
+      message: 'TTS request received',
+      text: text
+    });
+    
+  } catch (error) {
+    console.error('Gemini TTS error:', error);
+    res.status(500).json({ 
+      error: 'Failed to generate AI voice', 
+      details: error.message 
+    });
   }
 });
 

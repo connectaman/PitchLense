@@ -500,26 +500,6 @@
             <section class="p-2 grid gap-3 items-start grid-cols-[2fr_1fr] h-full overflow-hidden">
           <div class="space-y-3">
             <div class="grid grid-cols-2 gap-3">
-              <div class="card p-0">
-                <div class="rounded-xl border border-white/10 relative overflow-hidden" style="height:320px">
-                  <canvas id="radarChart" style="width:100%;height:100%;display:block;position:absolute;top:0;left:0;z-index:1"></canvas>
-                </div>
-              </div>
-              <div class="card p-0">
-                <div class="rounded-xl border border-white/10 relative overflow-hidden" style="height:320px">
-                  <canvas id="marketValueChart" style="width:100%;height:100%;display:block;position:absolute;top:0;left:0;z-index:1;height:100%"></canvas>
-                </div>
-              </div>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div class="card p-4 flex flex-col" style="height: 360px;">
-                <div class="text-sm mb-3">Startup Analysis</div>
-                <div class="flex-1 overflow-y-auto">
-                  <ul id="startupAnalysisList" class="divide-y divide-white/10">
-                    <!-- Startup analysis items will be populated here -->
-                </ul>
-                    </div>
-              </div>
               <div class="card p-4 flex flex-col" style="height: 360px;">
                 <div class="flex items-center justify-between">
                   <div class="text-sm">Growth Potential</div>
@@ -537,6 +517,26 @@
                 <div class="flex-1 mt-2"><canvas id="growthPotentialChart" style="width:100%;height:100%;display:block"></canvas></div>
                 <div class="mt-3 flex items-center justify-center text-xs">
                   <span class="flex items-center gap-2"><i class="inline-block w-2.5 h-2.5 rounded-full" id="growthPotentialLegend" style="background:#FFF27A"></i> Growth Potential: <span id="growthPotentialScore" class="font-semibold">6.4/10</span></span>
+                </div>
+              </div>
+              <div class="card p-0">
+                <div class="rounded-xl border border-white/10 relative overflow-hidden" style="height:320px">
+                  <canvas id="radarChart" style="width:100%;height:100%;display:block;position:absolute;top:0;left:0;z-index:1"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="card p-4 flex flex-col" style="height: 360px;">
+                <div class="text-sm mb-3">Startup Analysis</div>
+                <div class="flex-1 overflow-y-auto">
+                  <ul id="startupAnalysisList" class="divide-y divide-white/10">
+                    <!-- Startup analysis items will be populated here -->
+                </ul>
+                    </div>
+              </div>
+              <div class="card p-0">
+                <div class="rounded-xl border border-white/10 relative overflow-hidden" style="height:320px">
+                  <canvas id="marketValueChart" style="width:100%;height:100%;display:block;position:absolute;top:0;left:0;z-index:1;height:100%"></canvas>
                 </div>
               </div>
             </div>
@@ -741,6 +741,9 @@
                       <div class="flex gap-2">
                         <button id="generateFollowUpBtn" class="px-4 py-2 bg-accent text-[#1E1E21] rounded-lg hover:bg-accent/80 transition-colors text-sm font-medium">
                           Generate New Questions
+                        </button>
+                        <button id="clearQuestionsBtn" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium hidden">
+                          Clear Questions
                         </button>
                         <button id="askFounderBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium hidden">
                           Ask Founder for Follow Up
@@ -5227,8 +5230,9 @@
         initializePDFDownload();
         initializePPTXDownload();
         initializeEmailShare();
-        initializeChat();
         initializeFileViewToggle();
+        initializeFollowUpTab();
+        initializeChat();
         
         // Initialize news/documents tab switching
         const industryNewsTab = document.getElementById('industryNewsTab');
@@ -5245,6 +5249,11 @@
         // Show page loader initially
         showPageLoader();
         
+        // Fallback: hide page loader after 10 seconds to prevent blank page
+        setTimeout(() => {
+          hidePageLoader();
+        }, 10000);
+        
         // Check authentication and load data
       fetch('/api/auth/me').then(r=>r.json()).then(d=>{
           if(!d.user){ 
@@ -5259,6 +5268,8 @@
             fetchReportData();
           }
         }).catch(()=> {
+          // Hide page loader even on auth error
+          hidePageLoader();
           window.location.href='/auth.html';
         });
       });
@@ -5700,6 +5711,12 @@
         // Generate follow-up questions
         if (generateFollowUpBtn) {
           generateFollowUpBtn.addEventListener('click', generateFollowUpQuestions);
+        }
+
+        // Clear questions
+        const clearQuestionsBtn = document.getElementById('clearQuestionsBtn');
+        if (clearQuestionsBtn) {
+          clearQuestionsBtn.addEventListener('click', clearQuestions);
         }
 
         // Ask founder for follow up
@@ -6287,6 +6304,12 @@
           if (askFounderBtn && data.questions && data.questions.length > 0) {
             askFounderBtn.classList.remove('hidden');
           }
+          
+          // Show the "Clear Questions" button when questions are generated
+          const clearQuestionsBtn = document.getElementById('clearQuestionsBtn');
+          if (clearQuestionsBtn && data.questions && data.questions.length > 0) {
+            clearQuestionsBtn.classList.remove('hidden');
+          }
 
         } catch (error) {
           console.error('Error generating follow-up questions:', error);
@@ -6294,6 +6317,29 @@
           // Hide loading and show error
           loadingDiv.classList.add('hidden');
           errorDiv.classList.remove('hidden');
+        }
+      }
+
+      // Clear questions and show existing follow-up queries
+      function clearQuestions() {
+        // Hide questions table
+        const questionsDiv = document.getElementById('followUpQuestions');
+        questionsDiv.classList.add('hidden');
+        
+        // Show existing follow-up queries
+        const existingQueriesDiv = document.getElementById('existingFollowUpQueries');
+        existingQueriesDiv.classList.remove('hidden');
+        
+        // Hide clear and ask founder buttons
+        const clearQuestionsBtn = document.getElementById('clearQuestionsBtn');
+        const askFounderBtn = document.getElementById('askFounderBtn');
+        if (clearQuestionsBtn) clearQuestionsBtn.classList.add('hidden');
+        if (askFounderBtn) askFounderBtn.classList.add('hidden');
+        
+        // Clear the questions table body
+        const questionsBody = document.getElementById('followUpQuestionsBody');
+        if (questionsBody) {
+          questionsBody.innerHTML = '';
         }
       }
 
@@ -6566,14 +6612,28 @@
           <div class="text-center">
             <h3 class="text-xl font-semibold text-white mb-4">Follow-up Questions Sent!</h3>
             
-            <!-- Video Link -->
-            <div class="bg-[#1E1E21] border border-white/10 rounded-md p-3 mb-4">
-              <p class="text-sm text-white/60 mb-2">Video Recording Link:</p>
-              <div class="flex items-center gap-2">
-                <input type="text" id="videoLink" value="${window.location.origin}/video.html?id=${queryId}" readonly class="flex-1 bg-[#2E3137] border border-white/20 rounded px-2 py-1 text-xs text-white">
-                <button onclick="copyVideoLink()" class="px-2 py-1 bg-accent text-[#1E1E21] rounded text-xs hover:bg-accent/80 transition-colors">
-                  Copy
-                </button>
+            <!-- Video Recording Options -->
+            <div class="space-y-3 mb-4">
+              <!-- Traditional Video Link -->
+              <div class="bg-[#1E1E21] border border-white/10 rounded-md p-3">
+                <p class="text-sm text-white/60 mb-2">📹 Traditional Video Recording:</p>
+                <div class="flex items-center gap-2">
+                  <input type="text" id="videoLink" value="${window.location.origin}/video.html?id=${queryId}" readonly class="flex-1 bg-[#2E3137] border border-white/20 rounded px-2 py-1 text-xs text-white">
+                  <button onclick="copyVideoLink()" class="px-2 py-1 bg-accent text-[#1E1E21] rounded text-xs hover:bg-accent/80 transition-colors">
+                    Copy
+                  </button>
+                </div>
+              </div>
+
+              <!-- AI Chat Link -->
+              <div class="bg-[#1E1E21] border border-white/10 rounded-md p-3">
+                <p class="text-sm text-white/60 mb-2">🤖 AI Chat Interview:</p>
+                <div class="flex items-center gap-2">
+                  <input type="text" id="aiChatLink" value="${window.location.origin}/ai-chat.html?id=${queryId}" readonly class="flex-1 bg-[#2E3137] border border-white/20 rounded px-2 py-1 text-xs text-white">
+                  <button onclick="copyAiChatLink()" class="px-2 py-1 bg-accent text-[#1E1E21] rounded text-xs hover:bg-accent/80 transition-colors">
+                    Copy
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -6588,7 +6648,7 @@
               </div>
             </div>
             
-            <p class="text-white/60 text-sm mb-6">Share the video link with the founder to record their response.</p>
+            <p class="text-white/60 text-sm mb-6">Choose between traditional video recording or AI-powered chat interview. Share the preferred link with the founder.</p>
             <button onclick="closeSuccessPopup()" class="px-6 py-2 bg-accent text-[#1E1E21] rounded-lg hover:bg-accent/80 transition-colors font-medium">
               Got it!
             </button>
@@ -6624,6 +6684,15 @@
           videoLinkInput.select();
           document.execCommand('copy');
           showToast('Video link copied to clipboard!', 'green');
+        }
+      }
+
+      function copyAiChatLink() {
+        const aiChatLinkInput = document.getElementById('aiChatLink');
+        if (aiChatLinkInput) {
+          aiChatLinkInput.select();
+          document.execCommand('copy');
+          showToast('AI Chat link copied to clipboard!', 'green');
         }
       }
 
@@ -6734,9 +6803,8 @@
         }
       }
 
-      // Initialize follow-up tab when DOM is loaded
-      document.addEventListener('DOMContentLoaded', initializeFollowUpTab);
     </script>
+    
     <script src="/static/navbar.js"></script>
   </body>
 </html>
