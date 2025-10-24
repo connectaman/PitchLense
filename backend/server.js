@@ -2575,6 +2575,86 @@ app.get('/api/reports/:reportId/uploads/:uploadIndex/download', requireAuth, asy
   }
 });
 
+// Update analysis data for a specific report
+app.put('/api/reports/:reportId/analysis/:analysisKey', requireAuth, async (req, res) => {
+  try {
+    const { reportId, analysisKey } = req.params;
+    const { summary, analysis_result, overall_risk_level, category_score, overall_score } = req.body;
+    
+    // Get the report to verify ownership and get the report path
+    const report = await dbGet(`SELECT * FROM ${tableName('reports')} WHERE report_id=? AND user_id=? AND is_delete=0`, [reportId, req.user.id]);
+    
+    if (!report) {
+      return res.status(404).json({ error: 'report_not_found' });
+    }
+    
+    if (report.status !== 'success') {
+      return res.status(400).json({ error: 'report_not_ready' });
+    }
+    
+    if (!report.report_path) {
+      return res.status(404).json({ error: 'report_data_not_found' });
+    }
+    
+    // Check if report file exists in GCS
+    const exists = await gcsFileExists(report.report_path);
+    if (!exists) {
+      return res.status(404).json({ error: 'report_data_not_found' });
+    }
+    
+    // Fetch the current report data from GCS
+    const parsed = parseGsUri(report.report_path);
+    if (!parsed) {
+      return res.status(400).json({ error: 'invalid_report_path' });
+    }
+    
+    const client = getGcsClient();
+    const file = client.bucket(parsed.bucket).file(parsed.object);
+    const [data] = await file.download();
+    const reportData = JSON.parse(data.toString());
+    
+    // Update the specific analysis
+    if (reportData.startup_analysis && reportData.startup_analysis.analyses && reportData.startup_analysis.analyses[analysisKey]) {
+      const analysis = reportData.startup_analysis.analyses[analysisKey];
+      
+      // Update the analysis fields
+      if (summary !== undefined) analysis.summary = summary;
+      if (overall_risk_level !== undefined) analysis.overall_risk_level = overall_risk_level;
+      if (category_score !== undefined) analysis.category_score = category_score;
+      if (overall_score !== undefined) analysis.overall_score = overall_score;
+      
+      // Update the analysis result
+      if (analysis_result !== undefined) {
+        if (analysis.result && typeof analysis.result === 'object') {
+          analysis.result.analysis_result = analysis_result;
+        } else {
+          analysis.result = { analysis_result: analysis_result };
+        }
+      }
+      
+      // Upload the updated report data back to GCS
+      const updatedData = JSON.stringify(reportData, null, 2);
+      await file.save(updatedData, {
+        metadata: {
+          contentType: 'application/json',
+        },
+      });
+      
+      res.json({ 
+        success: true, 
+        message: 'Analysis updated successfully',
+        analysis: analysis
+      });
+    } else {
+      res.status(404).json({ error: 'analysis_not_found' });
+    }
+    
+  } catch (error) {
+    console.error('Error updating analysis:', error);
+    res.status(500).json({ error: 'update_analysis_failed' });
+  }
+});
+
 // Share report via email
 app.post('/api/reports/share-email', requireAuth, async (req, res) => {
   try {

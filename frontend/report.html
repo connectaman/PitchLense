@@ -130,7 +130,7 @@
       /* Override SVG colors in specific contexts where they should be dark on yellow backgrounds */
       .bg-accent svg,
       button[class*="bg-accent"] svg,
-      .bg-accent/20 svg {
+      .bg-accent\/20 svg {
         color: #1E1E21 !important;
       }
       
@@ -241,6 +241,22 @@
         background-color: #1E1E21 !important;
         color: #ef4444 !important;
         border-color: #ef4444 !important;
+      }
+      
+      /* Edit modal dropdown styling */
+      #editRiskLevel {
+        color: white !important;
+        background-color: rgba(255, 255, 255, 0.05) !important;
+      }
+      
+      #editRiskLevel option {
+        background-color: #1E1E21 !important;
+        color: white !important;
+      }
+      
+      #editRiskLevel:focus {
+        border-color: #FFF27A !important;
+        box-shadow: 0 0 0 1px #FFF27A !important;
       }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -3989,6 +4005,12 @@
                     <span class="text-sm text-white/70">Score: ${analysis.category_score || 'N/A'}/10</span>
                   </div>
                 </div>
+                <button id="editAnalysisBtn" class="edit-analysis-btn p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors" 
+                        data-analysis-key="${analysis.name}" title="Edit Analysis">
+                  <svg class="w-5 h-5 text-white/70 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                </button>
               </div>
               
               <div class="mb-6">
@@ -4029,6 +4051,12 @@
           contentArea.style.transition = 'all 0.3s ease-out';
           contentArea.style.opacity = '1';
           contentArea.style.transform = 'translateX(0)';
+          
+          // Add event listener for edit button
+          const editBtn = document.getElementById('editAnalysisBtn');
+          if (editBtn) {
+            editBtn.addEventListener('click', () => openEditModal(analysis));
+          }
         }, 150);
       }
 
@@ -4041,6 +4069,157 @@
           case 'critical': return 'bg-red-600/20 text-red-300 border border-red-600/30';
           default: return 'bg-gray-500/20 text-gray-400 border border-gray-500/30';
         }
+      }
+
+      // Global variable to store current analysis being edited
+      let currentEditingAnalysis = null;
+
+      // Function to open edit modal
+      function openEditModal(analysis) {
+        currentEditingAnalysis = analysis;
+        const modal = document.getElementById('editAnalysisModal');
+        
+        // Populate form fields
+        document.getElementById('editAnalysisName').value = analysis.category_name || '';
+        document.getElementById('editAnalysisSummary').value = analysis.summary || '';
+        
+        // Handle detailed analysis content
+        let analysisResult = '';
+        if (analysis.result && analysis.result.analysis_result) {
+          analysisResult = analysis.result.analysis_result;
+        } else if (analysis.result && typeof analysis.result === 'string') {
+          analysisResult = analysis.result;
+        }
+        document.getElementById('editAnalysisResult').value = analysisResult;
+        
+        // Set risk level
+        document.getElementById('editRiskLevel').value = analysis.overall_risk_level || 'low';
+        
+        // Set scores
+        document.getElementById('editCategoryScore').value = analysis.category_score || 0;
+        document.getElementById('editOverallScore').value = analysis.overall_score || 0;
+        
+        // Show modal
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      }
+
+      // Function to close edit modal
+      function closeEditModal() {
+        const modal = document.getElementById('editAnalysisModal');
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        currentEditingAnalysis = null;
+      }
+
+      // Function to save edited analysis
+      async function saveEditedAnalysis() {
+        if (!currentEditingAnalysis) return;
+
+        const formData = {
+          summary: document.getElementById('editAnalysisSummary').value,
+          analysis_result: document.getElementById('editAnalysisResult').value,
+          overall_risk_level: document.getElementById('editRiskLevel').value,
+          category_score: parseFloat(document.getElementById('editCategoryScore').value) || 0,
+          overall_score: parseFloat(document.getElementById('editOverallScore').value) || 0
+        };
+
+        try {
+          // Show loading state
+          const saveBtn = document.getElementById('saveEditAnalysis');
+          const originalText = saveBtn.textContent;
+          saveBtn.textContent = 'Saving...';
+          saveBtn.disabled = true;
+
+          // Get report ID from URL
+          const reportId = window.location.search.match(/report_id=([^&]+)/)?.[1];
+          if (!reportId) {
+            throw new Error('Report ID not found');
+          }
+
+          // Update the analysis in the global analyses object
+          if (window.analyses && window.analyses[currentEditingAnalysis.name]) {
+            const analysis = window.analyses[currentEditingAnalysis.name];
+            
+            // Update the analysis object
+            analysis.summary = formData.summary;
+            analysis.overall_risk_level = formData.overall_risk_level;
+            analysis.category_score = formData.category_score;
+            analysis.overall_score = formData.overall_score;
+            
+            // Update the result object
+            if (analysis.result) {
+              if (typeof analysis.result === 'object') {
+                analysis.result.analysis_result = formData.analysis_result;
+              } else {
+                analysis.result = formData.analysis_result;
+              }
+            } else {
+              analysis.result = { analysis_result: formData.analysis_result };
+            }
+          }
+
+          // Send update to backend
+          const response = await fetch(`/api/reports/${reportId}/analysis/${currentEditingAnalysis.name}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify(formData)
+          });
+
+          if (!response.ok) {
+            throw new Error(`Failed to save analysis: ${response.statusText}`);
+          }
+
+          // Refresh the current analysis display
+          showDetailedAnalysisContent(currentEditingAnalysis);
+          
+          // Close modal
+          closeEditModal();
+          
+          // Show success message
+          showNotification('Analysis updated successfully!', 'success');
+
+        } catch (error) {
+          console.error('Error saving analysis:', error);
+          showNotification('Failed to save analysis: ' + error.message, 'error');
+        } finally {
+          // Reset button state
+          const saveBtn = document.getElementById('saveEditAnalysis');
+          saveBtn.textContent = originalText;
+          saveBtn.disabled = false;
+        }
+      }
+
+      // Function to show notification
+      function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg text-white font-medium transition-all duration-300 ${
+          type === 'success' ? 'bg-green-500' : 
+          type === 'error' ? 'bg-red-500' : 
+          'bg-blue-500'
+        }`;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+          notification.style.transform = 'translateX(0)';
+          notification.style.opacity = '1';
+        }, 100);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+          notification.style.transform = 'translateX(100%)';
+          notification.style.opacity = '0';
+          setTimeout(() => {
+            document.body.removeChild(notification);
+          }, 300);
+        }, 3000);
       }
 
       // Global variables for file viewing
@@ -6803,7 +6982,112 @@
         }
       }
 
+      // Initialize edit modal event listeners
+      document.addEventListener('DOMContentLoaded', function() {
+        // Close modal buttons
+        const closeModalBtn = document.getElementById('closeEditModal');
+        const cancelBtn = document.getElementById('cancelEditAnalysis');
+        const saveBtn = document.getElementById('saveEditAnalysis');
+
+        if (closeModalBtn) {
+          closeModalBtn.addEventListener('click', closeEditModal);
+        }
+
+        if (cancelBtn) {
+          cancelBtn.addEventListener('click', closeEditModal);
+        }
+
+        if (saveBtn) {
+          saveBtn.addEventListener('click', saveEditedAnalysis);
+        }
+
+        // Close modal when clicking outside
+        const modal = document.getElementById('editAnalysisModal');
+        if (modal) {
+          modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+              closeEditModal();
+            }
+          });
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+            closeEditModal();
+          }
+        });
+      });
+
     </script>
+    
+    <!-- Edit Analysis Modal -->
+    <div id="editAnalysisModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden">
+      <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-[#1E1E21] border border-white/10 rounded-lg w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+          <div class="flex items-center justify-between p-6 border-b border-white/10">
+            <h3 class="text-xl font-semibold text-white">Edit Analysis</h3>
+            <button id="closeEditModal" class="text-white/70 hover:text-white transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="p-6 overflow-y-auto flex-1">
+            <form id="editAnalysisForm">
+              <div class="space-y-6">
+                <!-- Analysis Name -->
+                <div>
+                  <label class="block text-sm font-medium text-white mb-2">Analysis Name</label>
+                  <input type="text" id="editAnalysisName" class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent" readonly>
+                </div>
+                
+                <!-- Summary -->
+                <div>
+                  <label class="block text-sm font-medium text-white mb-2">Summary</label>
+                  <textarea id="editAnalysisSummary" rows="3" class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent resize-none"></textarea>
+                </div>
+                
+                <!-- Detailed Analysis -->
+                <div>
+                  <label class="block text-sm font-medium text-white mb-2">Detailed Analysis</label>
+                  <textarea id="editAnalysisResult" rows="8" class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent resize-none"></textarea>
+                </div>
+                
+                <!-- Risk Level -->
+                <div>
+                  <label class="block text-sm font-medium text-white mb-2">Risk Level</label>
+                  <select id="editRiskLevel" class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-accent" style="color: white; background-color: rgba(255, 255, 255, 0.05);">
+                    <option value="low" style="background-color: #1E1E21; color: white;">Low</option>
+                    <option value="medium" style="background-color: #1E1E21; color: white;">Medium</option>
+                    <option value="high" style="background-color: #1E1E21; color: white;">High</option>
+                    <option value="critical" style="background-color: #1E1E21; color: white;">Critical</option>
+                  </select>
+                </div>
+                
+                <!-- Category Score -->
+                <div>
+                  <label class="block text-sm font-medium text-white mb-2">Category Score (0-10)</label>
+                  <input type="number" id="editCategoryScore" min="0" max="10" step="0.1" class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent">
+                </div>
+                
+                <!-- Overall Score -->
+                <div>
+                  <label class="block text-sm font-medium text-white mb-2">Overall Score (0-100)</label>
+                  <input type="number" id="editOverallScore" min="0" max="100" step="0.1" class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent">
+                </div>
+              </div>
+            </form>
+          </div>
+          
+          <div class="flex items-center justify-end gap-3 p-6 border-t border-white/10">
+            <button id="cancelEditAnalysis" class="px-4 py-2 text-white/70 hover:text-white transition-colors">Cancel</button>
+            <button id="saveEditAnalysis" class="px-6 py-2 bg-accent text-[#1E1E21] font-medium rounded-lg hover:bg-accent/90 transition-colors">Save Changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
     
     <script src="/static/navbar.js"></script>
   </body>
