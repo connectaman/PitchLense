@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PitchLense - AI Follow-up Assistant</title>
+  <title>PitchLense - AI Conversation Assistant</title>
   <link rel="icon" type="image/svg+xml" href="/static/logo.svg" />
-  <meta name="description" content="AI-powered video follow-up with voice assistance" />
+  <meta name="description" content="AI-powered conversational follow-up with voice assistance" />
   
   <!-- Tailwind Play CDN with custom theme -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -43,6 +43,8 @@
   
   <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- Gemini Live API will be loaded dynamically to avoid CSP issues -->
 </head>
 <body class="bg-background text-text font-sans antialiased selection:bg-accent selection:text-white h-screen overflow-hidden">
   <div class="h-screen flex flex-col">
@@ -51,11 +53,11 @@
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <img src="/static/logo.svg" class="w-8 h-8" alt="PitchLense">
-          <h1 class="text-xl font-bold text-white">PitchLense AI Follow-up Assistant</h1>
+          <h1 class="text-xl font-bold text-white">PitchLense AI Conversation</h1>
         </div>
         <div class="text-sm">
           <a href="#" class="text-white/60 hover:text-accent transition-colors" title="Drop email to connectamanulla@gmail.com">
-            Facing issue?
+            Need help?
           </a>
         </div>
       </div>
@@ -63,7 +65,7 @@
 
     <!-- Main Content -->
     <main class="flex-1 flex min-h-0">
-      <!-- Video Section (60%) -->
+      <!-- Video Section (70%) -->
       <div class="w-3/5 p-6 min-w-0">
         <div class="h-full flex flex-col">
           <!-- Video Container -->
@@ -122,18 +124,51 @@
                 </div>
               </div>
 
-              <!-- AI Status Display -->
-              <div id="aiStatusDisplay" class="bg-[#1E1E21] border border-white/10 rounded-lg p-4 mb-4 hidden">
-                <div class="flex items-center gap-3">
-                  <div class="w-3 h-3 bg-accent rounded-full animate-pulse"></div>
-                  <span id="aiStatusText" class="text-white font-medium">AI Assistant is speaking...</span>
+              <!-- Start Conversation Section -->
+              <div id="startConversationSection" class="text-center space-y-6">
+                <div class="space-y-4">
+                  <div class="w-20 h-20 bg-accent/20 rounded-full flex items-center justify-center mx-auto">
+                    <svg class="w-10 h-10 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                  </div>
+                  <h2 class="text-2xl font-bold text-white">Start AI Conversation</h2>
+                  <p class="text-white/70 max-w-md mx-auto leading-relaxed">
+                    I'll have a natural conversation with you and ask about the topics we need to cover. 
+                    Just speak naturally and I'll guide our discussion.
+                  </p>
                 </div>
-              </div>
+                
+                <!-- Instructions -->
+                <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4 text-left max-w-lg mx-auto">
+                  <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-accent" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    How it works:
+                  </h3>
+                  <ul class="space-y-2 text-sm text-white/70">
+                    <li class="flex items-start gap-2">
+                      <span class="w-1.5 h-1.5 bg-accent rounded-full mt-2 flex-shrink-0"></span>
+                      <span>I'll start our conversation naturally</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                      <span class="w-1.5 h-1.5 bg-accent rounded-full mt-2 flex-shrink-0"></span>
+                      <span>Speak naturally - no need to rush</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                      <span class="w-1.5 h-1.5 bg-accent rounded-full mt-2 flex-shrink-0"></span>
+                      <span>I'll ask follow-up questions as needed</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                      <span class="w-1.5 h-1.5 bg-accent rounded-full mt-2 flex-shrink-0"></span>
+                      <span>Take your time to think and respond</span>
+                    </li>
+                  </ul>
+                </div>
 
-              <!-- Controls -->
-              <div class="space-y-4">
-                <!-- Device Selection Row -->
-                <div class="grid grid-cols-2 gap-4">
+                <!-- Device Selection -->
+                <div class="grid grid-cols-2 gap-4 max-w-lg mx-auto">
                   <!-- Camera Selection -->
                   <div class="flex flex-col gap-2">
                     <label class="text-white font-medium text-sm">Camera:</label>
@@ -151,115 +186,103 @@
                   </div>
                 </div>
 
-                <!-- Recording Controls -->
-                <div class="flex items-center justify-center gap-4">
-                  <button id="startInterview" class="px-6 py-3 bg-accent text-[#1E1E21] rounded-lg hover:bg-accent/80 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                    <svg class="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                    </svg>
-                    Start AI Follow-up
-                  </button>
-                  
-                  <button id="stopRecording" class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium hidden">
-                    <svg class="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
-                      <rect x="6" y="6" width="12" height="12" rx="2"/>
-                    </svg>
-                    Stop Recording
-                  </button>
-                  
-                  <!-- Post-Recording Controls -->
-                  <div id="postRecordingControls" class="flex items-center justify-center gap-4 hidden">
-                    <button id="replayVideo" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                      <svg class="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
+                <!-- Desktop Audio Setup -->
+                <div id="desktopAudioSetup" class="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 mb-4">
+                  <div class="flex items-start gap-3">
+                    <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                       </svg>
-                      Replay Video
-                    </button>
-                    
-                    <button id="reshootVideo" class="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium">
-                      <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                      </svg>
-                      Reshoot
-                    </button>
-                    
-                    <button id="submitFinalVideo" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
-                      <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-                      </svg>
-                      Submit Video
-                    </button>
+                    </div>
+                    <div class="flex-1">
+                      <h4 class="text-white font-medium mb-2">Desktop Audio Capture (Optional)</h4>
+                      <p class="text-white/70 text-sm mb-3">To record the AI's voice responses, enable desktop audio capture. This is optional - you can still proceed with just your microphone.</p>
+                      <div class="flex items-center gap-3">
+                        <button id="enableDesktopAudio" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                          Enable Desktop Audio
+                        </button>
+                        <button id="skipDesktopAudio" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium">
+                          Skip (Microphone Only)
+                        </button>
+                      </div>
+                      <div id="desktopAudioStatus" class="mt-2 text-sm text-white/60"></div>
+                    </div>
                   </div>
                 </div>
 
-                <!-- Current Question Display -->
-                <div id="currentQuestionDisplay" class="bg-[#1E1E21] border border-white/10 rounded-lg p-4 hidden">
-                  <div class="flex items-start gap-3">
-                    <span class="bg-accent text-[#1E1E21] text-xs font-bold px-2 py-1 rounded-full flex-shrink-0">Q</span>
-                    <div class="flex-1">
-                      <p id="currentQuestionText" class="text-white text-sm leading-relaxed"></p>
-                      <div class="flex items-center gap-2 mt-2">
-                        <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                        <span class="text-white/60 text-xs">Recording... <span id="questionTimer">30</span>s</span>
-                      </div>
-                    </div>
+                <!-- Start Button -->
+                <button id="startConversation" class="px-8 py-4 bg-accent text-[#1E1E21] rounded-lg hover:bg-accent/80 transition-colors font-medium text-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                  <svg class="w-6 h-6 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                  Start Conversation
+                </button>
+              </div>
+
+              <!-- Recording Controls (Hidden initially) -->
+              <div id="recordingControls" class="hidden">
+                <!-- AI Status Display -->
+                <div id="aiStatusDisplay" class="bg-[#1E1E21] border border-white/10 rounded-lg p-4 mb-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-3 h-3 bg-accent rounded-full animate-pulse"></div>
+                    <span id="aiStatusText" class="text-white font-medium">AI Assistant is speaking...</span>
                   </div>
                 </div>
 
                 <!-- Recording Status -->
-                <div id="recordingStatus" class="text-center text-white/70 hidden">
+                <div id="recordingStatus" class="text-center text-white/70 mb-4">
                   <div class="flex items-center justify-center gap-2">
                     <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                    <span>Recording...</span>
+                    <span>Recording conversation...</span>
                     <span id="recordingTime">00:00</span>
                   </div>
                 </div>
+              </div>
 
-                <!-- Upload Progress -->
-                <div id="uploadProgress" class="hidden">
-                  <div class="bg-[#1E1E21] border border-white/20 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-2">
-                      <span class="text-white font-medium">Uploading Video...</span>
-                      <span id="uploadPercentage" class="text-white/60">0%</span>
-                    </div>
-                    <div class="w-full bg-white/10 rounded-full h-2">
-                      <div id="uploadBar" class="bg-accent h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-                    </div>
+              <!-- Upload Progress -->
+              <div id="uploadProgress" class="hidden">
+                <div class="bg-[#1E1E21] border border-white/20 rounded-lg p-4">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-white font-medium">Uploading Video...</span>
+                    <span id="uploadPercentage" class="text-white/60">0%</span>
+                  </div>
+                  <div class="w-full bg-white/10 rounded-full h-2">
+                    <div id="uploadBar" class="bg-accent h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
                   </div>
                 </div>
+              </div>
 
-                <!-- Processing Loader -->
-                <div id="processingLoader" class="hidden">
-                  <div class="bg-[#1E1E21] border border-white/20 rounded-lg p-6 text-center">
-                    <div class="flex items-center justify-center mb-4">
-                      <div class="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mr-3"></div>
-                      <span class="text-white font-medium">Processing Video...</span>
-                    </div>
-                    <p class="text-white/70 text-sm mb-2">Analyzing video with AI</p>
-                    <p class="text-white/60 text-xs">Generating transcript and answers to questions</p>
+              <!-- Processing Loader -->
+              <div id="processingLoader" class="hidden">
+                <div class="bg-[#1E1E21] border border-white/20 rounded-lg p-6 text-center">
+                  <div class="flex items-center justify-center mb-4">
+                    <div class="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mr-3"></div>
+                    <span class="text-white font-medium">Processing Conversation...</span>
                   </div>
+                  <p class="text-white/70 text-sm mb-2">Analyzing video with AI</p>
+                  <p class="text-white/60 text-xs">Generating transcript and extracting insights</p>
                 </div>
+              </div>
 
-                <!-- Completion Message -->
-                <div id="completionMessage" class="hidden">
-                  <div class="bg-green-900/20 border border-green-500/30 rounded-lg p-6 text-center">
-                    <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold text-white mb-2">Follow-up Completed Successfully!</h3>
-                    <p class="text-white/70 mb-4">Your video has been processed and analyzed. The transcript and answers have been saved.</p>
-                    <div class="space-y-3">
-                      <p class="text-white/60 text-sm">You can now safely close this tab:</p>
-                      <div class="flex flex-col sm:flex-row gap-2 justify-center">
-                        <button onclick="closeTab()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
-                          Try Auto Close
-                        </button>
-                        <button onclick="showCloseInstructions()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                          Manual Close Instructions
-                        </button>
-                      </div>
+              <!-- Completion Message -->
+              <div id="completionMessage" class="hidden">
+                <div class="bg-green-900/20 border border-green-500/30 rounded-lg p-6 text-center">
+                  <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </div>
+                  <h3 class="text-xl font-semibold text-white mb-2">Conversation Completed Successfully!</h3>
+                  <p class="text-white/70 mb-4">Your conversation has been processed and analyzed. The transcript and insights have been saved.</p>
+                  <div class="space-y-3">
+                    <p class="text-white/60 text-sm">You can now safely close this tab:</p>
+                    <div class="flex flex-col sm:flex-row gap-2 justify-center">
+                      <button onclick="closeTab()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                        Try Auto Close
+                      </button>
+                      <button onclick="showCloseInstructions()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                        Manual Close Instructions
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -269,14 +292,33 @@
         </div>
       </div>
 
-      <!-- Questions Section (40%) -->
+      <!-- Questions Section (30%) -->
       <div class="w-2/5 bg-surface border-l border-white/10 p-6 flex flex-col min-w-0">
-        <h2 class="text-lg font-semibold text-white mb-4 flex-shrink-0">Follow-up Questions</h2>
-        <div id="questionsContainer" class="space-y-3 overflow-y-auto flex-1 min-h-0">
-          <!-- Questions will be loaded here -->
+        <h2 class="text-lg font-semibold text-white mb-4 flex-shrink-0">Topics to Cover</h2>
+        <div id="topicsContainer" class="space-y-3 overflow-y-auto flex-1 min-h-0">
+          <!-- Topics will be loaded here -->
         </div>
       </div>
     </main>
+
+    <!-- Bottom Dock (Hidden initially) -->
+    <div id="bottomDock" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 hidden">
+      <div class="bg-surface/95 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 flex items-center gap-4 shadow-lg">
+        <!-- Restart Button -->
+        <button id="restartRecording" class="p-3 bg-orange-600 text-white rounded-full hover:bg-orange-700 transition-colors group" title="Restart Conversation">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+        </button>
+        
+        <!-- Submit Button -->
+        <button id="submitConversation" class="p-3 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors group" title="Submit Conversation">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -292,19 +334,20 @@
     let animationFrame;
     let recordedVideoBlob;
     let currentStream;
-    let currentQuestionIndex = 0;
-    let questionTimerInterval;
     let isAISpeaking = false;
-    let audioQueue = [];
     let currentSpeech = null;
+    let geminiSession = null;
+    let isRecording = false;
+    let conversationStarted = false;
+    let desktopAudioStream = null;
+    let desktopAudioEnabled = false;
 
     // DOM elements
     const videoPreview = document.getElementById('videoPreview');
     const videoPlaceholder = document.getElementById('videoPlaceholder');
     const cameraSelect = document.getElementById('cameraSelect');
     const audioSelect = document.getElementById('audioSelect');
-    const startInterview = document.getElementById('startInterview');
-    const stopRecording = document.getElementById('stopRecording');
+    const startConversation = document.getElementById('startConversation');
     const recordingStatus = document.getElementById('recordingStatus');
     const recordingTime = document.getElementById('recordingTime');
     const uploadProgress = document.getElementById('uploadProgress');
@@ -312,13 +355,18 @@
     const uploadPercentage = document.getElementById('uploadPercentage');
     const processingLoader = document.getElementById('processingLoader');
     const completionMessage = document.getElementById('completionMessage');
-    const questionsContainer = document.getElementById('questionsContainer');
+    const topicsContainer = document.getElementById('topicsContainer');
     const aiSpeakingIndicator = document.getElementById('aiSpeakingIndicator');
     const aiStatusDisplay = document.getElementById('aiStatusDisplay');
     const aiStatusText = document.getElementById('aiStatusText');
-    const currentQuestionDisplay = document.getElementById('currentQuestionDisplay');
-    const currentQuestionText = document.getElementById('currentQuestionText');
-    const questionTimerElement = document.getElementById('questionTimer');
+    const startConversationSection = document.getElementById('startConversationSection');
+    const recordingControls = document.getElementById('recordingControls');
+    const bottomDock = document.getElementById('bottomDock');
+    const restartRecording = document.getElementById('restartRecording');
+    const submitConversation = document.getElementById('submitConversation');
+    const enableDesktopAudio = document.getElementById('enableDesktopAudio');
+    const skipDesktopAudio = document.getElementById('skipDesktopAudio');
+    const desktopAudioStatus = document.getElementById('desktopAudioStatus');
 
     // Get follow-up ID from URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -344,38 +392,36 @@
 
     // Initialize page
     async function initialize() {
-      await loadQuestions();
+      await loadTopics();
       await setupCamera();
-      await loadVoices(); // Load voices first
-      // Start AI greeting immediately
-      await startAIGreeting();
+      await loadVoices();
     }
 
-    // Load questions from follow-up query
-    async function loadQuestions() {
+    // Load topics from follow-up query
+    async function loadTopics() {
       try {
         const response = await fetch(`/api/follow-up-queries/${followupId}`, {
           credentials: 'include'
         });
 
         if (!response.ok) {
-          throw new Error('Failed to load questions');
+          throw new Error('Failed to load topics');
         }
 
         const data = await response.json();
         const questions = data.questions || [];
 
-        questionsContainer.innerHTML = questions.map((question, index) => `
-          <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-2">
+        topicsContainer.innerHTML = questions.map((question, index) => `
+          <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-3">
             <div class="flex items-start gap-2">
               <span class="bg-accent text-[#1E1E21] text-xs font-bold px-1.5 py-0.5 rounded-full flex-shrink-0">${index + 1}</span>
-              <p class="text-white text-xs leading-relaxed">${question}</p>
+              <p class="text-white text-sm leading-relaxed">${question}</p>
             </div>
           </div>
         `).join('');
       } catch (error) {
-        console.error('Error loading questions:', error);
-        questionsContainer.innerHTML = '<p class="text-white/60">Failed to load questions</p>';
+        console.error('Error loading topics:', error);
+        topicsContainer.innerHTML = '<p class="text-white/60">Failed to load topics</p>';
       }
     }
 
@@ -450,7 +496,7 @@
             const option = document.createElement('option');
             option.value = device.deviceId;
             option.textContent = device.label || `Audio Device ${index + 1}`;
-            audioSelect.appendChild(option);
+            cameraSelect.appendChild(option);
           });
 
           if (videoDevices.length > 0) {
@@ -468,7 +514,91 @@
       }
     }
 
-    // Start camera
+    // Enable desktop audio capture
+    async function enableDesktopAudioCapture() {
+      try {
+        enableDesktopAudio.disabled = true;
+        enableDesktopAudio.textContent = 'Requesting Permission...';
+        desktopAudioStatus.textContent = 'Requesting desktop audio permission...';
+
+        // Check if getDisplayMedia is supported
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+          throw new Error('Screen capture not supported in this browser');
+        }
+
+        // Try different audio configurations
+        let audioConfig = {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false
+        };
+
+        // First try with explicit audio config
+        try {
+          desktopAudioStream = await navigator.mediaDevices.getDisplayMedia({
+            video: false,
+            audio: audioConfig
+          });
+        } catch (audioError) {
+          console.log('Audio config failed, trying with basic audio:', audioError);
+          // Try with basic audio
+          desktopAudioStream = await navigator.mediaDevices.getDisplayMedia({
+            video: false,
+            audio: true
+          });
+        }
+        
+        // Check if we actually got audio
+        const audioTracks = desktopAudioStream.getAudioTracks();
+        if (audioTracks.length === 0) {
+          throw new Error('No audio tracks available from screen capture');
+        }
+        
+        desktopAudioEnabled = true;
+        enableDesktopAudio.textContent = '✓ Desktop Audio Enabled';
+        enableDesktopAudio.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        enableDesktopAudio.classList.add('bg-green-600', 'hover:bg-green-700');
+        desktopAudioStatus.textContent = 'Desktop audio capture enabled';
+        
+        console.log('Desktop audio capture successful');
+        
+        // Re-setup camera with desktop audio
+        await startCamera();
+        
+      } catch (error) {
+        console.error('Desktop audio capture failed:', error);
+        enableDesktopAudio.disabled = false;
+        enableDesktopAudio.textContent = 'Enable Desktop Audio';
+        
+        // Provide more specific error messages
+        let errorMessage = 'Failed to enable desktop audio. ';
+        if (error.message.includes('Not supported')) {
+          errorMessage += 'Your browser may not support desktop audio capture. ';
+        } else if (error.message.includes('Permission denied')) {
+          errorMessage += 'Permission was denied. Please try again and allow audio capture. ';
+        } else if (error.message.includes('NotAllowedError')) {
+          errorMessage += 'Audio capture was blocked. Please check your browser settings. ';
+        }
+        errorMessage += 'You can still proceed with microphone only.';
+        
+        desktopAudioStatus.textContent = errorMessage;
+        
+        // Still allow camera setup without desktop audio
+        await startCamera();
+      }
+    }
+
+    // Skip desktop audio capture
+    async function skipDesktopAudioCapture() {
+      desktopAudioStatus.textContent = 'Skipped desktop audio - using microphone only';
+      enableDesktopAudio.disabled = true;
+      skipDesktopAudio.disabled = true;
+      
+      // Proceed with camera setup without desktop audio
+      await startCamera();
+    }
+
+    // Start camera with desktop audio capture
     async function startCamera() {
       const videoDeviceId = cameraSelect.value;
       const audioDeviceId = audioSelect.value;
@@ -481,55 +611,80 @@
           stream.getTracks().forEach(track => track.stop());
         }
 
-        // Prepare constraints
-        const constraints = {
+        // First, get user media for camera and microphone
+        const userMediaConstraints = {
           video: {
             deviceId: { exact: videoDeviceId },
             width: { ideal: 1280 },
             height: { ideal: 720 },
             facingMode: 'user'
+          },
+          audio: {
+            deviceId: audioDeviceId ? { exact: audioDeviceId } : true,
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
           }
         };
 
-        // Add audio constraints if audio device is selected
-        if (audioDeviceId) {
-          constraints.audio = {
-            deviceId: { exact: audioDeviceId }
-          };
+        const userStream = await navigator.mediaDevices.getUserMedia(userMediaConstraints);
+        
+        // Combine streams if we have desktop audio
+        if (desktopAudioEnabled && desktopAudioStream) {
+          // Create a new MediaStream with video from user media and audio from both sources
+          const combinedStream = new MediaStream();
+          
+          // Add video track from user media
+          const videoTrack = userStream.getVideoTracks()[0];
+          if (videoTrack) {
+            combinedStream.addTrack(videoTrack);
+          }
+          
+          // Add microphone audio track
+          const micAudioTrack = userStream.getAudioTracks()[0];
+          if (micAudioTrack) {
+            combinedStream.addTrack(micAudioTrack);
+          }
+          
+          // Add desktop audio track
+          const desktopAudioTrack = desktopAudioStream.getAudioTracks()[0];
+          if (desktopAudioTrack) {
+            combinedStream.addTrack(desktopAudioTrack);
+          }
+          
+          stream = combinedStream;
         } else {
-          constraints.audio = true; // Use default audio device
+          // Use just the user media stream
+          stream = userStream;
         }
 
-        // Start new stream with selected devices
-        stream = await navigator.mediaDevices.getUserMedia(constraints);
         currentStream = stream;
 
         videoPreview.srcObject = stream;
         videoPreview.classList.remove('hidden');
         videoPlaceholder.classList.add('hidden');
-        startInterview.disabled = false;
+        
+        // Enable start conversation button
+        startConversation.disabled = false;
         
         // Setup audio level monitoring
         setupAudioLevelMonitoring(stream);
+        
+        // Show success message for desktop audio
+        if (desktopAudioEnabled) {
+          console.log('Desktop audio capture enabled - AI voice will be recorded');
+        }
+        
       } catch (error) {
         console.error('Error starting camera:', error);
         Swal.fire({
           icon: 'error',
           title: 'Camera Access Failed',
-          text: 'Failed to access camera. Please check permissions.',
+          text: 'Failed to access camera. Please check permissions and try again.',
           confirmButtonColor: '#f1d85b',
           confirmButtonText: 'OK'
         });
       }
-    }
-
-    // Start AI greeting
-    async function startAIGreeting() {
-      showAISpeaking();
-      await playAIAudio("Hello! Welcome to PitchLense AI Interview. I'll be your AI assistant today. I'll ask you questions one by one, and you'll have 30 seconds to answer each question. Let's get started!");
-      
-      // Enable start interview button after greeting
-      startInterview.disabled = false;
     }
 
     // Show AI speaking indicator
@@ -614,76 +769,116 @@
       }
     }
 
-    // Start AI follow-up
-    async function startAIFollowUp() {
+    // Start AI conversation
+    async function startAIConversation() {
       if (!stream) return;
 
-      // Get questions from the container
-      const questionElements = questionsContainer.querySelectorAll('.bg-\\[\\#1E1E21\\]');
-      const questions = Array.from(questionElements).map(el => 
+      // Get topics from the container
+      const topicElements = topicsContainer.querySelectorAll('.bg-\\[\\#1E1E21\\]');
+      const topics = Array.from(topicElements).map(el => 
         el.querySelector('p').textContent.trim()
       );
 
-      if (questions.length === 0) {
+      if (topics.length === 0) {
         Swal.fire({
           icon: 'error',
-          title: 'No Questions',
-          text: 'No questions found. Please refresh the page.',
+          title: 'No Topics',
+          text: 'No topics found. Please refresh the page.',
           confirmButtonColor: '#f1d85b',
           confirmButtonText: 'OK'
         });
         return;
       }
 
+      // Hide start section and show recording controls
+      startConversationSection.classList.add('hidden');
+      recordingControls.classList.remove('hidden');
+      bottomDock.classList.remove('hidden');
+
       // Start recording
       startRecordingVideo();
       
-      // Start asking follow-up questions
-      currentQuestionIndex = 0;
-      await askNextQuestion(questions);
+      // Start AI conversation
+      conversationStarted = true;
+      await startGeminiConversation(topics);
     }
 
-    // Ask next question
-    async function askNextQuestion(questions) {
-      if (currentQuestionIndex >= questions.length) {
-        // All questions asked, stop recording
-        stopRecordingVideo();
-        return;
-      }
+    // Start Gemini conversation
+    async function startGeminiConversation(topics) {
+      try {
+        // Create conversation prompt with topics
+        const topicsText = topics.map((topic, i) => `${i + 1}. ${topic}`).join('\n');
+        const systemPrompt = `You are a friendly, professional AI assistant conducting a natural conversation. 
 
-      const question = questions[currentQuestionIndex];
-      
-      // Show current question
-      currentQuestionDisplay.classList.remove('hidden');
-      currentQuestionText.textContent = question;
-      
-      // Show AI speaking and ask question
-      showAISpeaking();
-      await playAIAudio(`Question ${currentQuestionIndex + 1}: ${question}. You have 30 seconds to answer.`);
-      
-      // Start 30-second timer for this question
-      startQuestionTimer();
-      
-      // Move to next question after 30 seconds
-      setTimeout(async () => {
-        currentQuestionIndex++;
-        await askNextQuestion(questions);
-      }, 30000);
-    }
+Your goal is to have a natural, flowing conversation that covers these topics:
+${topicsText}
 
-    // Start question timer
-    function startQuestionTimer() {
-      let timeLeft = 30;
-      questionTimerElement.textContent = timeLeft;
-      
-      questionTimerInterval = setInterval(() => {
-        timeLeft--;
-        questionTimerElement.textContent = timeLeft;
+Guidelines:
+- Be conversational and friendly, not interrogative
+- Ask follow-up questions naturally
+- Don't rush through topics - let the conversation flow
+- Be encouraging and supportive
+- If the person seems to finish a topic, gently guide to the next one
+- Keep the conversation engaging and comfortable
+
+Start by greeting the person warmly and begin the conversation naturally.`;
+
+        // Use text-to-speech for AI conversation
+        console.log('Starting AI conversation with TTS');
+        await startAIConversationFlow(topics);
         
-        if (timeLeft <= 0) {
-          clearInterval(questionTimerInterval);
+      } catch (error) {
+        console.error('Error starting Gemini conversation:', error);
+        // Fallback to simple TTS
+        showAISpeaking();
+        await playAIAudio("Hello! Let's have a great conversation. I'll ask you some questions naturally as we go. Please feel free to share your thoughts openly.");
+      }
+    }
+
+    // Note: Gemini Live API integration removed due to CSP issues
+    // The system now uses TTS for AI responses, which works reliably
+
+    // Start AI conversation flow with TTS
+    async function startAIConversationFlow(topics) {
+      try {
+        // Welcome message
+        showAISpeaking();
+        await playAIAudio("Hello! I'm excited to have this conversation with you. I'll be asking you some questions naturally as we go. Please feel free to share your thoughts openly and take your time with your responses.");
+        
+        // Wait a moment before starting the conversation
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Start asking about topics naturally
+        for (let i = 0; i < topics.length; i++) {
+          const topic = topics[i];
+          
+          // Create a natural conversation flow
+          const conversationPrompts = [
+            `Let's talk about ${topic.toLowerCase()}. I'd love to hear your thoughts on this.`,
+            `I'm curious about your experience with ${topic.toLowerCase()}. Could you share some insights?`,
+            `Tell me about ${topic.toLowerCase()}. What's your perspective on this?`,
+            `I'd like to understand more about ${topic.toLowerCase()}. What can you tell me?`
+          ];
+          
+          const prompt = conversationPrompts[i % conversationPrompts.length];
+          
+          showAISpeaking();
+          await playAIAudio(prompt);
+          
+          // Wait for user to respond (simulate conversation timing)
+          await new Promise(resolve => setTimeout(resolve, 15000)); // 15 seconds per topic
         }
-      }, 1000);
+        
+        // Closing message
+        showAISpeaking();
+        await playAIAudio("Thank you for sharing your insights with me. That was a great conversation! Feel free to add anything else you'd like to mention, or we can wrap up here.");
+        
+      } catch (error) {
+        console.error('Error in AI conversation flow:', error);
+        // Fallback message
+        showAISpeaking();
+        await playAIAudio("Thank you for the conversation! Please feel free to share any additional thoughts you have.");
+      }
     }
 
     // Start recording
@@ -710,33 +905,31 @@
         videoPreview.src = url;
         videoPreview.srcObject = null;
         videoPreview.muted = false;
-        
-        // Show post-recording controls
-        document.getElementById('postRecordingControls').classList.remove('hidden');
-        currentQuestionDisplay.classList.add('hidden');
       };
 
       mediaRecorder.start();
       recordingStartTime = Date.now();
       startRecordingTimer();
+      isRecording = true;
       
-      startInterview.classList.add('hidden');
-      stopRecording.classList.remove('hidden');
-      recordingStatus.classList.remove('hidden');
+      // Audio capture is handled by the MediaRecorder
+      // Desktop audio capture ensures AI voice is recorded
     }
+
+    // Audio processing functions removed - using TTS instead of Live API
 
     // Stop recording
     function stopRecordingVideo() {
       if (mediaRecorder && mediaRecorder.state === 'recording') {
         mediaRecorder.stop();
         clearInterval(recordingTimer);
+        isRecording = false;
         
         // Stop any current AI speech
         stopCurrentSpeech();
         
-        stopRecording.classList.add('hidden');
-        recordingStatus.classList.add('hidden');
-        currentQuestionDisplay.classList.add('hidden');
+        // Clean up any remaining resources
+        // (Gemini Live API cleanup removed)
       }
     }
 
@@ -797,34 +990,24 @@
       }
     }
 
-    // Replay recorded video
-    function replayVideo() {
-      if (videoPreview.src) {
-        videoPreview.currentTime = 0;
-        videoPreview.play();
+    // Restart recording function
+    function restartRecordingFunction() {
+      // Stop current recording
+      if (isRecording) {
+        stopRecordingVideo();
       }
-    }
-
-    // Reshoot video
-    function reshootVideo() {
-      // Reset recording state
-      recordedChunks = [];
-      recordedVideoBlob = null;
       
-      // Hide post-recording controls
-      document.getElementById('postRecordingControls').classList.add('hidden');
-      
-      // Show start interview button
-      startInterview.classList.remove('hidden');
+      // Reset UI
+      startConversationSection.classList.remove('hidden');
+      recordingControls.classList.add('hidden');
+      bottomDock.classList.add('hidden');
       
       // Reset video preview to show camera feed
       if (currentStream) {
         videoPreview.srcObject = currentStream;
         videoPreview.muted = true;
-      } else {
-        // If no stream, show placeholder
-        videoPreview.classList.add('hidden');
-        document.getElementById('videoPlaceholder').classList.remove('hidden');
+        videoPreview.classList.remove('hidden');
+        videoPlaceholder.classList.add('hidden');
       }
       
       // Stop audio monitoring
@@ -836,15 +1019,17 @@
         cancelAnimationFrame(animationFrame);
       }
       document.getElementById('audioLevelIndicator').classList.add('hidden');
+      
+      conversationStarted = false;
     }
 
-    // Submit final video
-    async function submitFinalVideo() {
+    // Submit conversation
+    async function submitConversationFunction() {
       if (!recordedVideoBlob) {
         Swal.fire({
           icon: 'error',
           title: 'No Video',
-          text: 'No recorded video found. Please record a video first.',
+          text: 'No recorded conversation found. Please record a conversation first.',
           confirmButtonColor: '#f1d85b',
           confirmButtonText: 'OK'
         });
@@ -852,11 +1037,12 @@
       }
 
       const formData = new FormData();
-      formData.append('video', recordedVideoBlob, 'followup-video.webm');
+      formData.append('video', recordedVideoBlob, 'conversation-video.webm');
       formData.append('followupId', followupId);
 
-      // Hide post-recording controls and show upload progress
-      document.getElementById('postRecordingControls').classList.add('hidden');
+      // Hide controls and show upload progress
+      bottomDock.classList.add('hidden');
+      recordingControls.classList.add('hidden');
       uploadProgress.classList.remove('hidden');
 
       try {
@@ -891,14 +1077,14 @@
         
         // Determine error message based on the error
         let errorTitle = 'Upload Failed';
-        let errorText = 'Failed to submit video. Please try again.';
+        let errorText = 'Failed to submit conversation. Please try again.';
         
         if (error.message.includes('parse Gemini response')) {
           errorTitle = 'Processing Failed';
-          errorText = 'The video was uploaded but failed to process with AI. Please try again.';
+          errorText = 'The conversation was uploaded but failed to process with AI. Please try again.';
         } else if (error.message.includes('Failed to submit video')) {
           errorTitle = 'Upload Failed';
-          errorText = 'Failed to upload video to server. Please check your connection and try again.';
+          errorText = 'Failed to upload conversation to server. Please check your connection and try again.';
         }
         
         Swal.fire({
@@ -911,7 +1097,8 @@
         
         uploadProgress.classList.add('hidden');
         processingLoader.classList.add('hidden');
-        document.getElementById('postRecordingControls').classList.remove('hidden');
+        bottomDock.classList.remove('hidden');
+        recordingControls.classList.remove('hidden');
       }
     }
 
@@ -948,10 +1135,10 @@
     function showCloseInstructions() {
       Swal.fire({
         icon: 'success',
-        title: 'Follow-up Completed Successfully!',
+        title: 'Conversation Completed Successfully!',
         html: `
           <div class="text-left space-y-3">
-            <p class="text-gray-700">Your follow-up video has been processed and analyzed. The transcript and answers have been saved.</p>
+            <p class="text-gray-700">Your conversation has been processed and analyzed. The transcript and insights have been saved.</p>
             <p class="text-gray-700 font-medium">To close this tab, you can:</p>
             <div class="space-y-2">
               <div class="flex items-center gap-2">
@@ -967,7 +1154,7 @@
                 <span class="text-sm text-gray-600">(On the tab)</span>
               </div>
             </div>
-            <p class="text-sm text-gray-600 mt-3">Thank you for completing the follow-up!</p>
+            <p class="text-sm text-gray-600 mt-3">Thank you for completing the conversation!</p>
           </div>
         `,
         confirmButtonColor: '#f1d85b',
@@ -978,13 +1165,11 @@
     }
 
     // Event listeners
-    startInterview.addEventListener('click', startAIFollowUp);
-    stopRecording.addEventListener('click', stopRecordingVideo);
-    
-    // Post-recording controls event listeners
-    document.getElementById('replayVideo').addEventListener('click', replayVideo);
-    document.getElementById('reshootVideo').addEventListener('click', reshootVideo);
-    document.getElementById('submitFinalVideo').addEventListener('click', submitFinalVideo);
+    startConversation.addEventListener('click', startAIConversation);
+    restartRecording.addEventListener('click', restartRecordingFunction);
+    submitConversation.addEventListener('click', submitConversationFunction);
+    enableDesktopAudio.addEventListener('click', enableDesktopAudioCapture);
+    skipDesktopAudio.addEventListener('click', skipDesktopAudioCapture);
 
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', initialize);

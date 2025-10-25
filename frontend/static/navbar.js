@@ -92,15 +92,6 @@ function renderNavbar(activePage = '') {
       </svg>`
     },
     {
-      id: 'founder-dna',
-      href: '/founder-dna.html',
-      title: 'Founder DNA',
-      tooltip: 'Founder DNA',
-      icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2v20M2 12h20M12 2a10 10 0 0 0 0 20M12 2a10 10 0 0 1 0 20"></path>
-      </svg>`
-    },
-    {
       id: 'meeting-assistant',
       href: '/meeting-assistant.html',
       title: 'Meeting Assistant',
@@ -207,7 +198,6 @@ function getCurrentPage() {
   if (path.includes('search')) return 'search';
   if (path.includes('news')) return 'news';
   if (path.includes('networking')) return 'networking';
-  if (path.includes('founder-dna')) return 'founder-dna';
   if (path.includes('meeting-assistant')) return 'meeting-assistant';
   if (path.includes('extension')) return 'extension';
   if (path.includes('email')) return 'email';

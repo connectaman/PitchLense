@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PitchLense — Reports</title>
     <link rel="icon" type="image/svg+xml" href="/static/logo.svg" />
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = { theme: { extend: { colors: { background:'#1E1E21', surface:'#2E3137', text:'#ffffff', secondary:'#cfd4dd', accent:'#f1d85b' }}}}
     </script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,7 +19,9 @@
     <div class="h-screen flex flex-col p-3 gap-3">
       <header class="h-16 bg-[#2E3137] border border-white/10 rounded-[22px] flex items-center justify-between px-6 mobile-header">
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full bg-accent grid place-items-center"><img src="/static/logo.svg" class="w-5 h-5"/></div>
+          <div class="w-8 h-8 rounded-full bg-transparent grid place-items-center">
+            <img src="/static/logo.svg" class="w-6 h-6"/>
+          </div>
           <div class="text-base font-semibold">PitchLense</div>
         </div>
         <div class="flex items-center gap-3">
@@ -475,7 +477,7 @@
               <div class=\"flex items-center gap-2\">
                 <span class=\"text-white/60\">Status:</span>
                 <span class=\"status-chip text-xs px-2 py-1 rounded-full border whitespace-nowrap inline-block\" style=\"${statusStyle}\">${r.status}</span>
-                ${status === 'pending' ? '<span class=\"text-xs text-white/80 eta-timer\" data-created=\"' + r.created_at + '\">ETA: <span class=\"countdown\">10m 0s</span></span>' : ''}
+                ${status === 'pending' ? '<span class=\"text-xs text-white/80 eta-timer\" data-created=\"' + r.created_at + '\">ETA: <span class=\"countdown\">18m 0s</span></span>' : ''}
               </div>
             </div>
             <div class=\"mt-7 flex justify-center gap-2\">
@@ -552,7 +554,7 @@
             const createdTime = new Date(r.created_at).getTime();
             const now = new Date().getTime();
             const timeElapsed = now - createdTime;
-            const totalTime = 10 * 60 * 1000; // 10 minutes in milliseconds
+            const totalTime = 18 * 60 * 1000; // 18 minutes in milliseconds
             let timeLeft = Math.max(0, totalTime - timeElapsed);
             
             let timerId;

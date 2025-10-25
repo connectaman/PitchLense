@@ -831,9 +831,6 @@
                     <!-- Empty State -->
                     <div id="followUpEmpty" class="flex items-center justify-center py-8 text-white/70">
                       <div class="text-center">
-                        <div class="text-4xl mb-4">❓</div>
-                        <div class="text-lg mb-2">No questions generated yet</div>
-                        <div class="text-sm">Click "Generate Questions" to create follow-up questions based on your analysis</div>
                       </div>
                     </div>
                   </div>
@@ -3743,6 +3740,9 @@
             window.overallRiskLevel = getOverallRiskLevel(growthPotential.score);
           }
 
+          // LinkedIn analysis will be shown only in Team & Founder Risks analysis type
+          // No need to populate it in overall analysis tab
+
           // Populate uploaded files data
           if (result.data && result.data.files && Array.isArray(result.data.files)) {
             populateUploadedFiles(result.data.files);
@@ -3908,6 +3908,7 @@
         }
       }
 
+
       // Function to show detailed analysis content
       function showDetailedAnalysisContent(analysis) {
         const contentArea = document.getElementById('detailedAnalysisContentArea');
@@ -3920,6 +3921,101 @@
         contentArea.style.transform = 'translateX(20px)';
         
         setTimeout(() => {
+          // Check for LinkedIn analysis in the report data - only show for Team & Founder Risks
+          const linkedinAnalysis = window.reportData?.data?.linkedin_analysis;
+          let linkedinAnalysisContent = '';
+          
+          // Only show LinkedIn analysis for Team & Founder Risks analysis type
+          const isTeamFounderRisk = analysis.category_name && 
+            (analysis.category_name.toLowerCase().includes('team') || 
+             analysis.category_name.toLowerCase().includes('founder') ||
+             analysis.category_name.toLowerCase().includes('team & founder'));
+          
+          if (linkedinAnalysis && linkedinAnalysis.primary_analysis && isTeamFounderRisk) {
+            const primaryAnalysis = linkedinAnalysis.primary_analysis;
+            linkedinAnalysisContent = `
+              <div class="mb-8">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    LinkedIn Founder Analysis
+                  </h3>
+                  <div class="flex items-center gap-2">
+                    <span class="px-3 py-1 bg-blue-500/20 text-blue-400 text-sm rounded-full">${primaryAnalysis.overallRating}</span>
+                    <span class="text-2xl font-bold text-white">${primaryAnalysis.overallScore}/100</span>
+                  </div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <!-- Overall Summary -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-3">Overall Summary</h4>
+                    <p class="text-white/80 text-sm leading-relaxed">${primaryAnalysis.overallSummary}</p>
+                  </div>
+                  
+                  <!-- Key Strengths -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-3">Key Strengths</h4>
+                    <ul class="space-y-2">
+                      ${primaryAnalysis.keyStrengths.slice(0, 3).map(strength => `
+                        <li class="flex items-start gap-2 text-white/80 text-sm">
+                          <svg class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                          </svg>
+                          <span>${strength.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</span>
+                        </li>
+                      `).join('')}
+                    </ul>
+                  </div>
+                  
+                  <!-- Competency Scores -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-3">Competency Scores</h4>
+                    <div class="space-y-3">
+                      ${primaryAnalysis.scores.map(score => `
+                        <div class="flex items-center justify-between">
+                          <span class="text-white/80 text-sm">${score.competency}</span>
+                          <div class="flex items-center gap-2">
+                            <div class="w-20 bg-white/10 rounded-full h-2">
+                              <div class="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full" style="width: ${score.score}%"></div>
+                            </div>
+                            <span class="text-white font-medium text-sm">${score.score}</span>
+                          </div>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+                  
+                  <!-- Key Metrics -->
+                  <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                    <h4 class="text-white font-medium mb-3">Key Metrics</h4>
+                    <div class="grid grid-cols-2 gap-3">
+                      ${primaryAnalysis.detailedKPIs.slice(0, 6).map(kpi => `
+                        <div class="text-center">
+                          <div class="text-2xl mb-1">${kpi.icon}</div>
+                          <div class="text-white font-medium text-sm">${kpi.value}</div>
+                          <div class="text-white/60 text-xs">${kpi.metric}</div>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Investment Recommendation -->
+                <div class="mt-6 bg-[#1E1E21] border border-white/10 rounded-lg p-4">
+                  <h4 class="text-white font-medium mb-3 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Investment Recommendation
+                  </h4>
+                  <p class="text-white/80 text-sm leading-relaxed">${primaryAnalysis.investmentRecommendation}</p>
+                </div>
+              </div>
+            `;
+          }
           // Debug: Log the analysis object to see its structure
           // Check if this is a detailed business note with analysis_result
           let analysisResultContent = '';
@@ -3993,6 +4089,7 @@
 
           contentArea.innerHTML = `
             <div class="analysis-content">
+              ${linkedinAnalysisContent}
               <div class="flex items-center justify-between mb-6">
                 <div>
                   <h2 class="text-xl font-semibold text-white mb-2">${analysis.category_name || 'Analysis'}</h2>
@@ -4873,6 +4970,8 @@
           processApiData();
         } else if (apiKnowledgeGraph && apiKnowledgeGraph.root) {
           processApiData();
+        } else if (apiKnowledgeGraph && (apiKnowledgeGraph.dependencies || apiKnowledgeGraph.dependents)) {
+          processApiData();
         } else {
           // Wait for data if it's not available yet
           function waitForData(attempt = 0) {
@@ -4885,6 +4984,8 @@
             if (apiKnowledgeGraph && apiKnowledgeGraph.nodes && apiKnowledgeGraph.nodes.length > 0) {
               processApiData();
             } else if (apiKnowledgeGraph && apiKnowledgeGraph.root) {
+              processApiData();
+            } else if (apiKnowledgeGraph && (apiKnowledgeGraph.dependencies || apiKnowledgeGraph.dependents)) {
               processApiData();
             } else if (attempt < maxAttempts && window.reportData) {
               setTimeout(() => waitForData(attempt + 1), delayMs);
@@ -4908,9 +5009,100 @@
 
         function processApiData() {
           // Transform API data structure to D3.js format with proper positioning
+          // Handle both old format (nodes/edges) and new format (root/dependencies/dependents)
 
-          knowledgeGraph = {
-            nodes: [
+          let nodes = [];
+          let edges = [];
+
+          // Check if it's the new format with root/dependencies/dependents
+          if (apiKnowledgeGraph.root && (apiKnowledgeGraph.dependencies || apiKnowledgeGraph.dependents)) {
+            console.log('Processing new format knowledge graph');
+            
+            // Add root node
+            nodes.push({
+              id: apiKnowledgeGraph.root.name || 'root',
+              name: apiKnowledgeGraph.root.name || 'Company',
+              type: apiKnowledgeGraph.root.type || 'company',
+              description: apiKnowledgeGraph.root.description || '',
+              category: apiKnowledgeGraph.root.type || 'company',
+              position: { x: 0, y: 0 },
+              isRoot: true,
+              news: [],
+              market_data: {},
+              relationship: ''
+            });
+
+            // Process dependencies (left side)
+            if (apiKnowledgeGraph.dependencies && Array.isArray(apiKnowledgeGraph.dependencies)) {
+              apiKnowledgeGraph.dependencies.forEach((dep, index) => {
+                const nodeId = dep.entity_name || `dep_${index}`;
+                nodes.push({
+                  id: nodeId,
+                  name: dep.entity_name || `Dependency ${index + 1}`,
+                  type: dep.entity_type || 'dependency',
+                  description: dep.relationship || '',
+                  category: dep.entity_type || 'dependency',
+                  position: { x: -1, y: (index - apiKnowledgeGraph.dependencies.length / 2) * 0.3 },
+                  isRoot: false,
+                  news: dep.news || [],
+                  market_data: {
+                    stock_data: dep.stock_data,
+                    trade_data: dep.trade_data,
+                    market_info: dep.market_info,
+                    market_sources: dep.market_sources
+                  },
+                  relationship: dep.relationship || '',
+                  hover_info: dep.market_info || dep.relationship || ''
+                });
+
+                // Create edge from dependency to root
+                edges.push({
+                  source: nodeId,
+                  target: apiKnowledgeGraph.root.name || 'root',
+                  relationship: dep.relationship || 'dependency',
+                  strength: 0.7
+                });
+              });
+            }
+
+            // Process dependents (right side)
+            if (apiKnowledgeGraph.dependents && Array.isArray(apiKnowledgeGraph.dependents)) {
+              apiKnowledgeGraph.dependents.forEach((dep, index) => {
+                const nodeId = dep.entity_name || `dependent_${index}`;
+                nodes.push({
+                  id: nodeId,
+                  name: dep.entity_name || `Dependent ${index + 1}`,
+                  type: dep.entity_type || 'dependent',
+                  description: dep.relationship || '',
+                  category: dep.entity_type || 'dependent',
+                  position: { x: 1, y: (index - apiKnowledgeGraph.dependents.length / 2) * 0.3 },
+                  isRoot: false,
+                  news: dep.news || [],
+                  market_data: {
+                    stock_data: dep.stock_data,
+                    trade_data: dep.trade_data,
+                    market_info: dep.market_info,
+                    market_sources: dep.market_sources
+                  },
+                  relationship: dep.relationship || '',
+                  hover_info: dep.market_info || dep.relationship || ''
+                });
+
+                // Create edge from root to dependent
+                edges.push({
+                  source: apiKnowledgeGraph.root.name || 'root',
+                  target: nodeId,
+                  relationship: dep.relationship || 'dependent',
+                  strength: 0.7
+                });
+              });
+            }
+
+          } else if (apiKnowledgeGraph.nodes && apiKnowledgeGraph.edges) {
+            // Handle old format with nodes and edges
+            console.log('Processing old format knowledge graph');
+            
+            nodes = [
               // Add root node if it exists
               ...(apiKnowledgeGraph.root ? [{
                 id: apiKnowledgeGraph.root.id,
@@ -4918,9 +5110,13 @@
                 type: apiKnowledgeGraph.root.type,
                 description: apiKnowledgeGraph.root.description,
                 category: apiKnowledgeGraph.root.type,
-                position: apiKnowledgeGraph.root.position || { x: 0, y: 0 }
+                position: apiKnowledgeGraph.root.position || { x: 0, y: 0 },
+                isRoot: true,
+                news: [],
+                market_data: {},
+                relationship: ''
               }] : []),
-              // Add all nodes from API - don't set x,y here, let the simulation handle it
+              // Add all nodes from API
               ...(apiKnowledgeGraph.nodes || []).map(node => {
                 // Skip invalid nodes
                 if (!node || !node.id || !node.name) {
@@ -4935,21 +5131,55 @@
                   category: node.category || node.type || 'unknown',
                   description: node.description || '',
                   position: pos,
+                  isRoot: false,
                   relationship: node.relationship || '',
                   news: node.news || [],
                   market_data: node.market_data || {},
                   hover_info: node.hover_info || ''
                 };
               }).filter(Boolean) // Remove null entries
-            ],
-            edges: apiKnowledgeGraph.edges ? apiKnowledgeGraph.edges.map(edge => ({
+            ];
+
+            edges = apiKnowledgeGraph.edges ? apiKnowledgeGraph.edges.map(edge => ({
               source: edge.from,
               target: edge.to,
               relationship: edge.relationship,
               strength: edge.strength || 0.5
-            })) : []
+            })) : [];
+          } else {
+            console.error('Unknown knowledge graph format:', apiKnowledgeGraph);
+            showFallback();
+            return;
+          }
+
+          knowledgeGraph = {
+            nodes: nodes,
+            edges: edges
           };
 
+          console.log('Processed knowledge graph:', knowledgeGraph);
+          console.log('Total nodes:', knowledgeGraph.nodes.length);
+          console.log('Total edges:', knowledgeGraph.edges.length);
+          
+          // Log metadata if available
+          if (apiKnowledgeGraph.metadata) {
+            console.log('Graph metadata:', apiKnowledgeGraph.metadata);
+          }
+          
+          // Add a summary display for large graphs
+          if (knowledgeGraph.nodes.length > 10) {
+            const summary = document.createElement('div');
+            summary.className = 'absolute top-4 right-4 bg-[#1E1E21] border border-white/10 rounded-lg p-3 text-white text-sm';
+            summary.innerHTML = `
+              <div class="font-semibold mb-1">Ecosystem Overview</div>
+              <div>Nodes: ${knowledgeGraph.nodes.length}</div>
+              <div>Connections: ${knowledgeGraph.edges.length}</div>
+              ${apiKnowledgeGraph.metadata ? `<div>Dependencies: ${apiKnowledgeGraph.metadata.total_dependencies || 0}</div>` : ''}
+              ${apiKnowledgeGraph.metadata ? `<div>Dependents: ${apiKnowledgeGraph.metadata.total_dependents || 0}</div>` : ''}
+            `;
+            document.getElementById('knowledgeGraph').appendChild(summary);
+          }
+          
           // Now that we have the data, continue with visualization
           continueWithVisualization();
         }
@@ -4992,17 +5222,16 @@
 
           // Color function based on position: root=yellow, left=blue, right=green
           function getNodeColor(node) {
-            const rootNode = knowledgeGraph.nodes.find(n => n.name === 'Sia' || n.type === 'company');
-            
-            if (node === rootNode) {
+            // Check if it's the root node
+            if (node.isRoot || node.name === 'Sia' || node.type === 'company') {
               return '#f1d85b'; // Yellow for root node
             }
             
             const pos = node.position || { x: 0, y: 0 };
             if (pos.x < 0) {
-              return '#3B82F6'; // Blue for left side
+              return '#3B82F6'; // Blue for left side (dependencies)
             } else if (pos.x > 0) {
-              return '#10B981'; // Green for right side
+              return '#10B981'; // Green for right side (dependents)
             } else {
               return '#8B5CF6'; // Purple for center/neutral
             }
@@ -5080,45 +5309,47 @@
               .on('drag', dragged)
               .on('end', dragended));
 
-          // Node circles
+          // Node circles - adjust size based on node type
           const nodeCircles = node.append('circle')
-            .attr('r', 20)
+            .attr('r', d => d.isRoot ? 25 : 18) // Larger root node, smaller others
             .attr('fill', d => getNodeColor(d))
             .attr('stroke', '#ffffff')
-            .attr('stroke-width', 2);
+            .attr('stroke-width', d => d.isRoot ? 3 : 2);
 
-          // Node labels
+          // Node labels - adjust positioning for better readability
           node.append('text')
             .attr('dx', 0)
-            .attr('dy', 35)
+            .attr('dy', d => d.isRoot ? 40 : 35)
             .attr('text-anchor', 'middle')
             .attr('fill', '#ffffff')
-            .attr('font-size', '10px')
+            .attr('font-size', d => d.isRoot ? '12px' : '10px')
             .attr('font-weight', 'bold')
-            .text(d => d.name);
+            .text(d => d.name.length > 15 ? d.name.substring(0, 15) + '...' : d.name); // Truncate long names
 
           // Position nodes based on coordinate signs - left/right of root
-          const rootNode = knowledgeGraph.nodes.find(n => n.name === 'Sia' || n.type === 'company');
+          const rootNode = knowledgeGraph.nodes.find(n => n.isRoot || n.name === 'Sia' || n.type === 'company');
           
           // Set initial positions based on x coordinate sign
           knowledgeGraph.nodes.forEach(node => {
             const pos = node.position || { x: 0, y: 0 };
             
-            if (node === rootNode) {
+            if (node === rootNode || node.isRoot) {
               // Keep root node at center
+              node.x = centerX;
               node.fx = centerX;
+              node.y = centerY;
               node.fy = centerY;
             } else {
               // Position based on x coordinate sign
-              const offsetX = Math.abs(pos.x) > 0.5 ? 250 : 200; // Increased distance from center
-              const offsetY = pos.y * 80; // Vertical offset based on y coordinate
+              const offsetX = Math.abs(pos.x) > 0.5 ? 300 : 250; // Increased distance from center
+              const offsetY = pos.y * 100; // Vertical offset based on y coordinate
               
               if (pos.x < 0) {
-                // Negative x = left side
+                // Negative x = left side (dependencies)
                 node.x = centerX - offsetX;
                 node.fx = centerX - offsetX;
               } else if (pos.x > 0) {
-                // Positive x = right side  
+                // Positive x = right side (dependents)
                 node.x = centerX + offsetX;
                 node.fx = centerX + offsetX;
               } else {
@@ -5128,6 +5359,7 @@
               }
               
               node.y = centerY + offsetY;
+              node.fy = centerY + offsetY;
             }
           });
 
@@ -5135,13 +5367,30 @@
           simulation = d3.forceSimulation(knowledgeGraph.nodes)
             .force('link', d3.forceLink(knowledgeGraph.edges)
               .id(d => d.id)
-              .distance(200) // Increased edge length for better spacing
-              .strength(0.3) // Link strength for connections
+              .distance(250) // Increased edge length for better spacing with more nodes
+              .strength(0.4) // Link strength for connections
             )
-            .force('charge', d3.forceManyBody().strength(-100)) // Light repulsion to prevent overlap
-            .force('collision', d3.forceCollide().radius(40)) // Prevent overlap
-            .alpha(0.5) // Start with medium energy
-            .alphaDecay(0.02) // Slower decay to maintain layout
+            .force('charge', d3.forceManyBody().strength(-150)) // Increased repulsion for more nodes
+            .force('collision', d3.forceCollide().radius(50)) // Increased collision radius
+            .alpha(0.6) // Start with higher energy for better initial positioning
+            .alphaDecay(0.03) // Slightly faster decay for better convergence
+
+          // Add zoom-to-fit functionality for large graphs
+          if (knowledgeGraph.nodes.length > 15) {
+            setTimeout(() => {
+              const bounds = g.node().getBBox();
+              const fullWidth = containerWidth;
+              const fullHeight = containerHeight;
+              const width = bounds.width;
+              const height = bounds.height;
+              const midX = bounds.x + width / 2;
+              const midY = bounds.y + height / 2;
+              if (width === 0 || height === 0) return; // nothing to fit
+              const scale = 0.85 / Math.max(width / fullWidth, height / fullHeight);
+              const translate = [fullWidth / 2 - scale * midX, fullHeight / 2 - scale * midY];
+              zoom.transform(svg, d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale));
+            }, 1000); // Wait for simulation to settle
+          }
 
           if (simulation) {
             simulation.on('tick', () => {
@@ -5613,8 +5862,100 @@
           });
         }
 
+        // Store current tab state before opening feedback modal
+        let savedTabState = null;
+        
+        function saveCurrentTabState() {
+          // Find the currently active tab button (exclude feedback and documentation buttons)
+          const activeTabButton = document.querySelector('.tab-button.active:not([data-tab="news"]):not([data-tab="documents"]):not([id="toggleFeedbackForm"]):not([id="documentationTab"])');
+          if (activeTabButton) {
+            savedTabState = {
+              tabId: activeTabButton.id,
+              tabData: activeTabButton.getAttribute('data-tab')
+            };
+            console.log('Saved tab state:', savedTabState);
+          } else {
+            // Fallback: look for any active tab content to determine current tab
+            const activeContent = document.querySelector('.tab-content.active:not(.news-tab-content)');
+            if (activeContent) {
+              // Determine tab from content ID
+              let tabData = null;
+              let tabId = null;
+              
+              if (activeContent.id === 'overallAnalysisContent') {
+                tabData = 'overall';
+                tabId = 'overallAnalysisTab';
+              } else if (activeContent.id === 'detailedAnalysisContent') {
+                tabData = 'detailed';
+                tabId = 'detailedAnalysisTab';
+              } else if (activeContent.id === 'qnaContent') {
+                tabData = 'qna';
+                tabId = 'qnaTab';
+              } else if (activeContent.id === 'dependencyContent') {
+                tabData = 'dependency';
+                tabId = 'dependencyTab';
+              } else if (activeContent.id === 'uploadedFilesContent') {
+                tabData = 'files';
+                tabId = 'uploadedFilesTab';
+              } else if (activeContent.id === 'followUpContent') {
+                tabData = 'followup';
+                tabId = 'followUpTab';
+              }
+              
+              if (tabData && tabId) {
+                savedTabState = { tabId, tabData };
+                console.log('Saved tab state (fallback):', savedTabState);
+              }
+            }
+          }
+        }
+        
+        function restoreTabState() {
+          if (savedTabState) {
+            console.log('Restoring tab state:', savedTabState);
+            
+            // Find the tab button to restore
+            const tabButton = document.getElementById(savedTabState.tabId);
+            if (tabButton) {
+              // Remove active class from all tab buttons and contents
+              const tabButtons = document.querySelectorAll('.tab-button:not([data-tab="news"]):not([data-tab="documents"])');
+              const tabContents = document.querySelectorAll('.tab-content');
+              
+              tabButtons.forEach(btn => btn.classList.remove('active'));
+              tabContents.forEach(content => content.classList.add('hidden'));
+              
+              // Add active class to the saved tab button
+              tabButton.classList.add('active');
+              
+              // Show corresponding content
+              let targetContent;
+              const targetTab = savedTabState.tabData;
+              if (targetTab === 'files') {
+                targetContent = document.getElementById('uploadedFilesContent');
+              } else if (targetTab === 'qna') {
+                targetContent = document.getElementById('qnaContent');
+              } else if (targetTab === 'dependency') {
+                targetContent = document.getElementById('dependencyContent');
+              } else if (targetTab === 'followup') {
+                targetContent = document.getElementById('followUpContent');
+              } else {
+                targetContent = document.getElementById(`${targetTab}AnalysisContent`);
+              }
+              if (targetContent) {
+                targetContent.classList.remove('hidden');
+              }
+            }
+            savedTabState = null; // Clear saved state after restoration
+          }
+        }
+
         // Check for existing feedback and open modal
         async function openFeedbackModal() {
+          // Save current tab state before opening modal
+          saveCurrentTabState();
+          
+          // Authentication check removed for now
+          
           try {
             // Get current report ID from URL parameters
             const urlParams = new URLSearchParams(window.location.search);
@@ -5632,11 +5973,13 @@
             }
 
             // Check for existing feedback
+            console.log('Making feedback API call...');
             const response = await fetch(`/api/feedback/${reportId}`, {
               method: 'GET',
               headers: {
                 'Content-Type': 'application/json'
-              }
+              },
+              credentials: 'include'
             });
 
             console.log('Feedback check response status:', response.status);
@@ -5699,14 +6042,7 @@
               initializeStarRatings();
             }
             
-            // Show warning but don't block the user
-            Swal.fire({
-              title: 'Warning',
-              text: 'Could not load existing feedback. You can still submit new feedback.',
-              icon: 'warning',
-              confirmButtonColor: '#f1d85b',
-              confirmButtonText: 'OK'
-            });
+            // Silently handle the case - no error message needed
           }
         }
 
@@ -5738,6 +6074,9 @@
             document.querySelectorAll('.star').forEach(star => {
               star.classList.remove('rated', 'active');
             });
+            
+            // Restore the tab state that was saved before opening the modal
+            restoreTabState();
           }
         }
 
@@ -5809,6 +6148,7 @@
                 headers: {
                   'Content-Type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify({
                   report_id: reportId,
                   ...feedbackData
@@ -5844,6 +6184,17 @@
                     mainContent.classList.remove('hidden');
                     mainContent.style.display = 'flex';
                   }
+                });
+              } else if (response.status === 401) {
+                // Handle authentication error
+                Swal.fire({
+                  title: 'Session Expired',
+                  text: 'Your session has expired. Please log in again to submit feedback.',
+                  icon: 'warning',
+                  confirmButtonColor: '#f1d85b',
+                  confirmButtonText: 'Go to Login'
+                }).then(() => {
+                  window.location.href = '/auth.html';
                 });
               } else {
                 throw new Error('Failed to submit feedback');
@@ -6806,7 +7157,7 @@
 
               <!-- AI Chat Link -->
               <div class="bg-[#1E1E21] border border-white/10 rounded-md p-3">
-                <p class="text-sm text-white/60 mb-2">🤖 AI Chat Interview:</p>
+                <!-- <p class="text-sm text-white/60 mb-2">🤖 AI Chat Interview:</p> -->
                 <div class="flex items-center gap-2">
                   <input type="text" id="aiChatLink" value="${window.location.origin}/ai-chat.html?id=${queryId}" readonly class="flex-1 bg-[#2E3137] border border-white/20 rounded px-2 py-1 text-xs text-white">
                   <button onclick="copyAiChatLink()" class="px-2 py-1 bg-accent text-[#1E1E21] rounded text-xs hover:bg-accent/80 transition-colors">

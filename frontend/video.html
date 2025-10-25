@@ -43,6 +43,15 @@
   
   <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- Gemini Live API -->
+  <script type="module">
+    import { GoogleGenAI, Modality } from 'https://unpkg.com/@google/genai@latest/dist/index.esm.js';
+    
+    // Make it globally available
+    window.GoogleGenAI = GoogleGenAI;
+    window.Modality = Modality;
+  </script>
 </head>
 <body class="bg-background text-text font-sans antialiased selection:bg-accent selection:text-white h-screen overflow-hidden">
   <div class="h-screen flex flex-col">
@@ -63,11 +72,11 @@
 
     <!-- Main Content -->
     <main class="flex-1 flex min-h-0">
-      <!-- Video Section (60%) -->
-      <div class="w-3/5 p-6 min-w-0">
+      <!-- Video Section (50%) -->
+      <div class="w-1/2 p-6 min-w-0">
         <div class="h-full flex flex-col">
           <!-- Video Container -->
-          <div class="flex-1 bg-surface border border-white/10 rounded-lg p-6 mb-4 min-h-0">
+          <div class="flex-1 bg-surface border border-white/10 rounded-lg p-6 min-h-0">
             <div class="h-full flex flex-col">
               <!-- Video Preview -->
               <div class="flex-1 bg-black rounded-lg mb-4 flex items-center justify-center relative overflow-hidden">
@@ -99,7 +108,7 @@
                 </div>
               </div>
 
-              <!-- Controls -->
+              <!-- Device Selection -->
               <div class="space-y-4">
                 <!-- Device Selection Row -->
                 <div class="grid grid-cols-2 gap-4">
@@ -120,87 +129,7 @@
                   </div>
                 </div>
 
-                <!-- Recording Controls -->
-                <div class="flex items-center justify-center gap-4">
-                  <button id="startRecording" class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                    <svg class="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="10"/>
-                    </svg>
-                    Start Recording
-                  </button>
-                  
-                  <button id="stopRecording" class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium hidden">
-                    <svg class="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
-                      <rect x="6" y="6" width="12" height="12" rx="2"/>
-                    </svg>
-                    Stop Recording
-                  </button>
-                  
-                  <button id="submitVideo" class="px-6 py-3 bg-accent text-[#1E1E21] rounded-lg hover:bg-accent/80 transition-colors font-medium hidden">
-                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-                    </svg>
-                    Submit Video
-                  </button>
-                  
-                  <!-- Post-Recording Controls -->
-                  <div id="postRecordingControls" class="flex items-center justify-center gap-4 hidden">
-                    <button id="replayVideo" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                      <svg class="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
-                      Replay Video
-                    </button>
-                    
-                    <button id="reshootVideo" class="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium">
-                      <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                      </svg>
-                      Reshoot
-                    </button>
-                    
-                    <button id="submitFinalVideo" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
-                      <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-                      </svg>
-                      Submit Video
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Recording Status -->
-                <div id="recordingStatus" class="text-center text-white/70 hidden">
-                  <div class="flex items-center justify-center gap-2">
-                    <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                    <span>Recording...</span>
-                    <span id="recordingTime">00:00</span>
-                  </div>
-                </div>
-
-                <!-- Upload Progress -->
-                <div id="uploadProgress" class="hidden">
-                  <div class="bg-[#1E1E21] border border-white/20 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-2">
-                      <span class="text-white font-medium">Uploading Video...</span>
-                      <span id="uploadPercentage" class="text-white/60">0%</span>
-                    </div>
-                    <div class="w-full bg-white/10 rounded-full h-2">
-                      <div id="uploadBar" class="bg-accent h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Processing Loader -->
-                <div id="processingLoader" class="hidden">
-                  <div class="bg-[#1E1E21] border border-white/20 rounded-lg p-6 text-center">
-                    <div class="flex items-center justify-center mb-4">
-                      <div class="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mr-3"></div>
-                      <span class="text-white font-medium">Processing Video...</span>
-                    </div>
-                    <p class="text-white/70 text-sm mb-2">Analyzing video with AI</p>
-                    <p class="text-white/60 text-xs">Generating transcript and answers to questions</p>
-                  </div>
-                </div>
+                <!-- Status indicators moved to dock -->
 
                 <!-- Completion Message -->
                 <div id="completionMessage" class="hidden">
@@ -231,14 +160,102 @@
         </div>
       </div>
 
-      <!-- Questions Section (40%) -->
-      <div class="w-2/5 bg-surface border-l border-white/10 p-6 flex flex-col min-w-0">
+      <!-- Questions Section (50%) -->
+      <div class="w-1/2 bg-surface border-l border-white/10 p-6 flex flex-col min-h-0">
         <h2 class="text-lg font-semibold text-white mb-4 flex-shrink-0">Follow-up Questions</h2>
         <div id="questionsContainer" class="space-y-3 overflow-y-auto flex-1 min-h-0">
           <!-- Questions will be loaded here -->
         </div>
       </div>
     </main>
+
+
+    <!-- Bottom Dock -->
+    <div id="bottomDock" class="fixed bottom-6 left-1/2 transform -translate-x-1/2">
+      <div class="bg-surface/95 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 flex items-center gap-4 shadow-lg">
+        <!-- Voice Visualization (shown during introduction) -->
+        <div id="voiceVisualizationDock" class="flex items-center gap-3 px-4 py-2 bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-500/30 rounded-full hidden">
+          <!-- 3D Sphere Animation -->
+          <div class="relative w-8 h-8">
+            <!-- Outer pulsing sphere -->
+            <div class="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 animate-pulse opacity-30"></div>
+            <!-- Middle sphere -->
+            <div class="absolute inset-1 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 animate-ping opacity-50"></div>
+            <!-- Inner sphere -->
+            <div class="absolute inset-2 rounded-full bg-gradient-to-r from-blue-600 to-purple-700 animate-bounce"></div>
+            <!-- Speech waveform animation -->
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div class="flex items-center gap-0.5">
+                <div class="w-0.5 h-3 bg-white/60 rounded-full animate-pulse"></div>
+                <div class="w-0.5 h-4 bg-white/80 rounded-full animate-pulse" style="animation-delay: 0.1s"></div>
+                <div class="w-0.5 h-2 bg-white/60 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+                <div class="w-0.5 h-3 bg-white/80 rounded-full animate-pulse" style="animation-delay: 0.3s"></div>
+                <div class="w-0.5 h-2 bg-white/60 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+              </div>
+            </div>
+          </div>
+          <span class="text-white text-sm font-medium">AI Introduction</span>
+        </div>
+        
+        <!-- Start Recording Button -->
+        <button id="startRecording" class="p-3 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors group disabled:opacity-50 disabled:cursor-not-allowed" title="Start Recording" disabled>
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"/>
+          </svg>
+        </button>
+        
+        <!-- Stop Recording Button -->
+        <button id="stopRecording" class="p-3 bg-gray-600 text-white rounded-full hover:bg-gray-700 transition-colors group hidden" title="Stop Recording">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <rect x="6" y="6" width="12" height="12" rx="2"/>
+          </svg>
+        </button>
+        
+        <!-- Recording Timer (shown during recording) -->
+        <div id="recordingTimer" class="flex items-center gap-2 px-4 py-2 bg-red-900/30 border border-red-500/30 rounded-full hidden">
+          <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+          <span id="recordingTime" class="text-white text-sm font-medium">00:00</span>
+        </div>
+        
+        <!-- Upload Progress (shown during upload) -->
+        <div id="uploadProgressDock" class="flex items-center gap-3 px-4 py-2 bg-blue-900/30 border border-blue-500/30 rounded-full hidden">
+          <div class="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+          <div class="flex flex-col">
+            <span class="text-white text-xs font-medium">Uploading...</span>
+            <div class="w-20 bg-white/20 rounded-full h-1">
+              <div id="uploadBarDock" class="bg-blue-400 h-1 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Processing Loader (shown during processing) -->
+        <div id="processingLoaderDock" class="flex items-center gap-3 px-4 py-2 bg-yellow-900/30 border border-yellow-500/30 rounded-full hidden">
+          <div class="w-4 h-4 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+          <span class="text-white text-xs font-medium">Processing...</span>
+        </div>
+        
+        <!-- Replay Video Button -->
+        <button id="replayVideo" class="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors group hidden" title="Replay Video">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        </button>
+        
+        <!-- Reshoot Video Button -->
+        <button id="reshootVideo" class="p-3 bg-orange-600 text-white rounded-full hover:bg-orange-700 transition-colors group hidden" title="Reshoot Video">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+        </button>
+        
+        <!-- Submit Video Button -->
+        <button id="submitFinalVideo" class="p-3 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors group hidden" title="Submit Video">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Welcome Popup -->
@@ -278,7 +295,7 @@
     let mediaRecorder;
     let recordedChunks = [];
     let recordingStartTime;
-    let recordingTimer;
+    let recordingTimerInterval;
     let stream;
     let audioContext;
     let analyser;
@@ -292,15 +309,14 @@
     const audioSelect = document.getElementById('audioSelect');
     const startRecording = document.getElementById('startRecording');
     const stopRecording = document.getElementById('stopRecording');
-    const submitVideo = document.getElementById('submitVideo');
-    const recordingStatus = document.getElementById('recordingStatus');
     const recordingTime = document.getElementById('recordingTime');
-    const uploadProgress = document.getElementById('uploadProgress');
-    const uploadBar = document.getElementById('uploadBar');
-    const uploadPercentage = document.getElementById('uploadPercentage');
-    const processingLoader = document.getElementById('processingLoader');
+    const recordingTimer = document.getElementById('recordingTimer');
+    const uploadProgressDock = document.getElementById('uploadProgressDock');
+    const uploadBarDock = document.getElementById('uploadBarDock');
+    const processingLoaderDock = document.getElementById('processingLoaderDock');
     const completionMessage = document.getElementById('completionMessage');
     const questionsContainer = document.getElementById('questionsContainer');
+    const voiceVisualizationDock = document.getElementById('voiceVisualizationDock');
 
     // Get follow-up ID from URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -315,6 +331,7 @@
     async function initialize() {
       await loadQuestions();
       await setupCamera();
+      await showIntroduction();
     }
 
     // Load questions from follow-up query
@@ -339,9 +356,190 @@
             </div>
           </div>
         `).join('');
+        
+        // Store questions globally for introduction
+        window.questions = questions;
       } catch (error) {
         console.error('Error loading questions:', error);
         questionsContainer.innerHTML = '<p class="text-white/60">Failed to load questions</p>';
+        window.questions = [];
+      }
+    }
+
+    // Show AI introduction
+    async function showIntroduction() {
+      try {
+        // Show voice visualization in dock
+        voiceVisualizationDock.classList.remove('hidden');
+        
+        // Generate introduction text
+        const introductionPrompt = await generateIntroductionText();
+        
+        // Generate and play audio introduction
+        await playIntroductionAudio(introductionPrompt);
+        
+        // Hide dock visualization and show start recording button
+        voiceVisualizationDock.classList.add('hidden');
+        startRecording.disabled = false;
+        
+      } catch (error) {
+        console.error('Error showing introduction:', error);
+        // Fallback: hide visualization and enable recording
+        voiceVisualizationDock.classList.add('hidden');
+        startRecording.disabled = false;
+      }
+    }
+
+    // Generate introduction text using Gemini
+    async function generateIntroductionText() {
+      const questions = window.questions || [];
+      const questionsText = questions.join(', ');
+      
+      const prompt = `Create a brief, friendly introduction (under 50 words) for a video interview session. 
+      
+      Context: The user will be answering questions about: ${questionsText}
+      
+      Instructions:
+      - Welcome them warmly
+      - Explain this is a video interview
+      - Briefly mention what topics will be covered
+      - Give simple instructions (speak clearly, take your time)
+      - Keep it conversational and encouraging
+      - End with "When you're ready, click the record button to begin"
+      
+      Make it sound natural and professional.`;
+
+      try {
+        // Try to use Gemini Live API if available
+        if (window.GoogleGenAI && window.Modality) {
+          return await generateWithGemini(prompt);
+        } else {
+          // Fallback to a generic introduction
+          return generateFallbackIntroduction(questions);
+        }
+      } catch (error) {
+        console.error('Error generating introduction:', error);
+        return generateFallbackIntroduction(questions);
+      }
+    }
+
+    // Generate introduction with Gemini Live API
+    async function generateWithGemini(prompt) {
+      try {
+        const ai = new window.GoogleGenAI({ 
+          apiKey: 'YOUR_GEMINI_API_KEY' // Replace with actual API key
+        });
+        
+        const model = ai.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        return response.text();
+      } catch (error) {
+        console.error('Gemini API error:', error);
+        throw error;
+      }
+    }
+
+    // Generate fallback introduction
+    function generateFallbackIntroduction(questions) {
+      const topics = questions.slice(0, 3).join(', ');
+      return `Welcome to your video interview! I'm excited to learn about your experience and insights. Today we'll be discussing ${topics} and other related topics. Please speak clearly and take your time with your responses. This is your opportunity to share your thoughts and experiences in detail. When you're ready, click the record button to begin.`;
+    }
+
+    // Play introduction audio
+    async function playIntroductionAudio(text) {
+      try {
+        // Use Web Speech API for audio
+        if ('speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(text);
+          
+          // Enhanced voice settings for more human-like speech
+          utterance.rate = 0.85;        // Slightly slower for natural pace
+          utterance.pitch = 1.1;        // Slightly higher pitch for warmth
+          utterance.volume = 0.9;        // Higher volume for clarity
+          
+          // Wait for voices to load if needed
+          let voices = speechSynthesis.getVoices();
+          if (voices.length === 0) {
+            await new Promise(resolve => {
+              speechSynthesis.onvoiceschanged = resolve;
+            });
+            voices = speechSynthesis.getVoices();
+          }
+          
+          // Enhanced voice selection for more human-like quality
+          const preferredVoices = [
+            // Ursa voice (primary choice)
+            'Ursa',
+            // Premium voices (best quality)
+            'Samantha', 'Karen', 'Victoria', 'Alex', 'Daniel',
+            // Google voices
+            'Google UK English Female', 'Google UK English Male',
+            'Google US English Female', 'Google US English Male',
+            // Microsoft voices
+            'Microsoft Zira Desktop', 'Microsoft David Desktop',
+            'Microsoft Susan Desktop', 'Microsoft Mark Desktop',
+            // Amazon voices
+            'Amazon Polly Joanna', 'Amazon Polly Matthew',
+            'Amazon Polly Amy', 'Amazon Polly Brian',
+            // Other high-quality voices
+            'Karen', 'Moira', 'Tessa', 'Veena', 'Rishi'
+          ];
+          
+          // Find the best available voice
+          let selectedVoice = null;
+          
+          // First, try to find exact matches
+          for (const preferredName of preferredVoices) {
+            selectedVoice = voices.find(voice => 
+              voice.name === preferredName || 
+              voice.name.includes(preferredName)
+            );
+            if (selectedVoice) break;
+          }
+          
+          // If no exact match, find the best quality English voice
+          if (!selectedVoice) {
+            selectedVoice = voices.find(voice => 
+              voice.lang.startsWith('en') && 
+              (voice.name.includes('Female') || 
+               voice.name.includes('Samantha') ||
+               voice.name.includes('Karen') ||
+               voice.name.includes('Victoria') ||
+               voice.name.includes('Google') ||
+               voice.name.includes('Microsoft') ||
+               voice.name.includes('Amazon'))
+            );
+          }
+          
+          // Fallback to any English voice
+          if (!selectedVoice) {
+            selectedVoice = voices.find(voice => voice.lang.startsWith('en'));
+          }
+          
+          if (selectedVoice) {
+            utterance.voice = selectedVoice;
+            console.log('Using voice:', selectedVoice.name);
+          }
+          
+          // Enhanced speech settings
+          utterance.rate = 0.85;  // Natural speaking pace
+          utterance.pitch = 1.1;  // Slightly higher for warmth
+          utterance.volume = 0.9; // Clear volume
+          
+          return new Promise((resolve) => {
+            utterance.onend = resolve;
+            utterance.onerror = resolve;
+            speechSynthesis.speak(utterance);
+          });
+        } else {
+          // Fallback: just wait a bit
+          return new Promise(resolve => setTimeout(resolve, 3000));
+        }
+      } catch (error) {
+        console.error('Error playing introduction audio:', error);
+        // Fallback: just wait a bit
+        return new Promise(resolve => setTimeout(resolve, 3000));
       }
     }
 
@@ -474,7 +672,8 @@
         videoPreview.srcObject = stream;
         videoPreview.classList.remove('hidden');
         videoPlaceholder.classList.add('hidden');
-        startRecording.disabled = false;
+        // Start recording button will be enabled after introduction
+        // startRecording.disabled = false;
         
         // Setup audio level monitoring
         setupAudioLevelMonitoring(stream);
@@ -518,35 +717,67 @@
         // Ensure the video element is visible
         videoPreview.classList.remove('hidden');
         
-        // Don't auto-play - let user decide with replay button
+        // Show post-recording controls in dock
+        showPostRecordingControls();
       };
 
       mediaRecorder.start();
       recordingStartTime = Date.now();
       startRecordingTimer();
       
+      // Update dock controls
       startRecording.classList.add('hidden');
       stopRecording.classList.remove('hidden');
-      recordingStatus.classList.remove('hidden');
+      recordingTimer.classList.remove('hidden');
     }
 
     // Stop recording
     function stopRecordingVideo() {
       if (mediaRecorder && mediaRecorder.state === 'recording') {
         mediaRecorder.stop();
-        clearInterval(recordingTimer);
+        clearInterval(recordingTimerInterval);
         
+        // Update dock controls
         stopRecording.classList.add('hidden');
-        recordingStatus.classList.add('hidden');
-        
-        // Show post-recording controls instead of auto-playing
-        document.getElementById('postRecordingControls').classList.remove('hidden');
+        recordingTimer.classList.add('hidden');
       }
+    }
+
+    // Show post-recording controls in dock
+    function showPostRecordingControls() {
+      // Hide start recording button
+      startRecording.classList.add('hidden');
+      // Show replay, reshoot, and submit buttons
+      document.getElementById('replayVideo').classList.remove('hidden');
+      document.getElementById('reshootVideo').classList.remove('hidden');
+      document.getElementById('submitFinalVideo').classList.remove('hidden');
+    }
+
+    // Hide post-recording controls
+    function hidePostRecordingControls() {
+      document.getElementById('replayVideo').classList.add('hidden');
+      document.getElementById('reshootVideo').classList.add('hidden');
+      document.getElementById('submitFinalVideo').classList.add('hidden');
+    }
+
+    // Simulate upload progress
+    function simulateUploadProgress() {
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 15; // Random increment
+        if (progress > 90) progress = 90; // Cap at 90% until actual completion
+        
+        uploadBarDock.style.width = progress + '%';
+        
+        if (progress >= 90) {
+          clearInterval(interval);
+        }
+      }, 200);
     }
 
     // Start recording timer
     function startRecordingTimer() {
-      recordingTimer = setInterval(() => {
+      recordingTimerInterval = setInterval(() => {
         const elapsed = Date.now() - recordingStartTime;
         const minutes = Math.floor(elapsed / 60000);
         const seconds = Math.floor((elapsed % 60000) / 1000);
@@ -615,16 +846,18 @@
       recordedChunks = [];
       recordedVideoBlob = null;
       
-      // Hide post-recording controls
-      document.getElementById('postRecordingControls').classList.add('hidden');
+      // Hide post-recording controls in dock
+      hidePostRecordingControls();
       
       // Show start recording button
       startRecording.classList.remove('hidden');
       
       // Reset video preview to show camera feed
-      if (currentStream) {
-        videoPreview.srcObject = currentStream;
+      if (stream) {
+        videoPreview.srcObject = stream;
         videoPreview.muted = true;
+        videoPreview.classList.remove('hidden');
+        document.getElementById('videoPlaceholder').classList.add('hidden');
       } else {
         // If no stream, show placeholder
         videoPreview.classList.add('hidden');
@@ -659,9 +892,12 @@
       formData.append('video', recordedVideoBlob, 'followup-video.webm');
       formData.append('followupId', followupId);
 
-      // Hide post-recording controls and show upload progress
-      document.getElementById('postRecordingControls').classList.add('hidden');
-      uploadProgress.classList.remove('hidden');
+      // Hide dock controls and show upload progress
+      hidePostRecordingControls();
+      uploadProgressDock.classList.remove('hidden');
+      
+      // Simulate upload progress
+      simulateUploadProgress();
 
       try {
         const response = await fetch('/api/follow-up-queries/submit-video', {
@@ -675,15 +911,15 @@
         }
 
         // Hide upload progress and show processing loader
-        uploadProgress.classList.add('hidden');
-        processingLoader.classList.remove('hidden');
+        uploadProgressDock.classList.add('hidden');
+        processingLoaderDock.classList.remove('hidden');
 
         const data = await response.json();
         
         // Check if the response indicates success
         if (data.success && data.message) {
           // Hide processing loader and show completion message
-          processingLoader.classList.add('hidden');
+          processingLoaderDock.classList.add('hidden');
           completionMessage.classList.remove('hidden');
         } else {
           // Handle unexpected response format
@@ -713,9 +949,9 @@
           confirmButtonText: 'OK'
         });
         
-        uploadProgress.classList.add('hidden');
-        processingLoader.classList.add('hidden');
-        document.getElementById('postRecordingControls').classList.remove('hidden');
+        uploadProgressDock.classList.add('hidden');
+        processingLoaderDock.classList.add('hidden');
+        showPostRecordingControls();
       }
     }
 
@@ -732,13 +968,31 @@
 
     // Close tab
     function closeTab() {
-      // Try to close the tab (only works if opened by JavaScript)
-      window.close();
-      
-      // If window.close() doesn't work, show a message to the user
-      setTimeout(() => {
+      // Try multiple methods to close the tab
+      try {
+        // Method 1: Standard window.close()
+        window.close();
+        
+        // Method 2: Try to close via history
+        if (window.history.length > 1) {
+          window.history.back();
+        }
+        
+        // Method 3: Try to navigate away
+        window.location.href = 'about:blank';
+        
+        // If none of the above work, show instructions after a short delay
+        setTimeout(() => {
+          // Check if we're still on the same page
+          if (window.location.href.includes('video.html')) {
+            showCloseInstructions();
+          }
+        }, 200);
+        
+      } catch (error) {
+        console.log('Auto-close failed, showing manual instructions');
         showCloseInstructions();
-      }, 100);
+      }
     }
 
     // Show close instructions
@@ -776,9 +1030,8 @@
     // Event listeners
     startRecording.addEventListener('click', startRecordingVideo);
     stopRecording.addEventListener('click', stopRecordingVideo);
-    submitVideo.addEventListener('click', submitVideoToServer);
     
-    // Post-recording controls event listeners
+    // Dock controls event listeners
     document.getElementById('replayVideo').addEventListener('click', replayVideo);
     document.getElementById('reshootVideo').addEventListener('click', reshootVideo);
     document.getElementById('submitFinalVideo').addEventListener('click', submitFinalVideo);
