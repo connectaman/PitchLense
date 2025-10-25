@@ -207,7 +207,7 @@ body {
 
 .analysis-url {
     font-size: 13px;
-    color: #cfd4dd;
+    color: #ffffff;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -216,7 +216,7 @@ body {
 
 .analysis-time {
     font-size: 12px;
-    color: #8b949e;
+    color: #ffffff;
     margin-top: 4px;
 }
 
@@ -242,7 +242,7 @@ body {
     gap: 10px;
     font-size: 14px;
     cursor: pointer;
-    color: #cfd4dd;
+    color: #ffffff;
 }
 
 .setting-item input[type="checkbox"] {
@@ -298,7 +298,7 @@ body {
 
 .status-label {
     font-size: 14px;
-    color: #cfd4dd;
+    color: #ffffff;
     font-weight: 500;
 }
 

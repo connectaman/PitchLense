@@ -301,10 +301,16 @@
                             </svg>
                             <div>
                                 <h4 class="text-blue-300 font-semibold mb-2">Hackathon Demo Mode</h4>
-                                <p class="text-sm text-blue-200 leading-relaxed">
-                                    This email client uses a <strong>centralized email server</strong> (contact@amanulla.in) for all users. 
+                                <p class="text-sm text-blue-200 leading-relaxed mb-3">
+                                    Due to hackathon submission and email security considerations, we are currently using a <strong>demo email server</strong> (contact@amanulla.in) for all users. 
                                     All emails are sent from this shared account, with your PitchLense email shown as the sender.
                                 </p>
+                                <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                                    <p class="text-sm text-yellow-200 leading-relaxed">
+                                        <strong>To test this feature:</strong> Send an email to <span class="font-mono bg-yellow-500/20 px-2 py-1 rounded">contact@amanulla.in</span> with your proposal and documents attached. 
+                                        The system will analyze your email and create a PitchLense report automatically.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -315,11 +321,6 @@
                         <p class="text-xs text-white/50 mt-1">Shared email server for all PitchLense users (read-only)</p>
                     </div>
                     
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Your Identity</label>
-                        <input type="email" id="userIdentity" class="w-full bg-[#1E1E21] border border-white/20 rounded-lg px-4 py-2 text-white/60" readonly disabled>
-                        <p class="text-xs text-white/50 mt-1">Your PitchLense account email (shown to recipients as sender)</p>
-                    </div>
                     
                     <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4">
                         <h4 class="font-medium mb-3">Server Configuration</h4>
@@ -349,15 +350,12 @@
                                 <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
                             </svg>
                             <div class="text-xs text-green-200">
-                                <strong>How it works:</strong> When you send an email, it's sent from contact@amanulla.in with your email (${localStorage.getItem('userEmail')}) shown as the sender. Recipients can reply to you directly.
+                                <strong>How it works:</strong> When you send an email, it's sent from contact@amanulla.in with your email shown as the sender. Recipients can reply to you directly. <strong>To test email analysis:</strong> Send a proposal email to contact@amanulla.in with attachments.
                             </div>
                         </div>
                     </div>
                     
                     <div class="flex justify-end gap-3">
-                        <button id="testConnectionBtn" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
-                            Test Email Server
-                        </button>
                         <button id="closeSettingsModal" class="bg-[#FFF27A] text-[#1E1E21] px-6 py-2 rounded-lg font-semibold hover:bg-[#f0e068] transition-colors">
                             Close
                         </button>
@@ -485,8 +483,6 @@
                 });
             });
 
-            // Test connection
-            document.getElementById('testConnectionBtn').addEventListener('click', testConnection);
 
             // Attachment input
             document.getElementById('attachmentInput').addEventListener('change', handleAttachments);
@@ -1366,44 +1362,6 @@
         // No save function needed - using centralized email server
         // Settings are read-only from server configuration
 
-        async function testConnection() {
-            try {
-                document.getElementById('connectionStatus').textContent = 'Testing...';
-                document.getElementById('connectionStatus').className = 'text-yellow-400';
-                
-                const response = await fetch('/api/emails/test-connection', {
-                    method: 'POST',
-                    credentials: 'include'
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.details || error.error || 'Connection failed');
-                }
-
-                document.getElementById('connectionStatus').textContent = 'Active';
-                document.getElementById('connectionStatus').className = 'text-green-400';
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Connection Successful!',
-                    text: 'Email server is properly configured and ready to use.',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            } catch (error) {
-                console.error('Connection test failed:', error);
-                document.getElementById('connectionStatus').textContent = 'Failed';
-                document.getElementById('connectionStatus').className = 'text-red-400';
-                
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Connection Failed',
-                    text: `Could not connect to email server: ${error.message}`,
-                    confirmButtonText: 'OK'
-                });
-            }
-        }
 
         // Load email server settings
         async function loadEmailSettings() {

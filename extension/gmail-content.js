@@ -35,6 +35,9 @@ class GmailPitchLense {
     
     // Process existing emails
     this.processExistingEmails();
+    
+    // Set up periodic button visibility check
+    this.setupButtonVisibilityCheck();
   }
 
   setupNavigationListener() {
@@ -50,7 +53,7 @@ class GmailPitchLense {
         setTimeout(() => {
           this.cleanupExistingButtons();
           this.processExistingEmails();
-        }, 1000);
+        }, 2000);
       }
     });
 
@@ -58,6 +61,24 @@ class GmailPitchLense {
     navigationObserver.observe(document.body, {
       childList: true,
       subtree: true
+    });
+  }
+
+  setupButtonVisibilityCheck() {
+    // Check every 3 seconds to ensure buttons remain visible
+    setInterval(() => {
+      this.ensureButtonsVisible();
+    }, 3000);
+  }
+
+  ensureButtonsVisible() {
+    // Check all existing buttons and ensure they're visible
+    const existingButtons = document.querySelectorAll('.pitchlense-gmail-button');
+    existingButtons.forEach(button => {
+      if (button.style.display === 'none' || button.style.opacity === '0') {
+        button.style.display = 'flex';
+        button.style.opacity = '0.9';
+      }
     });
   }
 
@@ -112,17 +133,21 @@ class GmailPitchLense {
   }
 
   cleanupExistingButtons() {
-    // Remove any existing PitchLense buttons to prevent duplicates
+    // Only remove buttons that are orphaned (not attached to valid email rows)
     const existingButtons = document.querySelectorAll('.pitchlense-gmail-button');
     existingButtons.forEach(button => {
-      if (button.parentNode) {
-        button.parentNode.removeChild(button);
+      const emailRow = button.closest('[role="listitem"], .zA, .yP');
+      if (!emailRow || !document.body.contains(emailRow)) {
+        // Button is orphaned, remove it
+        if (button.parentNode) {
+          button.parentNode.removeChild(button);
+        }
       }
     });
     
-    // Clear the processed emails set and button references
-    this.processedEmails.clear();
-    this.analysisButtons.clear();
+    // Don't clear processed emails and buttons - keep them for persistence
+    // this.processedEmails.clear();
+    // this.analysisButtons.clear();
   }
 
   isEmailRow(element) {
@@ -138,13 +163,16 @@ class GmailPitchLense {
   }
 
   addAnalysisButtonToEmail(emailRow) {
-    if (!emailRow || this.processedEmails.has(emailRow)) {
+    if (!emailRow) {
       return;
     }
 
     // Check if there's already a PitchLense button in this email row
     const existingButton = emailRow.querySelector('.pitchlense-gmail-button');
     if (existingButton) {
+      // Button already exists, just ensure it's visible and functional
+      existingButton.style.display = 'flex';
+      existingButton.style.opacity = '0.8';
       return;
     }
 
@@ -221,8 +249,8 @@ class GmailPitchLense {
       width: 32px;
       height: 32px;
       border-radius: 50%;
-      background: rgba(241,216,91,0.15);
-      border: 1px solid rgba(241,216,91,0.3);
+      background: rgba(241,216,91,0.2);
+      border: 1px solid rgba(241,216,91,0.4);
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -230,9 +258,11 @@ class GmailPitchLense {
       font-size: 16px;
       margin: 0 4px;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      opacity: 0.8;
-      box-shadow: 0 2px 8px rgba(241,216,91,0.2);
+      opacity: 0.9;
+      box-shadow: 0 2px 8px rgba(241,216,91,0.3);
       backdrop-filter: blur(10px);
+      position: relative;
+      z-index: 1000;
     `;
 
     // Hover effects
