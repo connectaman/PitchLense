@@ -78,12 +78,12 @@
 
                     <!-- Results -->
                     <div id="results" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="bg-[#2C2F34] border border-white/10 rounded-xl p-6">
+                        <div class="bg-[#2C2F34] border border-white/10 rounded-xl p-6 flex flex-col">
                             <h3 class="text-lg font-bold mb-3">Transcript</h3>
-                            <div id="transcript" class="prose prose-invert max-w-none whitespace-pre-wrap text-white/80 text-sm"></div>
+                            <div id="transcript" class="prose prose-invert max-w-none whitespace-pre-wrap text-white/80 text-sm overflow-y-auto flex-1" style="max-height: 80vh;"></div>
                         </div>
-                        <div class="bg-[#2C2F34] border border-white/10 rounded-xl p-6">
-                            <div class="space-y-4">
+                        <div class="bg-[#2C2F34] border border-white/10 rounded-xl p-6 flex flex-col">
+                            <div class="space-y-4 overflow-y-auto flex-1" style="max-height: 80vh;">
                                 <h3 class="text-lg font-bold">Summary</h3>
                                 <div id="summary" class="text-white/80"></div>
                                 <div>
@@ -108,6 +108,24 @@
                 </div>
             </main>
         </div>
+
+        <!-- Bottom Dock -->
+        <div id="bottomDock" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+            <div class="bg-[#2C2F34] border border-white/10 rounded-2xl px-6 py-4 flex items-center gap-4 shadow-2xl">
+                <button id="downloadBtn" class="flex items-center gap-2 bg-[#FFF27A] text-[#1E1E21] font-semibold px-4 py-2 rounded-lg hover:bg-[#f0e068] transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    Download Report
+                </button>
+                <button id="emailBtn" class="flex items-center gap-2 bg-[#FFF27A] text-[#1E1E21] font-semibold px-4 py-2 rounded-lg hover:bg-[#f0e068] transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                        <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                    </svg>
+                    Email Report
+                </button>
+            </div>
+        </div>
     </div>
 
     <script src="/static/navbar.js"></script>
@@ -123,6 +141,9 @@
         const results = document.getElementById('results');
         const connectSection = document.getElementById('connect-section');
         const uploadSection = document.getElementById('upload-section');
+        const bottomDock = document.getElementById('bottomDock');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const emailBtn = document.getElementById('emailBtn');
 
         input.addEventListener('change', (e) => {
             const f = e.target.files[0];
@@ -154,6 +175,7 @@
                 renderList('actions', data.actionItems);
                 renderList('followups', data.followUps);
                 results.classList.remove('hidden');
+                bottomDock.classList.remove('hidden');
                 tryAgainBtn.classList.remove('hidden');
             } catch (e) {
                 Swal.fire({ icon:'error', title:'Analysis failed', text: e.message });
@@ -176,6 +198,7 @@
             renderList('actions', []);
             renderList('followups', []);
             results.classList.add('hidden');
+            bottomDock.classList.add('hidden');
             tryAgainBtn.classList.add('hidden');
             connectSection.classList.remove('hidden');
             uploadSection.classList.remove('hidden');
@@ -193,6 +216,236 @@
                 el.appendChild(li);
             });
         }
+
+        // Download button functionality
+        downloadBtn.addEventListener('click', async () => {
+            const transcript = document.getElementById('transcript').textContent;
+            const summary = document.getElementById('summary').textContent;
+            const takeaways = Array.from(document.getElementById('takeaways').children).map(li => li.textContent);
+            const decisions = Array.from(document.getElementById('decisions').children).map(li => li.textContent);
+            const actions = Array.from(document.getElementById('actions').children).map(li => li.textContent);
+            const followups = Array.from(document.getElementById('followups').children).map(li => li.textContent);
+            
+            // First file: transcript.txt
+            const transcriptBlob = new Blob([transcript], { type: 'text/plain' });
+            const transcriptUrl = URL.createObjectURL(transcriptBlob);
+            const transcriptLink = document.createElement('a');
+            transcriptLink.href = transcriptUrl;
+            transcriptLink.download = 'transcript.txt';
+            document.body.appendChild(transcriptLink);
+            transcriptLink.click();
+            document.body.removeChild(transcriptLink);
+            URL.revokeObjectURL(transcriptUrl);
+            
+            // Wait a moment before downloading the second file
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Second file: summary.txt
+            const summaryContent = `SUMMARY:
+${summary}
+
+KEY TAKEAWAYS:
+${takeaways.map(item => `• ${item}`).join('\n')}
+
+DECISIONS:
+${decisions.map(item => `• ${item}`).join('\n')}
+
+ACTION ITEMS:
+${actions.map(item => `• ${item}`).join('\n')}
+
+FOLLOW-UPS:
+${followups.map(item => `• ${item}`).join('\n')}`;
+
+            const summaryBlob = new Blob([summaryContent], { type: 'text/plain' });
+            const summaryUrl = URL.createObjectURL(summaryBlob);
+            const summaryLink = document.createElement('a');
+            summaryLink.href = summaryUrl;
+            summaryLink.download = 'summary.txt';
+            document.body.appendChild(summaryLink);
+            summaryLink.click();
+            document.body.removeChild(summaryLink);
+            URL.revokeObjectURL(summaryUrl);
+        });
+
+        // Email button functionality
+        emailBtn.addEventListener('click', () => {
+            const summary = document.getElementById('summary').textContent;
+            const takeaways = Array.from(document.getElementById('takeaways').children).map(li => li.textContent);
+            const decisions = Array.from(document.getElementById('decisions').children).map(li => li.textContent);
+            const actions = Array.from(document.getElementById('actions').children).map(li => li.textContent);
+            const followups = Array.from(document.getElementById('followups').children).map(li => li.textContent);
+            
+            // Create email modal
+            const emailModal = document.createElement('div');
+            emailModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            emailModal.innerHTML = `
+                <div class="bg-[#2C2F34] border border-white/10 rounded-xl p-6 w-full max-w-md mx-4">
+                    <h3 class="text-lg font-bold mb-4 text-white">Send Meeting Summary</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-white/80 mb-2">Email Address</label>
+                            <input type="email" id="emailInput" placeholder="Enter email address" 
+                                   class="w-full bg-[#1E1E21] border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:border-[#FFF27A]">
+                        </div>
+                        <div class="flex gap-3">
+                            <button id="sendEmailBtn" class="flex-1 bg-[#FFF27A] text-[#1E1E21] font-semibold px-4 py-2 rounded-lg hover:bg-[#f0e068] transition-colors">
+                                Send Email
+                            </button>
+                            <button id="cancelEmailBtn" class="flex-1 bg-gray-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(emailModal);
+            
+            const emailInput = emailModal.querySelector('#emailInput');
+            const sendBtn = emailModal.querySelector('#sendEmailBtn');
+            const cancelBtn = emailModal.querySelector('#cancelEmailBtn');
+            
+            // Send email functionality
+            sendBtn.addEventListener('click', async () => {
+                const email = emailInput.value.trim();
+                if (!email) {
+                    Swal.fire({ icon: 'error', title: 'Error', text: 'Please enter an email address' });
+                    return;
+                }
+                
+                if (!email.includes('@')) {
+                    Swal.fire({ icon: 'error', title: 'Error', text: 'Please enter a valid email address' });
+                    return;
+                }
+                
+                sendBtn.disabled = true;
+                sendBtn.textContent = 'Sending...';
+                
+                try {
+                    const htmlContent = `
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <meta charset="UTF-8">
+                            <style>
+                                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
+                                .header { background: linear-gradient(135deg, #f1d85b, #78e6d0); padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 30px; }
+                                .header h1 { color: #1e1e21; margin: 0; font-size: 28px; }
+                                .section { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f1d85b; }
+                                .section h2 { color: #1e1e21; margin-top: 0; font-size: 20px; }
+                                .section h3 { color: #1e1e21; margin-top: 0; font-size: 16px; }
+                                ul { margin: 10px 0; padding-left: 20px; }
+                                li { margin: 8px 0; }
+                                .summary-text { background: white; padding: 15px; border-radius: 5px; border: 1px solid #e0e0e0; }
+                                .footer { text-align: center; margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; color: #666; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="header">
+                                <h1>📊 Meeting Analysis Report</h1>
+                                <p>Generated by PitchLense AI Meeting Assistant</p>
+                            </div>
+                            
+                            <div class="section">
+                                <h2>📝 Summary</h2>
+                                <div class="summary-text">${summary}</div>
+                            </div>
+                            
+                            ${takeaways.length > 0 ? `
+                            <div class="section">
+                                <h2>🎯 Key Takeaways</h2>
+                                <ul>
+                                    ${takeaways.map(item => `<li>${item}</li>`).join('')}
+                                </ul>
+                            </div>
+                            ` : ''}
+                            
+                            ${decisions.length > 0 ? `
+                            <div class="section">
+                                <h2>✅ Decisions Made</h2>
+                                <ul>
+                                    ${decisions.map(item => `<li>${item}</li>`).join('')}
+                                </ul>
+                            </div>
+                            ` : ''}
+                            
+                            ${actions.length > 0 ? `
+                            <div class="section">
+                                <h2>📋 Action Items</h2>
+                                <ul>
+                                    ${actions.map(item => `<li>${item}</li>`).join('')}
+                                </ul>
+                            </div>
+                            ` : ''}
+                            
+                            ${followups.length > 0 ? `
+                            <div class="section">
+                                <h2>🔄 Follow-ups</h2>
+                                <ul>
+                                    ${followups.map(item => `<li>${item}</li>`).join('')}
+                                </ul>
+                            </div>
+                            ` : ''}
+                            
+                            <div class="footer">
+                                <p>This report was generated by PitchLense AI Meeting Assistant</p>
+                                <p>For more information, visit <a href="https://pitchlense.com" style="color: #f1d85b;">pitchlense.com</a></p>
+                            </div>
+                        </body>
+                        </html>
+                    `;
+                    
+                    const response = await fetch('/api/emails/send', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            to: email,
+                            subject: 'Meeting Analysis Report - PitchLense',
+                            body: htmlContent
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to send email');
+                    }
+                    
+                    Swal.fire({ 
+                        icon: 'success', 
+                        title: 'Email Sent!', 
+                        text: `Meeting summary has been sent to ${email}` 
+                    });
+                    
+                    document.body.removeChild(emailModal);
+                    
+                } catch (error) {
+                    Swal.fire({ 
+                        icon: 'error', 
+                        title: 'Failed to send email', 
+                        text: error.message 
+                    });
+                    sendBtn.disabled = false;
+                    sendBtn.textContent = 'Send Email';
+                }
+            });
+            
+            // Cancel functionality
+            cancelBtn.addEventListener('click', () => {
+                document.body.removeChild(emailModal);
+            });
+            
+            // Close on backdrop click
+            emailModal.addEventListener('click', (e) => {
+                if (e.target === emailModal) {
+                    document.body.removeChild(emailModal);
+                }
+            });
+            
+            // Focus on email input
+            emailInput.focus();
+        });
     </script>
 </body>
 </html>

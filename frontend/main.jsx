@@ -149,6 +149,354 @@ const YouTubeVideo = () => {
   );
 };
 
+
+const TechStack = () => {
+  const techRef = useRef(null);
+
+  useEffect(() => {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('reveal-visible');
+        }
+      });
+    }, { threshold: 0.2 });
+
+    if (techRef.current) io.observe(techRef.current);
+    return () => io.disconnect();
+  }, []);
+
+  const technologies = [
+    { name: 'React', icon: '⚛️', color: 'from-blue-400 to-blue-600' },
+    { name: 'Node.js', icon: '🟢', color: 'from-green-400 to-green-600' },
+    { name: 'Python', icon: '🐍', color: 'from-yellow-400 to-yellow-600' },
+    { name: 'Gemini', icon: '💎', color: 'from-purple-400 to-purple-600' },
+    { name: 'GCP Cloud', icon: '☁️', color: 'from-blue-500 to-blue-700' },
+    { name: 'Docker', icon: '🐳', color: 'from-cyan-400 to-cyan-600' },
+    { name: 'GitHub', icon: '🐙', color: 'from-gray-500 to-gray-700' },
+    { name: 'Perplexity', icon: '🤔', color: 'from-indigo-400 to-indigo-600' },
+    { name: 'SerpAPI', icon: '🔍', color: 'from-green-500 to-green-700' },
+    { name: 'Vertex AI', icon: '🧠', color: 'from-orange-400 to-orange-600' }
+  ];
+
+  return (
+    <section id="tech-stack" className="py-20 bg-black/10">
+      <div className="max-w-7xl mx-auto px-6">
+        <div ref={techRef} className="text-center reveal" style={{ '--ty': '30px' }}>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Built with Modern Technology</h2>
+          <p className="text-secondary mb-12 max-w-3xl mx-auto">
+            Leveraging the latest technologies and frameworks to deliver a powerful, scalable, and secure platform.
+          </p>
+          
+          <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-6">
+            {technologies.map((tech, index) => (
+              <div 
+                key={index}
+                className="tech-item liquid-glass-card p-4 rounded-xl text-center group hover:scale-110 transition-all duration-300"
+                style={{ '--delay': `${index * 0.1}s` }}
+              >
+                <div className="text-3xl mb-2 group-hover:scale-125 transition-transform duration-300">
+                  {tech.icon}
+                </div>
+                <div className="text-sm font-medium text-white/90">{tech.name}</div>
+                <div className={`absolute inset-0 rounded-xl bg-gradient-to-br ${tech.color} opacity-0 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none`} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const HackathonInfo = () => {
+  const hackathonRef = useRef(null);
+
+  useEffect(() => {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('reveal-visible');
+        }
+      });
+    }, { threshold: 0.2 });
+
+    if (hackathonRef.current) io.observe(hackathonRef.current);
+    return () => io.disconnect();
+  }, []);
+
+  return (
+    <section id="hackathon" className="py-20 relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6">
+        <div ref={hackathonRef} className="text-center reveal" style={{ '--ty': '30px' }}>
+          <div className="liquid-glass-card p-8 rounded-3xl max-w-4xl mx-auto">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center">
+                <span className="text-2xl">🏆</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold">Hack2Skill - Google Hackathon</h2>
+            </div>
+            
+            <p className="text-secondary text-lg mb-8 max-w-3xl mx-auto">
+              PitchLense was developed as part of the prestigious Hack2Skill - Google Hackathon, 
+              showcasing innovation in AI-powered startup evaluation and investment management.
+            </p>
+            
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+              <div className="text-center">
+                <div className="text-3xl mb-2">🚀</div>
+                <h3 className="font-semibold mb-2">Innovation</h3>
+                <p className="text-sm text-secondary">Cutting-edge AI technology for startup analysis</p>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl mb-2">🤝</div>
+                <h3 className="font-semibold mb-2">Collaboration</h3>
+                <p className="text-sm text-secondary">Built by passionate developers and entrepreneurs</p>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl mb-2">💡</div>
+                <h3 className="font-semibold mb-2">Impact</h3>
+                <p className="text-sm text-secondary">Revolutionizing the investment landscape</p>
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
+              <a 
+                href="https://vision.hack2skill.com/event/genaiexchangehackathon/?utm_source=hack2skill&utm_medium=homepage#overview" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="glass-button px-6 py-3 rounded-full font-semibold hover:scale-105 transition-all duration-300"
+              >
+                View Hackathon Details
+              </a>
+              <a 
+                href="https://github.com/connectaman/PitchLense" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="glass-button px-6 py-3 rounded-full font-semibold hover:scale-105 transition-all duration-300"
+              >
+                View on GitHub
+              </a>
+            </div>
+            
+            {/* Project Links and Badges */}
+            <div className="space-y-6">
+              <h3 className="text-xl font-semibold text-center mb-4">Project Links & Resources</h3>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <a 
+                  href="https://youtu.be/XUuLeXaEIdI" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-300"
+                >
+                  <span className="text-lg">📺</span>
+                  <span className="text-sm font-medium">YouTube Tutorial</span>
+                </a>
+                
+                <a 
+                  href="https://www.pitchlense.com/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors duration-300"
+                >
+                  <span className="text-lg">🌐</span>
+                  <span className="text-sm font-medium">Website</span>
+                </a>
+                
+                <a 
+                  href="https://github.com/connectaman/PitchLense" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors duration-300"
+                >
+                  <span className="text-lg">💻</span>
+                  <span className="text-sm font-medium">GitHub Repository</span>
+                </a>
+                
+                <a 
+                  href="https://github.com/connectaman/Pitchlense-mcp" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors duration-300"
+                >
+                  <span className="text-lg">🔧</span>
+                  <span className="text-sm font-medium">MCP Repository</span>
+                </a>
+                
+                <a 
+                  href="https://pypi.org/project/pitchlense-mcp/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-300"
+                >
+                  <span className="text-lg">🐍</span>
+                  <span className="text-sm font-medium">PyPI Package</span>
+                </a>
+                
+                <a 
+                  href="https://pitchlense-mcp.readthedocs.io/en/latest/api.html" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-black rounded-lg transition-colors duration-300"
+                >
+                  <span className="text-lg">📚</span>
+                  <span className="text-sm font-medium">Documentation</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const TeamSection = () => {
+  const teamRef = useRef(null);
+
+  useEffect(() => {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('reveal-visible');
+        }
+      });
+    }, { threshold: 0.2 });
+
+    if (teamRef.current) io.observe(teamRef.current);
+    return () => io.disconnect();
+  }, []);
+
+  const teamMembers = [
+    {
+      name: "Aman Ulla",
+      role: "Full Stack AI Engineer, Architect",
+      image: "/static/team/aman.png",
+      social: {
+        github: "https://github.com/connectaman",
+        linkedin: "https://www.linkedin.com/in/connectaman/",
+        website: "https://connectaman.hashnode.dev/",
+        email: "connectamanulla@gmail.com"
+      }
+    },
+    {
+      name: "Srinivas Alva",
+      role: "Backend Developer & Data Scientist",
+      image: "https://images.pexels.com/photos/555790/pexels-photo-555790.png",
+      social: {
+        github: "#",
+        linkedin: "#",
+        email: "connectamanulla@gmail.com"
+      }
+    }
+  ];
+
+  return (
+    <section id="team" className="py-20 relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6">
+        <div ref={teamRef} className="text-center reveal" style={{ '--ty': '30px' }}>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Team</h2>
+          <p className="text-secondary mb-12 max-w-3xl mx-auto">
+            Meet the passionate developers and entrepreneurs behind PitchLense, 
+            bringing together expertise in AI, full-stack development, and investment analysis.
+          </p>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {teamMembers.map((member, index) => (
+              <div 
+                key={index}
+                className="team-card liquid-glass-card p-6 rounded-3xl text-center group hover:scale-105 transition-all duration-300"
+                style={{ '--delay': `${index * 0.2}s` }}
+              >
+                <div className="image-wrapper mb-4">
+                  <img 
+                    src={member.image} 
+                    alt={member.name}
+                    className="w-32 h-32 rounded-full mx-auto object-cover object-center border-4 border-accent/20 group-hover:border-accent/40 transition-all duration-300"
+                    style={{ objectPosition: 'center top' }}
+                  />
+                </div>
+                <div className="box-desc">
+                  <h3 className="text-xl font-semibold mb-2 group-hover:text-accent transition-colors duration-300">
+                    {member.name}
+                  </h3>
+                  <p className="text-secondary text-sm mb-4">{member.role}</p>
+                </div>
+                <div className="flex justify-center gap-3">
+                  <a 
+                    href={member.social.github} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 rounded-full bg-accent/20 hover:bg-accent/40 flex items-center justify-center transition-all duration-300 group-hover:scale-110"
+                    title="GitHub"
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                  </a>
+                  <a 
+                    href={member.social.linkedin} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 rounded-full bg-accent/20 hover:bg-accent/40 flex items-center justify-center transition-all duration-300 group-hover:scale-110"
+                    title="LinkedIn"
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    </svg>
+                  </a>
+                  {member.social.website && (
+                    <a 
+                      href={member.social.website} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 rounded-full bg-accent/20 hover:bg-accent/40 flex items-center justify-center transition-all duration-300 group-hover:scale-110"
+                      title="Blog"
+                    >
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                      </svg>
+                    </a>
+                  )}
+                  {member.social.email && (
+                    <div className="relative group">
+                      <a 
+                        href={`mailto:${member.social.email}`} 
+                        className="w-10 h-10 rounded-full bg-accent/20 hover:bg-accent/40 flex items-center justify-center transition-all duration-300 group-hover:scale-110"
+                        title={member.social.email}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigator.clipboard.writeText(member.social.email);
+                          // Show tooltip
+                          const tooltip = e.target.closest('.relative').querySelector('.email-tooltip');
+                          if (tooltip) {
+                            tooltip.classList.remove('hidden');
+                            setTimeout(() => {
+                              tooltip.classList.add('hidden');
+                            }, 2000);
+                          }
+                        }}
+                      >
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                        </svg>
+                      </a>
+                      <div className="email-tooltip absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-black text-white text-xs rounded-lg whitespace-nowrap hidden z-50">
+                        {member.social.email}
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black"></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const RadialDock = () => {
   const dockRef = useRef(null);
 
@@ -350,8 +698,11 @@ const App = () => (
     <main>
       <Hero />
       <Features />
+      <TechStack />
       <YouTubeVideo />
       <RadialDock />
+      <HackathonInfo />
+      <TeamSection />
       {/* <CTA /> */}
     </main>
     <Footer />

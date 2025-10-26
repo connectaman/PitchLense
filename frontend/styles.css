@@ -992,6 +992,165 @@ footer:hover .footer-circle svg {
   z-index: 1;
 }
 
+/* Feature Card Animations */
+.feature-card {
+  animation: fadeInUp 0.6s ease-out forwards;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.feature-card:nth-child(1) { animation-delay: 0.1s; }
+.feature-card:nth-child(2) { animation-delay: 0.2s; }
+.feature-card:nth-child(3) { animation-delay: 0.3s; }
+.feature-card:nth-child(4) { animation-delay: 0.4s; }
+.feature-card:nth-child(5) { animation-delay: 0.5s; }
+.feature-card:nth-child(6) { animation-delay: 0.6s; }
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Tech Stack Animations */
+.tech-item {
+  animation: scaleIn 0.5s ease-out forwards;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.tech-item:nth-child(1) { animation-delay: 0.1s; }
+.tech-item:nth-child(2) { animation-delay: 0.15s; }
+.tech-item:nth-child(3) { animation-delay: 0.2s; }
+.tech-item:nth-child(4) { animation-delay: 0.25s; }
+.tech-item:nth-child(5) { animation-delay: 0.3s; }
+.tech-item:nth-child(6) { animation-delay: 0.35s; }
+.tech-item:nth-child(7) { animation-delay: 0.4s; }
+.tech-item:nth-child(8) { animation-delay: 0.45s; }
+
+@keyframes scaleIn {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Hackathon Section Animations */
+.hackathon-card {
+  animation: slideInFromBottom 0.8s ease-out;
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Enhanced hover effects for feature cards */
+.feature-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Tech item pulse animation */
+.tech-item:hover {
+  animation: pulse 0.6s ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* Team Section Styles */
+.team-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.team-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(241, 216, 91, 0.1), rgba(120, 230, 208, 0.1));
+  transition: all 0.3s ease;
+  z-index: 0;
+}
+
+.team-card:hover::before {
+  width: 100%;
+}
+
+.team-card:hover .image-wrapper {
+  transform: scale(1.05);
+}
+
+.team-card:hover .box-desc h3 {
+  color: #f1d85b;
+}
+
+.team-card .image-wrapper {
+  position: relative;
+  transition: all 0.5s ease;
+  z-index: 1;
+  width: 128px;
+  height: 128px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.team-card .image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  transition: all 0.3s ease;
+}
+
+.team-card .box-desc {
+  position: relative;
+  z-index: 1;
+}
+
+.team-card .box-desc h3 {
+  transition: color 0.3s ease;
+}
+
+.team-card .box-desc p {
+  transition: color 0.3s ease;
+}
+
+.team-card:hover .box-desc p {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Social links hover effects */
+.team-card .social a {
+  transition: all 0.3s ease;
+}
+
+.team-card:hover .social a {
+  background: rgba(241, 216, 91, 0.2);
+  color: #f1d85b;
+}
+
+.team-card:hover .social a:hover {
+  background: rgba(241, 216, 91, 0.4);
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
 /* Mobile responsive for radial dock */
 @media (max-width: 768px) {
   .radial-dock-container {
@@ -1009,6 +1168,15 @@ footer:hover .footer-circle svg {
   
   .dock-item-icon {
     font-size: 1.5rem !important;
+  }
+  
+  /* Mobile adjustments for new sections */
+  .feature-card {
+    margin-bottom: 1rem;
+  }
+  
+  .tech-item {
+    margin-bottom: 0.5rem;
   }
 }
 
@@ -1028,6 +1196,23 @@ footer:hover .footer-circle svg {
   
   .dock-item-icon {
     font-size: 1.25rem !important;
+  }
+  
+  /* Mobile adjustments for new sections */
+  .feature-card h3 {
+    font-size: 1.125rem !important;
+  }
+  
+  .feature-card p {
+    font-size: 0.875rem !important;
+  }
+  
+  .tech-item {
+    padding: 0.75rem !important;
+  }
+  
+  .tech-item div {
+    font-size: 0.75rem !important;
   }
 }
 

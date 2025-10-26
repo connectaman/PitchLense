@@ -673,7 +673,8 @@
                     <div id="chatMessages" class="flex-1 overflow-y-auto mb-4 space-y-4 pr-2">
                       <div class="flex items-start gap-3">
                         <div class="w-8 h-8 rounded-full bg-accent/20 grid place-items-center flex-shrink-0">
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                          <img src="/static/logo.svg" alt="PitchLense" class="w-5 h-5" onError="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="display: none;">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                           </svg>
                         </div>
@@ -4670,7 +4671,7 @@
           
           if (isUser) {
             messageDiv.innerHTML = `
-              <div class="bg-accent text-white rounded-lg p-3 max-w-[80%]">
+              <div class="bg-accent text-black rounded-lg p-3 max-w-[80%]">
                 <p class="text-sm">${message}</p>
               </div>
               <div class="w-8 h-8 rounded-full bg-accent/20 grid place-items-center flex-shrink-0">
@@ -4684,7 +4685,8 @@
             const htmlContent = marked.parse(message);
             messageDiv.innerHTML = `
               <div class="w-8 h-8 rounded-full bg-accent/20 grid place-items-center flex-shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <img src="/static/logo.svg" alt="PitchLense" class="w-5 h-5" onError="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="display: none;">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                 </svg>
               </div>
@@ -4710,7 +4712,8 @@
           loadingDiv.className = 'flex items-start gap-3';
           loadingDiv.innerHTML = `
             <div class="w-8 h-8 rounded-full bg-accent/20 grid place-items-center flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+              <img src="/static/logo.svg" alt="PitchLense" class="w-5 h-5" onError="this.style.display='none'; this.nextElementSibling.style.display='block';">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="display: none;">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
               </svg>
             </div>
