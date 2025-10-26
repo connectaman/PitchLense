@@ -774,3 +774,260 @@ footer:hover .footer-circle svg {
   transform: scale(1.2);
 }
 
+/* Radial Dock Styles */
+.radial-dock-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.radial-dock-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(241, 216, 91, 0.1), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.radial-dock-item:hover::before {
+  opacity: 1;
+}
+
+.radial-dock-item::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: conic-gradient(from 0deg, rgba(241, 216, 91, 0.3), rgba(120, 230, 208, 0.3), transparent 60%, transparent 100%);
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.radial-dock-item:hover::after {
+  opacity: 1;
+  animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Enhanced liquid glass for dock items */
+.dock-item-glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dock-item-glass:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(241, 216, 91, 0.4);
+  box-shadow: 
+    0 16px 48px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(241, 216, 91, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transform: translateY(-8px) scale(1.05);
+}
+
+/* Connection line animations */
+.connection-line {
+  stroke-dasharray: 5, 5;
+  animation: dash 2s linear infinite;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
+/* Central logo enhanced effects */
+.center-logo {
+  position: relative;
+  overflow: hidden;
+}
+
+.center-logo::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(from 0deg, rgba(241, 216, 91, 0.2), rgba(120, 230, 208, 0.2), transparent 60%, transparent 100%);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.center-logo:hover::before {
+  opacity: 1;
+  animation: rotate 3s linear infinite;
+}
+
+/* Movie Reel Styles */
+.movie-reel-container {
+  width: 200px;
+  height: 600px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.movie-reel-track {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.movie-reel-strip {
+  display: flex;
+  flex-direction: column;
+  animation: movie-reel-scroll 20s linear infinite;
+  height: 200%;
+}
+
+.movie-reel-reverse {
+  animation: movie-reel-scroll-reverse 20s linear infinite;
+}
+
+.movie-reel-frame {
+  width: 100%;
+  height: 100px;
+  flex-shrink: 0;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid rgba(241, 216, 91, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.movie-reel-frame:hover {
+  transform: scale(1.05);
+  border-color: rgba(241, 216, 91, 0.6);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.movie-reel-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: filter 0.3s ease;
+}
+
+.movie-reel-frame:hover img {
+  filter: brightness(1.1) contrast(1.1);
+}
+
+@keyframes movie-reel-scroll {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes movie-reel-scroll-reverse {
+  0% {
+    transform: translateY(-50%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* Movie reel sprocket holes effect */
+.movie-reel-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 8px,
+    rgba(0, 0, 0, 0.1) 8px,
+    rgba(0, 0, 0, 0.1) 10px,
+    transparent 10px,
+    transparent 18px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.movie-reel-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.1) 0%,
+    transparent 2%,
+    transparent 98%,
+    rgba(0, 0, 0, 0.1) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Mobile responsive for radial dock */
+@media (max-width: 768px) {
+  .radial-dock-container {
+    height: 500px !important;
+  }
+  
+  .dock-item {
+    width: 24rem !important;
+    height: 24rem !important;
+  }
+  
+  .dock-item-text {
+    font-size: 0.625rem !important;
+  }
+  
+  .dock-item-icon {
+    font-size: 1.5rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .radial-dock-container {
+    height: 400px !important;
+  }
+  
+  .dock-item {
+    width: 20rem !important;
+    height: 20rem !important;
+  }
+  
+  .dock-item-text {
+    font-size: 0.5rem !important;
+  }
+  
+  .dock-item-icon {
+    font-size: 1.25rem !important;
+  }
+}
+

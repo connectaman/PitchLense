@@ -49,7 +49,7 @@ const Hero = () => {
             <span>AI Analyst for Startup Evaluation</span>
           </div>
           <h1 className="mt-6 text-4xl md:text-6xl font-extrabold tracking-tight">
-            Cut through noise. <span className="text-accent">Invest</span> with confidence.
+            Pitch<span className="text-accent">Lense</span>
           </h1>
           <p className="mt-4 md:text-lg text-secondary max-w-3xl mx-auto">
             PitchLense synthesizes pitch decks, founder calls and public signals to produce concise, investor‑ready deal notes with benchmarks and risk assessments.
@@ -85,7 +85,7 @@ const Features = () => {
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid md:grid-cols-2 gap-8 items-center">
           <div ref={leftRef} className="rounded-xl bg-[linear-gradient(180deg,rgba(255,255,255,0.06)_0%,rgba(255,255,255,0.0)_100%)] border border-white/10 p-6 shadow-card reveal" style={{ '--tx': '-40px' }}>
-            <img src="/static/banner.svg" alt="dashboard" className="rounded-lg opacity-90" />
+            <img src="/static/tag_line.gif" alt="PitchLense Tagline" className="rounded-lg opacity-90" />
           </div>
           <ul ref={rightRef} className="space-y-5 reveal" style={{ '--tx': '40px' }}>
             {[{
@@ -100,41 +100,6 @@ const Features = () => {
               </li>
             ))}
           </ul>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const RiskGrid = () => {
-  const risks = [
-    ['Market','Small TAM, weak growth, crowded space, limited differentiation'],
-    ['Product','Early stage, unclear PMF, technical risk, weak IP'],
-    ['Team/Founder','Churn, single‑founder, skill gaps, credibility'],
-    ['Financial','Inconsistent metrics, burn, CAC/LTV, margins'],
-    ['Customer & Traction','Low traction, churn, retention, concentration'],
-    ['Operational','Supply chain, GTM, inefficiency, execution'],
-    ['Competitive','Incumbent strength, low barriers, defensibility'],
-    ['Legal & Regulatory','Grey areas, compliance gaps, disputes, IP risks'],
-    ['Exit','Limited pathways, low sector exits, late‑stage appeal']
-  ];
-  return (
-    <section id="risks" className="py-20 bg-black/20">
-      <div className="max-w-7xl mx-auto px-6">
-        <h2 className="text-2xl md:text-3xl font-bold">Risk categories we assess</h2>
-        <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {risks.map(([name, desc], i) => (
-            <div key={i} className="rounded-xl border border-white/10 bg-surface p-5 hover:translate-y-[-2px] transition">
-              <div className="flex items-center justify-between">
-                <p className="font-semibold">{name}</p>
-                <span className="text-xs text-black bg-accent px-2 py-0.5 rounded-full">v1</span>
-              </div>
-              <p className="mt-2 text-secondary text-sm">{desc}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-10 flex justify-center">
-          <img src="/static/hero_trans.svg" alt="PitchLense overview" className="w-full max-w-4xl md:max-w-5xl rounded-lg opacity-90" />
         </div>
       </div>
     </section>
@@ -176,6 +141,163 @@ const YouTubeVideo = () => {
                 allowFullScreen
                 loading="lazy"
               />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const RadialDock = () => {
+  const dockRef = useRef(null);
+
+  useEffect(() => {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('reveal-visible');
+        }
+      });
+    }, { threshold: 0.2 });
+
+    if (dockRef.current) io.observe(dockRef.current);
+    return () => io.disconnect();
+  }, []);
+
+  const dockItems = [
+    { title: 'Startup Analysis', icon: '📊', color: 'from-blue-500/20 to-cyan-500/20' },
+    { title: 'Investment Management', icon: '💰', color: 'from-green-500/20 to-emerald-500/20' },
+    { title: 'Global Market Performance & News', icon: '🌍', color: 'from-purple-500/20 to-violet-500/20' },
+    { title: 'Networking with other VC, Investors', icon: '🤝', color: 'from-orange-500/20 to-red-500/20' },
+    { title: 'AI Meeting Assistance', icon: '🤖', color: 'from-pink-500/20 to-rose-500/20' },
+    { title: 'Connect your email client with Pitchlense', icon: '📧', color: 'from-indigo-500/20 to-blue-500/20' },
+    { title: 'Company Profiles', icon: '🏢', color: 'from-teal-500/20 to-cyan-500/20' },
+    { title: 'Crowd funding & Insider trades', icon: '📈', color: 'from-yellow-500/20 to-orange-500/20' }
+  ];
+
+  return (
+    <section id="radial-dock" className="py-20 relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6">
+        <div ref={dockRef} className="text-center reveal" style={{ '--ty': '30px' }}>
+          <h2 className="text-2xl md:text-3xl font-bold mb-4">PitchLense Capabilities</h2>
+          <p className="text-secondary mb-12 max-w-2xl mx-auto">
+            Explore our comprehensive suite of AI-powered tools designed to revolutionize startup evaluation and investment management.
+          </p>
+          
+          {/* Main Container with Slideshows */}
+          <div className="relative flex items-center justify-center gap-8">
+            {/* Left Vertical Slideshow */}
+            <div className="movie-reel-container hidden lg:block">
+              <div className="movie-reel-track">
+                <div className="movie-reel-strip">
+                  {[1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6].map((num, index) => (
+                    <div key={index} className="movie-reel-frame">
+                      <img 
+                        src={`/static/screenshots/${num}.png`} 
+                        alt={`Screenshot ${num}`}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Radial Dock Container */}
+            <div className="radial-dock-container relative w-[600px] h-[600px]">
+            {/* SVG for connection lines */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 600 600">
+              {dockItems.map((_, index) => {
+                const angle = (index * 45) * (Math.PI / 180);
+                const radius = 200;
+                const centerX = 300;
+                const centerY = 300;
+                const x1 = centerX;
+                const y1 = centerY;
+                const x2 = centerX + radius * Math.cos(angle);
+                const y2 = centerY + radius * Math.sin(angle);
+                
+                return (
+                  <line
+                    key={index}
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
+                    stroke="rgba(241, 216, 91, 0.3)"
+                    strokeWidth="2"
+                    strokeDasharray="5,5"
+                    className="connection-line"
+                  />
+                );
+              })}
+            </svg>
+
+            {/* Central Logo */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 w-24 h-24 rounded-full dock-glass flex items-center justify-center cursor-pointer group">
+              <img 
+                src="/static/logo.svg" 
+                alt="PitchLense" 
+                className="w-16 h-16 transition-transform duration-300 group-hover:scale-110"
+                onError={(e) => {
+                  e.currentTarget.outerHTML = '<div class="w-16 h-16 rounded-full bg-accent grid place-items-center shadow-card"><span class="font-extrabold text-black text-2xl">P</span></div>';
+                }}
+              />
+            </div>
+
+            {/* Dock Items */}
+            {dockItems.map((item, index) => {
+              // Start from top (0 degrees) and go clockwise
+              const angle = (index * 45) * (Math.PI / 180);
+              const radius = 200;
+              const centerX = 300;
+              const centerY = 300;
+              const x = centerX + radius * Math.cos(angle);
+              const y = centerY + radius * Math.sin(angle);
+              
+              return (
+                <div
+                  key={index}
+                  className="radial-dock-item absolute dock-item-glass cursor-pointer group"
+                  style={{
+                    left: `${x - 60}px`,
+                    top: `${y - 60}px`,
+                    width: '120px',
+                    height: '120px'
+                  }}
+                >
+                  <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center">
+                    <div className="dock-item-icon text-3xl mb-2 transition-transform duration-300 group-hover:scale-110">
+                      {item.icon}
+                    </div>
+                    <div className="dock-item-text text-xs font-medium text-white/90 leading-tight">
+                      {item.title}
+                    </div>
+                  </div>
+                  
+                  {/* Gradient overlay */}
+                  <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`} />
+                </div>
+              );
+            })}
+            </div>
+
+            {/* Right Vertical Slideshow */}
+            <div className="movie-reel-container hidden lg:block">
+              <div className="movie-reel-track">
+                <div className="movie-reel-strip movie-reel-reverse">
+                  {[6, 5, 4, 3, 2, 1, 6, 5, 4, 3, 2, 1].map((num, index) => (
+                    <div key={index} className="movie-reel-frame">
+                      <img 
+                        src={`/static/screenshots/${num}.png`} 
+                        alt={`Screenshot ${num}`}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -229,7 +351,7 @@ const App = () => (
       <Hero />
       <Features />
       <YouTubeVideo />
-      <RiskGrid />
+      <RadialDock />
       {/* <CTA /> */}
     </main>
     <Footer />

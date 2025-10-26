@@ -4701,51 +4701,6 @@
         async function sendMessage() {
           const message = chatInput.value.trim();
           if (!message) return;
-
-          // Step 1: Check content moderation first
-          try {
-            const moderationResponse = await fetch('/api/content-moderate', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              credentials: 'include',
-              body: JSON.stringify({
-                content: message
-              })
-            });
-
-            if (!moderationResponse.ok) {
-              const errorData = await moderationResponse.json();
-              throw new Error(errorData.error || 'Content moderation failed');
-            }
-
-            const moderationResult = await moderationResponse.json();
-            
-            if (!moderationResult.safe) {
-              // Content is inappropriate - show moderation message
-              addMessage(message, true);
-              chatInput.value = '';
-              
-              // Show content moderation warning as bot response
-              let moderationMessage = "I'm sorry, but I cannot respond to that message. ";
-              
-              if (moderationResult.violations && moderationResult.violations.length > 0) {
-                const violations = moderationResult.violations.map(v => v.category).join(', ');
-                moderationMessage += `Your message contains inappropriate content: ${violations}. `;
-              }
-              
-              moderationMessage += "Please rephrase your question using professional language appropriate for business communication.";
-              
-              addMessage(moderationMessage, false);
-              return;
-            }
-          } catch (moderationError) {
-            console.error('Content moderation error:', moderationError);
-            // If moderation fails, continue with the message (fail-safe approach)
-          }
-
-          // Step 2: Content is safe - proceed with normal flow
           // Add user message
           addMessage(message, true);
           chatInput.value = '';
