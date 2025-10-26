@@ -382,11 +382,11 @@ const TeamSection = () => {
     {
       name: "Srinivas Alva",
       role: "Backend Developer & Data Scientist",
-      image: "https://images.pexels.com/photos/555790/pexels-photo-555790.png",
+      image: "/static/team/alva.png",
       social: {
-        github: "#",
-        linkedin: "#",
-        email: "connectamanulla@gmail.com"
+        github: "https://github.com/srinivas02",
+        linkedin: "https://www.linkedin.com/in/srinivasalva/",
+        email: "alva.srinu@gmail.com"
       }
     }
   ];
@@ -398,7 +398,7 @@ const TeamSection = () => {
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Team</h2>
           <p className="text-secondary mb-12 max-w-3xl mx-auto">
             Meet the passionate developers and entrepreneurs behind PitchLense, 
-            bringing together expertise in AI, full-stack development, and investment analysis.
+            bringing together expertise in AI, full-stack development, and Architecting the Product.
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
