@@ -31,6 +31,9 @@ Watch our comprehensive tutorial video to learn how to use PitchLense effectivel
 - **Risk Assessment**: Comprehensive analysis across multiple risk dimensions
 - **Interactive Charts & Visualizations**: D3.js knowledge graphs, radar charts, and financial visualizations
 - **Knowledge Graph**: Interactive network visualization of startup ecosystem connections
+- **Liquid Glass UI**: Modern glassmorphism design with animated components
+- **Radial Dock Navigation**: Interactive circular navigation with 8 key features
+- **Movie Reel Slideshows**: Animated vertical slideshows showcasing platform capabilities
 
 ### 🔍 Real-Time Search & Company Intelligence
 - **Symbol Search**: Real-time search with FMP API integration (debounced search after 2 characters)
@@ -104,9 +107,13 @@ Watch our comprehensive tutorial video to learn how to use PitchLense effectivel
 - **Attachment Support**: Handle email attachments in report creation
 
 ### 🎥 Meeting Assistant
-- **Meeting Recording Upload**: Upload and analyze meeting recordings
-- **Transcript Generation**: Automatic transcription of meetings
-- **AI Summary**: Get key insights and action items from meetings
+- **Meeting Recording Upload**: Upload and analyze meeting recordings (MP4, WebM, MOV)
+- **Transcript Generation**: Automatic transcription of meetings using AI
+- **AI Summary**: Get key insights, action items, and decisions from meetings
+- **Interactive Results**: Scrollable transcript and summary sections (80% viewport height)
+- **Download Reports**: Export transcript and summary as separate text files
+- **Email Sharing**: Send formatted HTML email reports with professional templates
+- **Bottom Dock Interface**: Floating action dock with download and email buttons
 - **Integration with Reports**: Link meeting insights to startup reports
 
 ### 🔗 Sharing & Export
@@ -120,6 +127,8 @@ Watch our comprehensive tutorial video to learn how to use PitchLense effectivel
 - **Chat History**: Persistent conversation history for each report
 - **Contextual Responses**: AI responses based on specific report data
 - **Source Citations**: AI lists sources used to answer questions
+- **PitchLense Branded Chat**: Custom AI avatar with PitchLense logo
+- **Enhanced UI**: Black text on yellow backgrounds for better readability
 - **LLM Guardrails**: 
   - Confidence scoring (40-100%)
   - Hallucination detection
@@ -144,7 +153,12 @@ Watch our comprehensive tutorial video to learn how to use PitchLense effectivel
 
 ### 🎨 Modern UI/UX
 - **Dark Theme**: Professional dark mode design throughout
-- **Glassmorphism**: Modern glass-like UI elements
+- **Liquid Glass Design**: Modern glassmorphism with frosted glass effects
+- **Animated Components**: Smooth animations and transitions
+- **Radial Navigation**: Interactive circular dock with connecting lines
+- **Movie Reel Effects**: Vertical scrolling slideshows with sprocket hole effects
+- **Team Showcase**: Professional team section with hover effects
+- **Tech Stack Display**: Animated technology showcase with staggered animations
 - **Responsive Design**: Mobile and desktop friendly
 - **Loading States**: Smooth loading animations
 - **Error Handling**: User-friendly error messages with SweetAlert2
@@ -506,6 +520,28 @@ PitchLense/
 
 ### 🚀 Latest Features (2025)
 
+#### **Enhanced UI/UX Design**
+- **Liquid Glass Theme**: Modern glassmorphism design with frosted glass effects
+- **Radial Dock Navigation**: Interactive circular navigation with 8 key features and connecting lines
+- **Movie Reel Slideshows**: Animated vertical slideshows showcasing platform capabilities
+- **Team Showcase**: Professional team section with hover effects and social links
+- **Tech Stack Animation**: Staggered animations for technology showcase
+- **Enhanced Landing Page**: Creative, animated, and innovative content presentation
+
+#### **Meeting Assistant Improvements**
+- **Enhanced File Support**: MP4, WebM, MOV format support (up to 100MB)
+- **Scrollable Results**: 80% viewport height for transcript and summary sections
+- **Dual File Downloads**: Separate transcript.txt and summary.txt files
+- **Professional Email Templates**: HTML-formatted email reports with branding
+- **Bottom Dock Interface**: Floating action dock with download and email buttons
+- **Email Modal**: Interactive email input with validation and sending status
+
+#### **AI Chat Enhancements**
+- **PitchLense Branding**: Custom AI avatar with PitchLense logo
+- **Improved Readability**: Black text on yellow backgrounds for better contrast
+- **Enhanced Tooltips**: Email addresses shown in hover tooltips
+- **Professional Presentation**: Consistent branding throughout
+
 #### **Market Intelligence Integration**
 - Integrated Financial Modeling Prep (FMP) API for real-time market data
 - Added comprehensive company search with 15+ data endpoints
@@ -551,6 +587,24 @@ PitchLense/
 - **Connection Pooling**: Enhanced performance and scalability
 - **User Data Isolation**: Secure multi-tenant architecture
 - **Consolidated Schema**: Single database.sql file for easy setup
+
+### 🏆 Hackathon & Team
+- **Hack2Skill - Google Hackathon**: Developed as part of the prestigious Hack2Skill - Google Hackathon
+- **Team Members**:
+  - **Aman Ulla**: Full Stack AI Engineer, Architect
+    - GitHub: [connectaman](https://github.com/connectaman)
+    - LinkedIn: [connectaman](https://www.linkedin.com/in/connectaman/)
+    - Blog: [Hashnode](https://connectaman.hashnode.dev/)
+    - Email: connectamanulla@gmail.com
+  - **Srinivas Alva**: Backend Developer & Data Scientist
+- **Tech Stack**: React, Node.js, Python, Gemini, GCP Cloud, Docker, GitHub, Perplexity, SerpAPI, Vertex AI
+- **Project Links**:
+  - [YouTube Tutorial](https://youtu.be/XUuLeXaEIdI)
+  - [Website](https://www.pitchlense.com/)
+  - [GitHub Repository](https://github.com/connectaman/PitchLense)
+  - [MCP Repository](https://github.com/connectaman/Pitchlense-mcp)
+  - [PyPI Package](https://pypi.org/project/pitchlense-mcp/)
+  - [Documentation](https://pitchlense-mcp.readthedocs.io/en/latest/api.html)
 
 ## License
 
