@@ -25,6 +25,14 @@
           <div class="text-base font-semibold">PitchLense</div>
         </div>
         <div class="flex items-center gap-3">
+          <!-- Mobile menu button -->
+          <button id="mobileMenuBtn" class="md:hidden w-9 h-9 grid place-items-center rounded-full bg-[#FFF27A] border border-white/10 text-[#1E1E21]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
           <div id="searchWrap" class="flex items-center gap-2">
             <button id="searchBtn" class="w-9 h-9 grid place-items-center rounded-full bg-[#FFF27A] border border-white/10 text-[#1E1E21]">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -57,6 +65,78 @@
       </header>
 
       <div class="grid flex-1 min-h-0 mobile-navbar" style="grid-template-columns: 84px 1fr; gap:12px;">
+        <!-- Mobile responsive styles -->
+        <style>
+          @media (max-width: 768px) {
+            .mobile-navbar {
+              grid-template-columns: 1fr !important;
+              gap: 8px !important;
+            }
+            .mobile-main {
+              padding: 12px !important;
+            }
+            .mobile-cards {
+              grid-template-columns: 1fr !important;
+              gap: 12px !important;
+            }
+            .mobile-card {
+              width: 100% !important;
+              min-width: unset !important;
+              max-width: 100% !important;
+              margin: 0 !important;
+            }
+            .mobile-header {
+              padding: 12px 16px !important;
+            }
+            .mobile-pagination {
+              position: fixed !important;
+              bottom: 16px !important;
+              right: 16px !important;
+              left: auto !important;
+              justify-content: flex-end !important;
+            }
+            #pitchlense-navbar {
+              display: none !important;
+            }
+            #grid {
+              grid-template-columns: 1fr !important;
+              gap: 12px !important;
+            }
+          }
+          @media (max-width: 480px) {
+            .mobile-card {
+              padding: 16px !important;
+            }
+            .mobile-header {
+              padding: 8px 12px !important;
+            }
+            .mobile-main {
+              padding: 8px !important;
+            }
+            .mobile-card .space-y-3 > div {
+              margin-bottom: 12px !important;
+            }
+            .mobile-card .text-sm {
+              font-size: 14px !important;
+            }
+            .mobile-card .text-xl {
+              font-size: 18px !important;
+            }
+          }
+          
+          /* Additional mobile card improvements */
+          @media (max-width: 640px) {
+            .mobile-card .flex-col {
+              align-items: flex-start !important;
+            }
+            .mobile-card .space-y-3 > div {
+              width: 100% !important;
+            }
+            .mobile-card .truncate {
+              max-width: 100% !important;
+            }
+          }
+        </style>
         <aside id="pitchlense-navbar" class="bg-[#2C2F34] border border-white/10 rounded-[18px] flex flex-col items-center py-4 gap-3">
           <nav class="flex flex-col gap-2 text-white/80 w-full items-center">
             <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10" href="/create-report.html" title="Create">
@@ -176,7 +256,7 @@
             <h2 class="text-xl font-semibold">Reports</h2>
             <div class="text-sm text-white/60" id="count"></div>
           </div>
-          <div id="grid" class="grid gap-3 mobile-cards" style="grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));"></div>
+          <div id="grid" class="grid gap-3 mobile-cards" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));"></div>
           
           <!-- Loading State -->
           <div id="loadingState" class="hidden min-h-[60vh] grid place-items-center">
@@ -238,6 +318,100 @@
             </div>
           </footer> -->
         </main>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Menu -->
+    <div id="mobileMenu" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden md:hidden">
+      <div class="bg-[#2C2F34] border border-white/10 rounded-[18px] m-4 p-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-white">Navigation</h3>
+          <button id="closeMobileMenu" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <nav class="flex flex-col gap-2 text-white/80">
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/create-report.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span>Create Report</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/10" href="/view-report.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <line x1="9" y1="17" x2="9" y2="11"/>
+              <line x1="13" y1="17" x2="13" y2="7"/>
+              <line x1="17" y1="17" x2="17" y2="13"/>
+            </svg>
+            <span>Reports</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/market.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3v18h18"/>
+              <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+            </svg>
+            <span>Market Data</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/investment.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            <span>Investments</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/search.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span>Search Symbols</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/news.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
+              <line x1="7" y1="8" x2="17" y2="8"/>
+              <line x1="7" y1="12" x2="17" y2="12"/>
+              <line x1="7" y1="16" x2="13" y2="16"/>
+            </svg>
+            <span>Market News</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/extension.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            <span>Extension</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/email.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <span>Email Client</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="https://youtu.be/XUuLeXaEIdI" target="_blank">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+            <span>How to use PitchLense</span>
+          </a>
+          <div class="border-t border-white/10 my-2"></div>
+          <button id="mobileSignoutBtn" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 text-white/80">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            <span>Sign out</span>
+          </button>
+        </nav>
       </div>
     </div>
 
@@ -359,6 +533,40 @@
         signout.addEventListener('click', async ()=>{ try { await fetch('/api/auth/logout',{method:'POST'}); } catch(e) {} window.location.href='/auth.html'; });
       }
 
+      // Mobile menu functionality
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      const mobileMenu = document.getElementById('mobileMenu');
+      const closeMobileMenu = document.getElementById('closeMobileMenu');
+      const mobileSignoutBtn = document.getElementById('mobileSignoutBtn');
+
+      if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', () => {
+          mobileMenu.classList.remove('hidden');
+        });
+      }
+
+      if (closeMobileMenu && mobileMenu) {
+        closeMobileMenu.addEventListener('click', () => {
+          mobileMenu.classList.add('hidden');
+        });
+      }
+
+      if (mobileSignoutBtn) {
+        mobileSignoutBtn.addEventListener('click', async () => {
+          try { await fetch('/api/auth/logout',{method:'POST'}); } catch(e) {}
+          window.location.href='/auth.html';
+        });
+      }
+
+      // Close mobile menu when clicking outside
+      if (mobileMenu) {
+        mobileMenu.addEventListener('click', (e) => {
+          if (e.target === mobileMenu) {
+            mobileMenu.classList.add('hidden');
+          }
+        });
+      }
+
       // pagination + fetch
       const state = { page: 0, limit: 12, search: '' };
       const prevBtn = document.getElementById('prevBtn');
@@ -435,18 +643,17 @@
 
         data.reports.forEach(r => {
           const card = document.createElement('div');
-          card.className = 'w-[400px] min-h-[240px] rounded-xl border border-white/10 bg-[#2E3137] p-6 hover:border-white/20 transition-colors glare-card mobile-card';
+          card.className = 'w-full max-w-[400px] min-h-[240px] rounded-xl border border-white/10 bg-[#2E3137] p-6 hover:border-white/20 transition-colors glare-card mobile-card';
           const status = String(r.status || '').toLowerCase();
           const statusBg = status === 'pending' ? '#FBBF24' : (status === 'success' ? '#22C55E' : (status === 'failed' ? '#FB5D5D' : 'rgba(255,255,255,0.12)'));
           const statusStyle = `background:${statusBg};color:#1E1E21;border-color:transparent;vertical-align:middle;`;
           const pinned = !!r.is_pinned;
           const createdFmt = formatCreated(r.created_at);
           card.innerHTML = `
-            <div class=\"flex items-start justify-between gap-2\">
-              <div class=\"min-w-0 flex-1\">
-                <div class=\"text-xl font-semibold truncate\" title=\"${r.report_name}\">${r.report_name}</div>
-              </div>
-              <div class=\"flex items-center gap-2\">
+            <!-- Mobile: Icons on top right, Desktop: Icons next to title -->
+            <div class=\"relative mb-4\">
+              <!-- Mobile icons - positioned absolutely in top right -->
+              <div class=\"absolute top-0 right-0 flex items-center gap-2 md:hidden\">
                 <button data-action=\"pin\" class=\"w-8 h-8 grid place-items-center rounded-full border border-white/10 bg-[#1E1E21] text-white/80 hover:bg-white/10\" title=\"Favorite\">
                   <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\"><path d=\"M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z\"/></svg>
                 </button>
@@ -454,87 +661,123 @@
                   <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6\"/><path d=\"M10 11v6\"/><path d=\"M14 11v6\"/><path d=\"M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2\"/></svg>
                 </button>
               </div>
-            </div>
-            <div class=\"mt-3 text-sm\">
-              <span class=\"text-white/60\">Startup Name:</span>
-              <span class=\"text-white truncate inline-block align-bottom max-w-full\" title=\"${r.startup_name}\">${r.startup_name}</span>
-            </div>
-            <div class=\"mt-2 text-sm\">
-              <div class=\"flex items-center gap-2\">
-                <span class=\"text-white/60 flex-shrink-0\">Founder:</span>
-                <span class=\"text-white truncate min-w-0\" title=\"${r.founder_name}\">${r.founder_name}</span>
+              
+              <!-- Title with desktop icons -->
+              <div class=\"flex items-start justify-between gap-2 pr-20 md:pr-0\">
+                <div class=\"min-w-0 flex-1\">
+                  <div class=\"text-xl font-semibold truncate\" title=\"${r.report_name}\">${r.report_name}</div>
+                </div>
+                <!-- Desktop icons - hidden on mobile -->
+                <div class=\"hidden md:flex items-center gap-2\">
+                  <button data-action=\"pin\" class=\"w-8 h-8 grid place-items-center rounded-full border border-white/10 bg-[#1E1E21] text-white/80 hover:bg-white/10\" title=\"Favorite\">
+                    <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\"><path d=\"M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z\"/></svg>
+                  </button>
+                  <button data-action=\"delete\" class=\"w-8 h-8 grid place-items-center rounded-full border border-white/10 bg-[#1E1E21] text-white/80 hover:bg-white/10\" title=\"Delete\">
+                    <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6\"/><path d=\"M10 11v6\"/><path d=\"M14 11v6\"/><path d=\"M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2\"/></svg>
+                  </button>
+                </div>
               </div>
             </div>
-            <div class=\"mt-2 text-sm\">
-              <span class=\"text-white/60\">Files Uploaded:</span>
-              <span class=\"text-white\">${r.file_count ?? r.total_files ?? 0}</span>
-            </div>
-            <div class=\"mt-2 text-sm\">
-              <span class=\"text-white/60\">Created:</span>
-              <span class=\"text-white truncate inline-block align-bottom max-w-full\" title=\"${r.created_at}\">${createdFmt}</span>
-            </div>
-            <div class=\"mt-2 text-sm\">
-              <div class=\"flex items-center gap-2\">
-                <span class=\"text-white/60\">Status:</span>
-                <span class=\"status-chip text-xs px-2 py-1 rounded-full border whitespace-nowrap inline-block\" style=\"${statusStyle}\">${r.status}</span>
-                ${status === 'pending' ? '<span class=\"text-xs text-white/80 eta-timer\" data-created=\"' + r.created_at + '\">ETA: <span class=\"countdown\">18m 0s</span></span>' : ''}
+            
+            <div class=\"space-y-3\">
+              <div class=\"flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2\">
+                <span class=\"text-white/60 text-sm flex-shrink-0\">Startup Name:</span>
+                <span class=\"text-white text-sm truncate\" title=\"${r.startup_name}\">${r.startup_name}</span>
+              </div>
+              
+              <div class=\"flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2\">
+                <span class=\"text-white/60 text-sm flex-shrink-0\">Founder:</span>
+                <span class=\"text-white text-sm truncate\" title=\"${r.founder_name}\">${r.founder_name}</span>
+              </div>
+              
+              <div class=\"flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2\">
+                <span class=\"text-white/60 text-sm flex-shrink-0\">Files Uploaded:</span>
+                <span class=\"text-white text-sm\">${r.file_count ?? r.total_files ?? 0}</span>
+              </div>
+              
+              <div class=\"flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2\">
+                <span class=\"text-white/60 text-sm flex-shrink-0\">Created:</span>
+                <span class=\"text-white text-sm truncate\" title=\"${r.created_at}\">${createdFmt}</span>
+              </div>
+              
+              <div class=\"flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2\">
+                <span class=\"text-white/60 text-sm flex-shrink-0\">Status:</span>
+                <div class=\"flex items-center gap-2 flex-wrap\">
+                  <span class=\"status-chip text-xs px-2 py-1 rounded-full border whitespace-nowrap inline-block\" style=\"${statusStyle}\">${r.status}</span>
+                  ${status === 'pending' ? '<span class=\"text-xs text-white/80 eta-timer\" data-created=\"' + r.created_at + '\">ETA: <span class=\"countdown\">18m 0s</span></span>' : ''}
+                </div>
               </div>
             </div>
-            <div class=\"mt-7 flex justify-center gap-2\">
-              <a data-role=\"view\" href=\"/report.html?report_id=${encodeURIComponent(r.report_id)}\" class=\"inline-block px-5 py-2 rounded-full bg-[#FFF27A] text-black font-semibold border border-white/15 btn-shine\">View Report</a>
-              ${status === 'pending' ? '<button class=\"text-[10px] px-2.5 py-1.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors hangman-trigger whitespace-nowrap\" data-report-id=\"' + r.report_id + '\">🎮 Play game while you wait</button>' : ''}
+            
+            <div class=\"mt-6 flex flex-col sm:flex-row justify-center gap-2\">
+              <a data-role=\"view\" href=\"/report.html?report_id=${encodeURIComponent(r.report_id)}\" class=\"inline-block px-5 py-2 rounded-full bg-[#FFF27A] text-black font-semibold border border-white/15 btn-shine text-center\">View Report</a>
+              ${status === 'pending' ? '<button class=\"text-[10px] px-2.5 py-1.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors hangman-trigger whitespace-nowrap text-center\" data-report-id=\"' + r.report_id + '\">🎮 Play game while you wait</button>' : ''}
             </div>
           `;
 
           // Pin/delete/view state and handlers
-          const pinBtn = card.querySelector('[data-action="pin"]');
-          const delBtn = card.querySelector('[data-action="delete"]');
+          const pinBtns = card.querySelectorAll('[data-action="pin"]');
+          const delBtns = card.querySelectorAll('[data-action="delete"]');
           const viewBtn = card.querySelector('[data-role="view"]');
+          
+          // Apply pinned state to all pin buttons
           if (pinned) {
-            pinBtn.classList.remove('bg-[#1E1E21]','text-white/80');
-            pinBtn.classList.add('bg-[#FFF27A]','text-[#1E1E21]');
+            pinBtns.forEach(btn => {
+              btn.classList.remove('bg-[#1E1E21]','text-white/80');
+              btn.classList.add('bg-[#FFF27A]','text-[#1E1E21]');
+            });
           }
+          
           if (status !== 'success') {
             // disable pin and view for non-success status, allow delete
-            pinBtn.classList.add('opacity-40','pointer-events-none');
+            pinBtns.forEach(btn => {
+              btn.classList.add('opacity-40','pointer-events-none');
+            });
             if (viewBtn) { 
               viewBtn.classList.add('opacity-40','pointer-events-none'); 
               viewBtn.setAttribute('tabindex','-1');
               viewBtn.style.cursor = 'not-allowed';
             }
           } else {
-            pinBtn.addEventListener('click', async (e)=>{
-              e.preventDefault();
-              try { await fetch(`/api/reports/${r.report_id}/pin`, { method:'PATCH', credentials:'include' }); } catch(_) {}
-              loadReports();
+            // Add event listeners to all pin buttons
+            pinBtns.forEach(pinBtn => {
+              pinBtn.addEventListener('click', async (e)=>{
+                e.preventDefault();
+                try { await fetch(`/api/reports/${r.report_id}/pin`, { method:'PATCH', credentials:'include' }); } catch(_) {}
+                loadReports();
+              });
             });
           }
-          delBtn.addEventListener('click', async (e)=>{
-            e.preventDefault();
-            const result = await Swal.fire({
-              title: 'Delete Report',
-              text: 'Are you sure you want to delete this report? This action cannot be undone.',
-              icon: 'warning',
-              showCancelButton: true,
-              confirmButtonColor: '#ef4444',
-              cancelButtonColor: '#6b7280',
-              confirmButtonText: 'Yes, delete it!',
-              cancelButtonText: 'Cancel'
+          
+          // Add event listeners to all delete buttons
+          delBtns.forEach(delBtn => {
+            delBtn.addEventListener('click', async (e)=>{
+              e.preventDefault();
+              const result = await Swal.fire({
+                title: 'Delete Report',
+                text: 'Are you sure you want to delete this report? This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+              });
+              
+              if (result.isConfirmed) {
+                try { 
+                  await fetch(`/api/reports/${r.report_id}`, { method:'DELETE', credentials:'include' }); 
+                  await Swal.fire({
+                    title: 'Deleted!',
+                    text: 'Your report has been deleted.',
+                    icon: 'success',
+                    confirmButtonColor: '#f1d85b',
+                    confirmButtonText: 'OK'
+                  });
+                } catch(_) {}
+                loadReports();
+              }
             });
-            
-            if (result.isConfirmed) {
-              try { 
-                await fetch(`/api/reports/${r.report_id}`, { method:'DELETE', credentials:'include' }); 
-                await Swal.fire({
-                  title: 'Deleted!',
-                  text: 'Your report has been deleted.',
-                  icon: 'success',
-                  confirmButtonColor: '#f1d85b',
-                  confirmButtonText: 'OK'
-                });
-              } catch(_) {}
-              loadReports();
-            }
           });
 
           grid.appendChild(card);
