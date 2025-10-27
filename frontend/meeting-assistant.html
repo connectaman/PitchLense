@@ -28,7 +28,14 @@
                         <line x1="3" y1="18" x2="21" y2="18"/>
                     </svg>
                 </button>
-                <button id="tryAgainBtn" class="hidden bg-[#FFF27A] text-[#1E1E21] font-semibold px-4 py-2 rounded-lg hover:bg-[#f0e068] transition-colors mr-2">Try Again</button>
+                <button id="tryAgainBtn" class="hidden bg-[#FFF27A] text-[#1E1E21] font-semibold px-4 py-2 rounded-lg hover:bg-[#f0e068] transition-colors mr-2 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="md:hidden">
+                        <polyline points="23 4 23 10 17 10"/>
+                        <polyline points="1 20 1 14 7 14"/>
+                        <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                    </svg>
+                    <span class="hidden md:inline">Try Again</span>
+                </button>
                 <div id="userProfileIcon" class="w-9 h-9 rounded-full border border-white/15 bg-[#FFF27A] grid place-items-center text-[#1E1E21] relative group">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
                         <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.31 0-6 2.69-6 6h12c0-3.31-2.69-6-6-6Z"/>
@@ -68,6 +75,50 @@
                 }
                 .mobile-main {
                   padding: 8px !important;
+                }
+              }
+              
+              /* Mobile Results Layout */
+              @media (max-width: 768px) {
+                #results {
+                  grid-template-columns: 1fr !important;
+                  gap: 12px !important;
+                }
+                
+                #results .bg-\[#2C2F34\] {
+                  min-height: 50vh !important;
+                  max-height: 60vh !important;
+                }
+                
+                #results .space-y-4 {
+                  max-height: 55vh !important;
+                  overflow-y: auto !important;
+                }
+                
+                #results .prose {
+                  max-height: 55vh !important;
+                  overflow-y: auto !important;
+                }
+                
+                /* Ensure summary section is visible */
+                #results .space-y-4 > * {
+                  margin-bottom: 16px !important;
+                }
+                
+                #results h3 {
+                  position: sticky !important;
+                  top: 0 !important;
+                  background: #2C2F34 !important;
+                  padding: 8px 0 !important;
+                  margin-bottom: 12px !important;
+                  z-index: 10 !important;
+                }
+                
+                /* Mobile Try Again button styling */
+                #tryAgainBtn {
+                  padding: 8px !important;
+                  min-width: 40px !important;
+                  justify-content: center !important;
                 }
               }
             </style>
@@ -114,30 +165,78 @@
                     </div>
 
                     <!-- Results -->
-                    <div id="results" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="bg-[#2C2F34] border border-white/10 rounded-xl p-6 flex flex-col">
-                            <h3 class="text-lg font-bold mb-3">Transcript</h3>
-                            <div id="transcript" class="prose prose-invert max-w-none whitespace-pre-wrap text-white/80 text-sm overflow-y-auto flex-1" style="max-height: 80vh;"></div>
+                    <div id="results" class="hidden">
+                        <!-- Mobile Tab Navigation -->
+                        <div class="lg:hidden mb-4">
+                            <div class="flex bg-[#2C2F34] border border-white/10 rounded-lg p-1">
+                                <button id="transcriptTab" class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-[#FFF27A] text-[#1E1E21]">
+                                    Transcript
+                                </button>
+                                <button id="summaryTab" class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-white/60 hover:text-white">
+                                    Summary
+                                </button>
+                            </div>
                         </div>
-                        <div class="bg-[#2C2F34] border border-white/10 rounded-xl p-6 flex flex-col">
-                            <div class="space-y-4 overflow-y-auto flex-1" style="max-height: 80vh;">
-                                <h3 class="text-lg font-bold">Summary</h3>
-                                <div id="summary" class="text-white/80"></div>
-                                <div>
-                                    <h4 class="font-semibold mb-2 text-white">Key Takeaways</h4>
-                                    <ul id="takeaways" class="list-disc list-inside text-white/80 space-y-1"></ul>
+                        
+                        <!-- Desktop Grid Layout -->
+                        <div class="hidden lg:grid grid-cols-2 gap-6">
+                            <div class="bg-[#2C2F34] border border-white/10 rounded-xl p-6 flex flex-col">
+                                <h3 class="text-lg font-bold mb-3">Transcript</h3>
+                                <div id="transcript" class="prose prose-invert max-w-none whitespace-pre-wrap text-white/80 text-sm overflow-y-auto flex-1" style="max-height: 80vh;"></div>
+                            </div>
+                            <div class="bg-[#2C2F34] border border-white/10 rounded-xl p-6 flex flex-col">
+                                <div class="space-y-4 overflow-y-auto flex-1" style="max-height: 80vh;">
+                                    <h3 class="text-lg font-bold">Summary</h3>
+                                    <div id="summary" class="text-white/80"></div>
+                                    <div>
+                                        <h4 class="font-semibold mb-2 text-white">Key Takeaways</h4>
+                                        <ul id="takeaways" class="list-disc list-inside text-white/80 space-y-1"></ul>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold mb-2 text-white">Decisions</h4>
+                                        <ul id="decisions" class="list-disc list-inside text-white/80 space-y-1"></ul>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold mb-2 text-white">Action Items</h4>
+                                        <ul id="actions" class="list-disc list-inside text-white/80 space-y-1"></ul>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold mb-2 text-white">Follow-ups</h4>
+                                        <ul id="followups" class="list-disc list-inside text-white/80 space-y-1"></ul>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h4 class="font-semibold mb-2 text-white">Decisions</h4>
-                                    <ul id="decisions" class="list-disc list-inside text-white/80 space-y-1"></ul>
-                                </div>
-                                <div>
-                                    <h4 class="font-semibold mb-2 text-white">Action Items</h4>
-                                    <ul id="actions" class="list-disc list-inside text-white/80 space-y-1"></ul>
-                                </div>
-                                <div>
-                                    <h4 class="font-semibold mb-2 text-white">Follow-ups</h4>
-                                    <ul id="followups" class="list-disc list-inside text-white/80 space-y-1"></ul>
+                            </div>
+                        </div>
+                        
+                        <!-- Mobile Tab Content -->
+                        <div class="lg:hidden">
+                            <!-- Transcript Tab Content -->
+                            <div id="transcriptContent" class="bg-[#2C2F34] border border-white/10 rounded-xl p-6 flex flex-col">
+                                <h3 class="text-lg font-bold mb-3">Transcript</h3>
+                                <div id="transcriptMobile" class="prose prose-invert max-w-none whitespace-pre-wrap text-white/80 text-sm overflow-y-auto flex-1" style="max-height: 60vh;"></div>
+                            </div>
+                            
+                            <!-- Summary Tab Content -->
+                            <div id="summaryContent" class="bg-[#2C2F34] border border-white/10 rounded-xl p-6 flex flex-col hidden">
+                                <div class="space-y-4 overflow-y-auto flex-1" style="max-height: 60vh;">
+                                    <h3 class="text-lg font-bold">Summary</h3>
+                                    <div id="summaryMobile" class="text-white/80"></div>
+                                    <div>
+                                        <h4 class="font-semibold mb-2 text-white">Key Takeaways</h4>
+                                        <ul id="takeawaysMobile" class="list-disc list-inside text-white/80 space-y-1"></ul>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold mb-2 text-white">Decisions</h4>
+                                        <ul id="decisionsMobile" class="list-disc list-inside text-white/80 space-y-1"></ul>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold mb-2 text-white">Action Items</h4>
+                                        <ul id="actionsMobile" class="list-disc list-inside text-white/80 space-y-1"></ul>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold mb-2 text-white">Follow-ups</h4>
+                                        <ul id="followupsMobile" class="list-disc list-inside text-white/80 space-y-1"></ul>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -205,12 +304,22 @@
                     throw new Error(err.error || 'Failed to analyze');
                 }
                 const data = await res.json();
+                
+                // Update desktop content
                 document.getElementById('transcript').textContent = data.transcript || '—';
                 document.getElementById('summary').textContent = data.summary || '—';
                 renderList('takeaways', data.keyTakeaways);
                 renderList('decisions', data.decisions);
                 renderList('actions', data.actionItems);
                 renderList('followups', data.followUps);
+                
+                // Update mobile content
+                document.getElementById('transcriptMobile').textContent = data.transcript || '—';
+                document.getElementById('summaryMobile').textContent = data.summary || '—';
+                renderList('takeawaysMobile', data.keyTakeaways);
+                renderList('decisionsMobile', data.decisions);
+                renderList('actionsMobile', data.actionItems);
+                renderList('followupsMobile', data.followUps);
                 results.classList.remove('hidden');
                 bottomDock.classList.remove('hidden');
                 tryAgainBtn.classList.remove('hidden');
@@ -230,10 +339,16 @@
             // Reset UI to initial state
             document.getElementById('transcript').textContent = '';
             document.getElementById('summary').textContent = '';
+            document.getElementById('transcriptMobile').textContent = '';
+            document.getElementById('summaryMobile').textContent = '';
             renderList('takeaways', []);
             renderList('decisions', []);
             renderList('actions', []);
             renderList('followups', []);
+            renderList('takeawaysMobile', []);
+            renderList('decisionsMobile', []);
+            renderList('actionsMobile', []);
+            renderList('followupsMobile', []);
             results.classList.add('hidden');
             bottomDock.classList.add('hidden');
             tryAgainBtn.classList.add('hidden');
@@ -483,6 +598,30 @@ ${followups.map(item => `• ${item}`).join('\n')}`;
             // Focus on email input
             emailInput.focus();
         });
+        
+        // Mobile tab functionality
+        const transcriptTab = document.getElementById('transcriptTab');
+        const summaryTab = document.getElementById('summaryTab');
+        const transcriptContent = document.getElementById('transcriptContent');
+        const summaryContent = document.getElementById('summaryContent');
+        
+        if (transcriptTab && summaryTab && transcriptContent && summaryContent) {
+            transcriptTab.addEventListener('click', () => {
+                // Switch to transcript tab
+                transcriptTab.className = 'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-[#FFF27A] text-[#1E1E21]';
+                summaryTab.className = 'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-white/60 hover:text-white';
+                transcriptContent.classList.remove('hidden');
+                summaryContent.classList.add('hidden');
+            });
+            
+            summaryTab.addEventListener('click', () => {
+                // Switch to summary tab
+                summaryTab.className = 'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-[#FFF27A] text-[#1E1E21]';
+                transcriptTab.className = 'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-white/60 hover:text-white';
+                summaryContent.classList.remove('hidden');
+                transcriptContent.classList.add('hidden');
+            });
+        }
     </script>
     
     <!-- Mobile Navigation Menu -->

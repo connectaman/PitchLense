@@ -105,6 +105,26 @@
             margin: 8px 0;
             padding-left: 24px;
         }
+        
+        /* Mobile popup email body styling */
+        #mobileEmailContent .email-body-content {
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        
+        #mobileEmailContent .email-body-content p {
+            margin: 8px 0;
+        }
+        
+        #mobileEmailContent .email-body-content pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 6px;
+            margin: 8px 0;
+        }
     </style>
 </head>
 <body class="bg-background text-text font-sans antialiased overflow-x-hidden bg-solid">
@@ -155,6 +175,36 @@
             #pitchlense-navbar {
               display: none !important;
             }
+            
+            /* Email Toolbar Mobile - Make buttons horizontal */
+            .email-toolbar-mobile {
+              flex-direction: row !important;
+              flex-wrap: wrap !important;
+              gap: 8px !important;
+              align-items: center !important;
+            }
+            
+            .email-toolbar-mobile .compose-btn {
+              flex: 1 !important;
+              min-width: 120px !important;
+            }
+            
+            .email-toolbar-mobile .action-buttons {
+              display: flex !important;
+              gap: 8px !important;
+            }
+            
+            .email-toolbar-mobile .filter-buttons {
+              display: flex !important;
+              gap: 4px !important;
+              flex: 1 !important;
+            }
+            
+            .email-toolbar-mobile .filter-buttons button {
+              flex: 1 !important;
+              padding: 8px 12px !important;
+              font-size: 12px !important;
+            }
           }
           @media (max-width: 480px) {
             .mobile-card {
@@ -166,6 +216,30 @@
             .mobile-main {
               padding: 8px !important;
             }
+            
+            /* Extra small mobile - stack compose button */
+            .email-toolbar-mobile {
+              flex-direction: column !important;
+              gap: 8px !important;
+            }
+            
+            .email-toolbar-mobile .compose-btn {
+              width: 100% !important;
+            }
+            
+            .email-toolbar-mobile .bottom-row {
+              display: flex !important;
+              gap: 8px !important;
+              width: 100% !important;
+            }
+            
+            .email-toolbar-mobile .action-buttons {
+              flex: 1 !important;
+            }
+            
+            .email-toolbar-mobile .filter-buttons {
+              flex: 2 !important;
+            }
           }
         </style>
         <!-- Sidebar Navigation -->
@@ -176,31 +250,34 @@
         <!-- Main Content -->
         <main class="flex-1 flex flex-col overflow-hidden bg-[#2E3137] border border-white/10 rounded-[14px] mobile-main">
             <!-- Email Toolbar -->
-            <div class="bg-[#2C2F34] border-b border-white/10 p-4 flex items-center gap-3">
-                <button id="composeBtn" class="bg-[#FFF27A] text-[#1E1E21] px-4 py-2 rounded-lg font-semibold hover:bg-[#f0e068] transition-colors flex items-center gap-2">
+            <div class="bg-[#2C2F34] border-b border-white/10 p-4 flex items-center gap-3 email-toolbar-mobile">
+                <button id="composeBtn" class="bg-[#FFF27A] text-[#1E1E21] px-4 py-2 rounded-lg font-semibold hover:bg-[#f0e068] transition-colors flex items-center gap-2 compose-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="12" y1="5" x2="12" y2="19"/>
                         <line x1="5" y1="12" x2="19" y2="12"/>
                     </svg>
-                    Compose
-                </button>
-                <button id="refreshBtn" class="text-white/80 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="23 4 23 10 17 10"/>
-                        <polyline points="1 20 1 14 7 14"/>
-                        <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                    </svg>
-                </button>
-                <button id="infoBtn" class="text-white/80 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition-colors" title="Email Server Info">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <line x1="12" y1="16" x2="12" y2="12"/>
-                        <line x1="12" y1="8" x2="12.01" y2="8"/>
-                    </svg>
+                    <span class="hidden sm:inline">Compose</span>
                 </button>
                 
+                <div class="action-buttons">
+                    <button id="refreshBtn" class="text-white/80 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"/>
+                            <polyline points="1 20 1 14 7 14"/>
+                            <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                        </svg>
+                    </button>
+                    <button id="infoBtn" class="text-white/80 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition-colors" title="Email Server Info">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="16" x2="12" y2="12"/>
+                            <line x1="12" y1="8" x2="12.01" y2="8"/>
+                        </svg>
+                    </button>
+                </div>
+                
                 <!-- Email Filter Tabs -->
-                <div class="flex items-center gap-1 ml-4 bg-[#1E1E21] rounded-lg p-1">
+                <div class="filter-buttons bg-[#1E1E21] rounded-lg p-1">
                     <button id="inboxBtn" class="email-filter-btn active px-4 py-1.5 text-sm rounded-md transition-colors" data-filter="inbox">
                         Inbox
                     </button>
@@ -208,8 +285,6 @@
                         Sent
                     </button>
                 </div>
-                
-                <div class="flex-1"></div>
             </div>
 
             <!-- Email Layout -->
@@ -402,12 +477,54 @@
         </div>
     </div>
 
+    <!-- Mobile Email Content Popup -->
+    <div id="mobileEmailPopup" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden md:hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-[#2E3137] border border-white/10 rounded-lg w-full max-h-[95vh] flex flex-col">
+                <div class="border-b border-white/10 p-4 flex items-center justify-between">
+                    <h3 class="text-lg font-semibold">Email Content</h3>
+                    <button id="closeMobileEmailPopup" class="text-white/60 hover:text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div id="mobileEmailContent" class="flex-1 overflow-y-auto">
+                    <!-- Email content will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Email data storage
         let emails = [];
         let sentEmails = []; // Store sent emails separately
         let selectedEmailId = null;
         let currentFilter = 'inbox'; // 'inbox' or 'sent'
+        
+        // Mobile detection
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+        
+        // Email body rendering function
+        function renderEmailBody(container, email, asHtml) {
+            if (asHtml) {
+                // Render as HTML
+                if (email.body && (email.body.includes('<html') || email.body.includes('<div') || email.body.includes('<p>') || email.body.includes('<br'))) {
+                    container.innerHTML = email.body;
+                } else if (email.body) {
+                    container.innerHTML = email.body.replace(/\n/g, '<br>');
+                }
+            } else {
+                // Render as plain text
+                const textContent = email.textBody || email.body.replace(/<[^>]*>/g, '');
+                container.innerHTML = `<pre class="whitespace-pre-wrap font-sans text-white/90">${textContent}</pre>`;
+            }
+        }
         
         // Utility function to format file size
         function formatFileSize(bytes) {
@@ -541,6 +658,11 @@
             
             // Save draft button
             document.getElementById('saveDraftBtn').addEventListener('click', saveDraft);
+            
+            // Mobile email popup
+            document.getElementById('closeMobileEmailPopup').addEventListener('click', () => {
+                document.getElementById('mobileEmailPopup').classList.add('hidden');
+            });
         }
         
         function saveDraft() {
@@ -756,9 +878,168 @@
                 });
                 document.querySelector(`[data-email-id="${emailId}"]`).classList.add('active');
 
-                // Show email content
-                showEmailContent(email);
+                // Show email content - mobile popup or desktop view
+                if (isMobile()) {
+                    showMobileEmailContent(email);
+                } else {
+                    showEmailContent(email);
+                }
             }
+        }
+
+        function showMobileEmailContent(email) {
+            const mobileEmailContent = document.getElementById('mobileEmailContent');
+            
+            mobileEmailContent.innerHTML = `
+                <div class="flex flex-col h-full">
+                    <!-- Email Header -->
+                    <div class="border-b border-white/10 p-4">
+                        <div class="mb-4">
+                            <h2 class="text-lg font-semibold mb-2 break-words">${email.subject}</h2>
+                            <div class="text-sm text-white/80 space-y-1">
+                                <div><span class="font-medium">From:</span> ${email.from}</div>
+                                <div><span class="font-medium">To:</span> ${email.to}</div>
+                                <div><span class="font-medium">Date:</span> ${new Date(email.date).toLocaleString()}</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Mobile Email Actions -->
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            <button id="mobileToggleViewBtn" class="text-white/60 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition-colors text-xs flex items-center justify-center gap-1" title="Toggle HTML/Text view">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="16 18 22 12 16 6"/>
+                                    <polyline points="8 6 2 12 8 18"/>
+                                </svg>
+                                HTML
+                            </button>
+                            <button onclick="deleteEmail(${email.id}, '${currentFilter}')" class="text-red-400 hover:text-red-300 px-3 py-2 rounded-lg hover:bg-red-500/10 transition-colors text-xs flex items-center justify-center gap-1" title="Delete email">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="3 6 5 6 21 6"/>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                </svg>
+                                Delete
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 gap-2">
+                            <button onclick="analyzePitchLense(${email.id})" class="bg-[#FFF27A] text-[#1E1E21] px-4 py-3 rounded-lg font-semibold hover:bg-[#f0e068] transition-colors flex items-center justify-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                                    <line x1="12" y1="22.08" x2="12" y2="12"/>
+                                </svg>
+                                PitchLense Analyze
+                            </button>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="replyToEmail(${email.id})" class="bg-[#FFF27A] text-[#1E1E21] px-3 py-2 rounded-lg font-semibold hover:bg-[#f0e068] transition-colors flex items-center justify-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="9 14 4 9 9 4"/>
+                                        <path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
+                                    </svg>
+                                    Reply
+                                </button>
+                                <button onclick="forwardEmail(${email.id})" class="bg-[#FFF27A] text-[#1E1E21] px-3 py-2 rounded-lg font-semibold hover:bg-[#f0e068] transition-colors flex items-center justify-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="15 10 20 15 15 20"/>
+                                        <path d="M4 4v7a4 4 0 0 0 4 4h12"/>
+                                    </svg>
+                                    Forward
+                                </button>
+                            </div>
+                        </div>
+                        
+                        ${email.attachments && email.attachments.length > 0 ? `
+                            <div class="mt-4">
+                                <div class="text-sm font-medium mb-2 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.64 16.2a2 2 0 0 1-2.83-2.83l8.49-8.49"/>
+                                    </svg>
+                                    Attachments (${email.attachments.length})
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    ${email.attachments.map(att => {
+                                        const attObj = typeof att === 'string' ? { filename: att } : att;
+                                        const sizeStr = attObj.size ? ` (${formatFileSize(attObj.size)})` : '';
+                                        const downloadUrl = attObj.downloadUrl || '#';
+                                        return `
+                                        <a href="${downloadUrl}" download="${attObj.filename}" class="attachment-item cursor-pointer hover:bg-white/20 transition-colors" title="Click to download">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                                <polyline points="7 10 12 15 17 10"/>
+                                                <line x1="12" y1="15" x2="12" y2="3"/>
+                                            </svg>
+                                            <span class="text-sm">${attObj.filename}${sizeStr}</span>
+                                        </a>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <!-- Email Body -->
+                    <div class="flex-1 p-4 overflow-y-auto">
+                        <div class="prose prose-invert max-w-none email-body-content">
+                            <!-- HTML content will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Show the mobile popup
+            document.getElementById('mobileEmailPopup').classList.remove('hidden');
+            
+            // Inject HTML content into the email body
+            setTimeout(() => {
+                const bodyContent = mobileEmailContent.querySelector('.email-body-content');
+                let isHtmlView = true;
+                
+                // Debug: Log email data
+                console.log('Mobile popup email data:', {
+                    body: email.body,
+                    textBody: email.textBody,
+                    preview: email.preview,
+                    hasBody: !!email.body,
+                    hasTextBody: !!email.textBody,
+                    hasPreview: !!email.preview
+                });
+                
+                if (bodyContent) {
+                    // Try to render email content
+                    if (email.body) {
+                        // Render HTML content by default
+                        renderEmailBody(bodyContent, email, isHtmlView);
+                    } else if (email.textBody) {
+                        // Use text body if available
+                        bodyContent.innerHTML = `<pre class="whitespace-pre-wrap font-sans text-white/90">${email.textBody}</pre>`;
+                    } else if (email.preview) {
+                        // Use preview as fallback
+                        bodyContent.innerHTML = email.preview.replace(/\n/g, '<br>');
+                    } else {
+                        // Show placeholder if no content
+                        bodyContent.innerHTML = '<p class="text-white/60 italic">No email content available</p>';
+                    }
+                    
+                    // Add toggle view functionality
+                    const toggleBtn = document.getElementById('mobileToggleViewBtn');
+                    if (toggleBtn && (email.body || email.textBody)) {
+                        toggleBtn.onclick = () => {
+                            isHtmlView = !isHtmlView;
+                            renderEmailBody(bodyContent, email, isHtmlView);
+                            toggleBtn.innerHTML = `
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="16 18 22 12 16 6"/>
+                                    <polyline points="8 6 2 12 8 18"/>
+                                </svg>
+                                ${isHtmlView ? 'HTML' : 'Text'}
+                            `;
+                        };
+                    } else if (toggleBtn) {
+                        // Hide toggle button if no content to toggle
+                        toggleBtn.style.display = 'none';
+                    }
+                }
+            }, 0);
         }
 
         function showEmailContent(email) {
@@ -883,21 +1164,6 @@
                     bodyContent.innerHTML = email.preview.replace(/\n/g, '<br>');
                 }
             }, 0);
-            
-            function renderEmailBody(container, email, asHtml) {
-                if (asHtml) {
-                    // Render as HTML
-                    if (email.body && (email.body.includes('<html') || email.body.includes('<div') || email.body.includes('<p>') || email.body.includes('<br'))) {
-                        container.innerHTML = email.body;
-                    } else if (email.body) {
-                        container.innerHTML = email.body.replace(/\n/g, '<br>');
-                    }
-                } else {
-                    // Render as plain text
-                    const textContent = email.textBody || email.body.replace(/<[^>]*>/g, '');
-                    container.innerHTML = `<pre class="whitespace-pre-wrap font-sans text-white/90">${textContent}</pre>`;
-                }
-            }
 
             // Re-render email list to update read status based on current filter
             if (currentFilter === 'inbox') {
@@ -1011,6 +1277,11 @@
             const email = emails.find(e => e.id === emailId) || sentEmails.find(e => e.id === emailId);
             if (!email) return;
 
+            // Close mobile popup if open
+            if (isMobile()) {
+                document.getElementById('mobileEmailPopup').classList.add('hidden');
+            }
+
             // Open compose modal with reply data
             document.getElementById('composeModal').classList.remove('hidden');
             document.getElementById('composeTo').value = email.from || email.to;
@@ -1023,6 +1294,11 @@
         function forwardEmail(emailId) {
             const email = emails.find(e => e.id === emailId) || sentEmails.find(e => e.id === emailId);
             if (!email) return;
+
+            // Close mobile popup if open
+            if (isMobile()) {
+                document.getElementById('mobileEmailPopup').classList.add('hidden');
+            }
 
             // Open compose modal with forward data
             document.getElementById('composeModal').classList.remove('hidden');
@@ -1178,6 +1454,10 @@
                 });
                 
                 if (viewReport.isConfirmed) {
+                    // Close mobile popup if open
+                    if (isMobile()) {
+                        document.getElementById('mobileEmailPopup').classList.add('hidden');
+                    }
                     window.location.href = `/view-report.html`;
                 }
                 
@@ -1244,6 +1524,11 @@
                                 </div>
                             `;
                         }
+                    }
+                    
+                    // Close mobile popup if open
+                    if (isMobile()) {
+                        document.getElementById('mobileEmailPopup').classList.add('hidden');
                     }
                     
                     Swal.fire({
