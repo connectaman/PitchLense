@@ -413,7 +413,10 @@ const TeamSection = () => {
                     src={member.image} 
                     alt={member.name}
                     className="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto object-cover object-center border-4 border-accent/20 group-hover:border-accent/40 transition-all duration-300"
-                    style={{ objectPosition: 'center top' }}
+                    style={{ 
+                      objectPosition: 'center top',
+                      backgroundColor: member.name === 'Srinivas Alva' ? 'white' : 'transparent'
+                    }}
                   />
                 </div>
                 <div className="box-desc">
