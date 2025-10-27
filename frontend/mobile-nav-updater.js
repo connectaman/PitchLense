@@ -1,53 +1,19 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PitchLense — Networking</title>
-    <link rel="icon" type="image/svg+xml" href="/static/logo.svg" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = { theme: { extend: { colors: { background:'#1E1E21', surface:'#2E3137', text:'#ffffff', secondary:'#cfd4dd', accent:'#f1d85b' }}}}
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
-  <body class="bg-background text-text font-sans antialiased overflow-x-hidden bg-solid">
-    <div class="h-screen flex flex-col p-3 gap-3">
-      <!-- Header -->
-      <header class="h-16 bg-[#2E3137] border border-white/10 rounded-[22px] flex items-center justify-between px-6 mobile-header">
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full bg-transparent grid place-items-center">
-            <img src="/static/logo.svg" class="w-6 h-6"/>
-          </div>
-          <div class="text-base font-semibold">PitchLense</div>
-        </div>
-        <div class="flex items-center gap-3">
-          <!-- Mobile menu button -->
+// Mobile Navigation Updater Script
+// This script helps apply mobile navigation to all pages
+
+const mobileNavPattern = {
+  // Mobile menu button HTML
+  mobileMenuButton: `<!-- Mobile menu button -->
           <button id="mobileMenuBtn" class="md:hidden w-9 h-9 grid place-items-center rounded-full bg-[#FFF27A] border border-white/10 text-[#1E1E21]">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="3" y1="6" x2="21" y2="6"/>
               <line x1="3" y1="12" x2="21" y2="12"/>
               <line x1="3" y1="18" x2="21" y2="18"/>
             </svg>
-          </button>
-          <div id="userProfileIcon" class="w-9 h-9 rounded-full border border-white/10 bg-[#FFF27A] grid place-items-center text-[#1E1E21] relative group">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-              <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.31 0-6 2.69-6 6h12c0-3.31-2.69-6-6-6Z"/>
-            </svg>
-            <div id="userEmailTooltip" class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
-              <span id="userEmailText">Loading...</span>
-              <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-[#1E1E21]"></div>
-            </div>
-          </div>
-        </div>
-      </header>
+          </button>`,
 
-      <div class="grid flex-1 min-h-0 mobile-navbar" style="grid-template-columns: 84px 1fr; gap:12px;">
-        <!-- Mobile responsive styles -->
+  // Mobile responsive CSS
+  mobileCSS: `        <!-- Mobile responsive styles -->
         <style>
           @media (max-width: 768px) {
             .mobile-navbar {
@@ -75,74 +41,10 @@
               padding: 8px !important;
             }
           }
-        </style>
-        <!-- Sidebar Navigation -->
-        <aside id="pitchlense-navbar" class="bg-[#2C2F34] border border-white/10 rounded-[18px] flex flex-col items-center py-4 gap-3">
-          <!-- Navbar content will be rendered by navbar.js -->
-        </aside>
+        </style>`,
 
-        <!-- Main Content -->
-        <main class="bg-[#2C2F34] border border-white/10 rounded-[18px] p-8 overflow-auto">
-          <div class="max-w-7xl mx-auto">
-            <!-- Page Header -->
-            <div class="flex items-center justify-between mb-8">
-              <div>
-                <h1 class="text-3xl font-bold text-white mb-2">Networking</h1>
-                <p class="text-white/60">Connect and collaborate with investors and founders</p>
-              </div>
-            </div>
-
-            <!-- Placeholder Content -->
-            <div class="flex items-center justify-center h-96">
-              <div class="text-center">
-                <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-accent/10 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                  </svg>
-                </div>
-                <h2 class="text-2xl font-semibold text-white mb-3">Coming Soon</h2>
-                <p class="text-white/60 max-w-md mx-auto">
-                  Networking features are under development. Stay tuned for updates!
-                </p>
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-    </div>
-
-    <!-- Load navbar script -->
-    <script src="/static/navbar.js"></script>
-
-    <!-- User profile initialization -->
-    <script>
-      // Fetch and display user email
-      async function initUserProfile() {
-        try {
-          const response = await fetch('/api/auth/me', { credentials: 'include' });
-          if (response.ok) {
-            const data = await response.json();
-            if (data.user && data.user.email) {
-              document.getElementById('userEmailText').textContent = data.user.email;
-            }
-          }
-        } catch (error) {
-          console.error('Failed to fetch user profile:', error);
-        }
-      }
-
-      // Initialize on page load
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initUserProfile);
-      } else {
-        initUserProfile();
-      }
-    </script>
-    
-    <!-- Mobile Navigation Menu -->
+  // Mobile navigation menu
+  mobileMenu: `    <!-- Mobile Navigation Menu -->
     <div id="mobileMenu" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden md:hidden">
       <div class="bg-[#2C2F34] border border-white/10 rounded-[18px] m-4 p-4">
         <div class="flex items-center justify-between mb-4">
@@ -234,9 +136,10 @@
           </button>
         </nav>
       </div>
-    </div>
+    </div>`,
 
-    <!-- Mobile Menu JavaScript -->
+  // Mobile menu JavaScript
+  mobileJS: `    <!-- Mobile Menu JavaScript -->
     <script>
       // Mobile menu functionality
       const mobileMenuBtn = document.getElementById('mobileMenuBtn');
@@ -271,9 +174,10 @@
           }
         });
       }
-    </script>
-    
-    <script src="/static/navbar.js"></script>
-  </body>
-</html>
+    </script>`
+};
 
+// Export for use
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = mobileNavPattern;
+}

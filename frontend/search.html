@@ -171,6 +171,14 @@
           <span class="text-base font-semibold">Search Symbols</span>
         </div>
         <div class="flex items-center gap-3">
+          <!-- Mobile menu button -->
+          <button id="mobileMenuBtn" class="md:hidden w-9 h-9 grid place-items-center rounded-full bg-[#FFF27A] border border-white/10 text-[#1E1E21]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
           <div id="userProfileIcon" class="w-9 h-9 rounded-full border border-white/15 bg-[#FFF27A] grid place-items-center text-[#1E1E21] relative group">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
               <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.31 0-6 2.69-6 6h12c0-3.31-2.69-6-6-6Z"/>
@@ -186,6 +194,302 @@
       </header>
 
       <div class="grid flex-1 min-h-0 mobile-navbar" style="grid-template-columns: 84px 1fr; gap:12px;">
+        <!-- Mobile responsive styles -->
+        <style>
+          @media (max-width: 768px) {
+            .mobile-navbar {
+              grid-template-columns: 1fr !important;
+              gap: 8px !important;
+            }
+            .mobile-main {
+              padding: 12px !important;
+            }
+            .mobile-header {
+              padding: 12px 16px !important;
+            }
+            #pitchlense-navbar {
+              display: none !important;
+            }
+            
+            /* Search Header Mobile */
+            .search-header {
+              padding: 16px !important;
+            }
+            .search-title {
+              font-size: 1.5rem !important;
+              margin-bottom: 12px !important;
+            }
+            .search-input {
+              font-size: 14px !important;
+              padding: 12px 12px 12px 40px !important;
+            }
+            .search-btn {
+              padding: 8px 12px !important;
+              font-size: 14px !important;
+            }
+            .quick-search-text {
+              font-size: 12px !important;
+            }
+            .quick-search-buttons {
+              display: grid !important;
+              grid-template-columns: repeat(5, 1fr) !important;
+              gap: 4px !important;
+            }
+            
+            /* Desktop styles */
+            @media (min-width: 769px) {
+              .quick-search-buttons {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                gap: 8px !important;
+              }
+              
+              .company-title-section {
+                display: flex !important;
+              }
+              
+              .mobile-company-header {
+                display: none !important;
+              }
+            }
+            
+            /* Search Results Mobile */
+            .search-results-container {
+              padding: 12px !important;
+            }
+            .search-result {
+              padding: 12px !important;
+              margin-bottom: 8px !important;
+            }
+            .search-result-content {
+              flex-direction: column !important;
+              align-items: flex-start !important;
+              gap: 8px !important;
+            }
+            .search-result-header {
+              flex-direction: row !important;
+              align-items: center !important;
+              gap: 8px !important;
+              flex-wrap: wrap !important;
+            }
+            .search-result-symbol {
+              font-size: 14px !important;
+              padding: 4px 8px !important;
+            }
+            .search-result-name {
+              font-size: 16px !important;
+              line-height: 1.3 !important;
+              flex: 1 !important;
+              min-width: 0 !important;
+            }
+            .search-result-exchange {
+              font-size: 10px !important;
+              padding: 2px 6px !important;
+            }
+            .search-result-details {
+              font-size: 12px !important;
+            }
+            
+            /* Company View Mobile */
+            .company-header {
+              padding: 16px !important;
+            }
+            .company-title-section {
+              display: none !important;
+            }
+            
+            .mobile-company-header {
+              display: block !important;
+            }
+            .company-symbol {
+              font-size: 18px !important;
+              padding: 6px 12px !important;
+            }
+            .company-name {
+              font-size: 1.5rem !important;
+              line-height: 1.2 !important;
+              flex: 1 !important;
+              min-width: 0 !important;
+            }
+            .company-meta {
+              flex-direction: column !important;
+              align-items: flex-start !important;
+              gap: 4px !important;
+            }
+            .company-meta span {
+              font-size: 12px !important;
+            }
+            
+            /* Tabs Mobile */
+            .tabs-container {
+              padding: 0 16px !important;
+              overflow-x: auto !important;
+              -webkit-overflow-scrolling: touch !important;
+            }
+            .tabs {
+              min-width: max-content !important;
+              gap: 8px !important;
+            }
+            .tab-button {
+              padding: 8px 12px !important;
+              font-size: 12px !important;
+              white-space: nowrap !important;
+            }
+            
+            /* Content Sections Mobile */
+            .content-section {
+              padding: 16px !important;
+            }
+            .section-title {
+              font-size: 1.1rem !important;
+              margin-bottom: 12px !important;
+            }
+            
+            /* KPI Cards Mobile */
+            .kpi-grid {
+              grid-template-columns: repeat(2, 1fr) !important;
+              gap: 8px !important;
+            }
+            .kpi-card {
+              padding: 12px !important;
+            }
+            .kpi-label {
+              font-size: 11px !important;
+            }
+            .kpi-value {
+              font-size: 16px !important;
+            }
+            
+            /* Overview Grid Mobile */
+            .overview-grid {
+              grid-template-columns: 1fr !important;
+              gap: 12px !important;
+            }
+            .overview-item {
+              padding: 8px 0 !important;
+            }
+            .overview-label {
+              font-size: 11px !important;
+            }
+            .overview-value {
+              font-size: 14px !important;
+            }
+            
+            /* Tables Mobile */
+            .table-container {
+              overflow-x: auto !important;
+              -webkit-overflow-scrolling: touch !important;
+            }
+            .table-container table {
+              min-width: 600px !important;
+            }
+            .table-container th,
+            .table-container td {
+              padding: 8px 6px !important;
+              font-size: 11px !important;
+            }
+            .table-container th {
+              font-size: 10px !important;
+            }
+            
+            /* Charts Mobile */
+            .chart-container {
+              height: 200px !important;
+              margin: 12px 0 !important;
+            }
+            
+            /* ETF Grid Mobile */
+            .etf-grid {
+              grid-template-columns: repeat(2, 1fr) !important;
+              gap: 8px !important;
+            }
+            .etf-item {
+              padding: 8px !important;
+            }
+            .etf-label {
+              font-size: 10px !important;
+            }
+            .etf-value {
+              font-size: 12px !important;
+            }
+            
+            /* News Items Mobile */
+            .news-item {
+              padding: 12px !important;
+              margin-bottom: 8px !important;
+            }
+            .news-title {
+              font-size: 14px !important;
+              line-height: 1.3 !important;
+            }
+            .news-meta {
+              font-size: 10px !important;
+              margin-top: 6px !important;
+            }
+            
+            /* Holdings Table Mobile */
+            .holdings-table {
+              font-size: 10px !important;
+            }
+            .holdings-table th,
+            .holdings-table td {
+              padding: 6px 4px !important;
+            }
+            
+            /* Back Button Mobile */
+            .back-button {
+              padding: 6px 8px !important;
+              font-size: 12px !important;
+            }
+          }
+          
+          @media (max-width: 480px) {
+            .mobile-card {
+              padding: 16px !important;
+            }
+            .mobile-header {
+              padding: 8px 12px !important;
+            }
+            .mobile-main {
+              padding: 8px !important;
+            }
+            
+            /* Extra small mobile adjustments */
+            .search-title {
+              font-size: 1.25rem !important;
+            }
+            .search-input {
+              font-size: 12px !important;
+              padding: 10px 10px 10px 36px !important;
+            }
+            .search-btn {
+              padding: 6px 10px !important;
+              font-size: 12px !important;
+            }
+            .company-name {
+              font-size: 1.25rem !important;
+            }
+            .kpi-grid {
+              grid-template-columns: 1fr !important;
+              gap: 6px !important;
+            }
+            .etf-grid {
+              grid-template-columns: 1fr !important;
+              gap: 6px !important;
+            }
+            .tab-button {
+              padding: 6px 8px !important;
+              font-size: 11px !important;
+            }
+            
+            /* Extra small mobile - make buttons even more compact */
+            .quick-search-btn {
+              flex: 0 0 calc(25% - 2px) !important;
+              font-size: 9px !important;
+              padding: 1px 3px !important;
+            }
+          }
+        </style>
         <aside id="pitchlense-navbar" class="bg-[#2C2F34] border border-white/10 rounded-[18px] flex flex-col items-center py-4 gap-3">
           <nav class="flex flex-col gap-2 text-white/80 w-full items-center">
             <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10" href="/create-report.html" title="Create">
@@ -291,9 +595,9 @@
             <!-- Search View -->
             <div id="searchView">
                 <!-- Search Header -->
-                <div class="bg-[#2C2F34] border-b border-white/10 p-6">
+                <div class="bg-[#2C2F34] border-b border-white/10 p-6 search-header">
                     <div class="max-w-2xl mx-auto">
-                        <h1 class="text-2xl font-bold mb-4">Search Stocks & Symbols</h1>
+                        <h1 class="text-2xl font-bold mb-4 search-title">Search Stocks & Symbols</h1>
                         <div class="relative">
                             <input
                                 type="text"
@@ -307,7 +611,7 @@
                             </svg>
                             <button
                                 id="searchBtn"
-                                class="absolute right-3 top-1/2 transform -translate-y-1/2 bg-[#FFF27A] text-[#1E1E21] px-4 py-2 rounded-lg font-semibold hover:bg-[#f0e068] transition-colors"
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 bg-[#FFF27A] text-[#1E1E21] px-4 py-2 rounded-lg font-semibold hover:bg-[#f0e068] transition-colors search-btn"
                             >
                                 Search
                             </button>
@@ -315,8 +619,8 @@
                         
                         <!-- Quick Search Buttons -->
                         <div class="mt-4">
-                            <div class="text-sm text-white/60 mb-3">Quick Search - Top 10 Companies:</div>
-                            <div id="quickSearchButtons" class="flex flex-wrap gap-2"></div>
+                            <div class="text-sm text-white/60 mb-3 quick-search-text">Quick Search - Top 10 Companies:</div>
+                            <div id="quickSearchButtons" class="flex flex-wrap gap-0.5 quick-search-buttons"></div>
                         </div>
                     </div>
                 </div>
@@ -332,7 +636,7 @@
                     </div>
                 </div>
 
-                <div id="resultsContainer" class="flex-1 overflow-y-auto p-6 hidden">
+                <div id="resultsContainer" class="flex-1 overflow-y-auto p-6 hidden search-results-container">
                     <div id="searchResults" class="max-w-4xl mx-auto space-y-4">
                         <!-- Results will be populated here -->
                     </div>
@@ -354,9 +658,9 @@
             <!-- Company Details View -->
             <div id="companyView" class="hidden flex-1 flex flex-col overflow-hidden">
                 <!-- Company Header -->
-                <div class="bg-[#2C2F34] border-b border-white/10 p-6">
+                <div class="bg-[#2C2F34] border-b border-white/10 p-6 company-header">
                     <div class="flex items-center justify-between mb-4">
-                        <button id="backBtn" class="flex items-center gap-2 text-white/80 hover:text-white">
+                        <button id="backBtn" class="flex items-center gap-2 text-white/80 hover:text-white back-button">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="19" y1="12" x2="5" y2="12"/>
                                 <polyline points="12 19 5 12 12 5"/>
@@ -378,10 +682,10 @@
                 </div>
 
                 <!-- Company Data -->
-                <div id="companyData" class="hidden flex-1 overflow-y-auto p-6">
+                <div id="companyData" class="hidden flex-1 overflow-y-auto p-6 content-section">
                     <div class="max-w-7xl mx-auto space-y-6">
                         <!-- KPI Cards -->
-                        <div id="kpiSection" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div id="kpiSection" class="grid grid-cols-2 md:grid-cols-4 gap-4 kpi-grid">
                             <!-- KPIs will be populated here -->
                         </div>
 
@@ -394,11 +698,15 @@
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <div class="data-card">
                                 <div class="section-title">Revenue & Earnings</div>
-                                <canvas id="revenueChart"></canvas>
+                                <div class="chart-container">
+                                    <canvas id="revenueChart"></canvas>
+                                </div>
                             </div>
                             <div class="data-card">
                                 <div class="section-title">Balance Sheet</div>
-                                <canvas id="balanceChart"></canvas>
+                                <div class="chart-container">
+                                    <canvas id="balanceChart"></canvas>
+                                </div>
                             </div>
                         </div>
 
@@ -493,7 +801,7 @@
             
             top10Companies.forEach(symbol => {
                 const button = document.createElement('button');
-                button.className = 'px-3 py-1.5 bg-[#1E1E21] hover:bg-accent hover:text-[#1E1E21] border border-white/10 hover:border-accent rounded-lg text-xs font-semibold text-white transition-all';
+                button.className = 'px-3 py-1.5 bg-[#1E1E21] hover:bg-[#FFF27A] hover:text-[#1E1E21] border border-white/10 hover:border-[#FFF27A] rounded-lg text-xs font-semibold text-white transition-all quick-search-btn';
                 button.textContent = symbol;
                 button.onclick = () => {
                     const input = document.getElementById('searchInput');
@@ -631,15 +939,15 @@
             div.onclick = () => loadCompanyDetails(result.symbol);
 
             div.innerHTML = `
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between search-result-content">
                     <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-2">
-                            <span class="symbol-badge">${result.symbol}</span>
-                            <h3 class="text-lg font-semibold">${result.name || result.symbol}</h3>
-                            ${result.exchange ? `<span class="text-xs text-white/60 bg-white/10 px-2 py-1 rounded">${result.exchange}</span>` : ''}
+                        <div class="flex items-center gap-3 mb-2 search-result-header">
+                            <span class="symbol-badge search-result-symbol">${result.symbol}</span>
+                            <h3 class="text-lg font-semibold search-result-name">${result.name || result.symbol}</h3>
+                            ${result.exchange ? `<span class="text-xs text-white/60 bg-white/10 px-2 py-1 rounded search-result-exchange">${result.exchange}</span>` : ''}
                         </div>
-                        <p class="text-white/70 text-sm mb-2">${result.exchangeFullName || 'No exchange info available'}</p>
-                        ${result.currency ? `<p class="text-white/50 text-xs">Currency: ${result.currency}</p>` : ''}
+                        <p class="text-white/70 text-sm mb-2 search-result-details">${result.exchangeFullName || 'No exchange info available'}</p>
+                        ${result.currency ? `<p class="text-white/50 text-xs search-result-details">Currency: ${result.currency}</p>` : ''}
                     </div>
 
                     <div class="text-right">
@@ -782,8 +1090,6 @@
             // Display news
             displayNews();
 
-            // Display data availability status
-            displayDataStatus();
 
             // Show company data
             document.getElementById('companyLoading').classList.add('hidden');
@@ -796,13 +1102,13 @@
                 `$${(parseInt(profile.marketCap) / 1000000000).toFixed(2)}B` : 'N/A';
 
             header.innerHTML = `
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between company-title-section">
                     <div>
                         <div class="flex items-center gap-3 mb-2">
-                            <span class="symbol-badge text-lg px-3 py-1">${profile.symbol}</span>
-                            <h1 class="text-2xl font-bold">${profile.companyName}</h1>
+                            <span class="symbol-badge text-lg px-3 py-1 company-symbol">${profile.symbol}</span>
+                            <h1 class="text-2xl font-bold company-name">${profile.companyName}</h1>
                         </div>
-                        <div class="flex items-center gap-4 text-white/70">
+                        <div class="flex items-center gap-4 text-white/70 company-meta">
                             <span>${profile.exchange || 'N/A'}</span>
                             <span>•</span>
                             <span>${profile.sector || 'N/A'}</span>
@@ -813,6 +1119,19 @@
                     <div class="text-right">
                         <div class="text-sm text-white/60">Market Cap</div>
                         <div class="text-2xl font-bold">${marketCap}</div>
+                    </div>
+                </div>
+                
+                <!-- Mobile Layout -->
+                <div class="md:hidden mobile-company-header">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="symbol-badge text-sm px-2 py-1">${profile.symbol}</span>
+                        <h1 class="text-lg font-bold">${profile.companyName}</h1>
+                        <span class="text-sm text-white/70">${profile.sector || 'N/A'}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-white/60">Market Cap:</span>
+                        <span class="text-lg font-bold">${marketCap}</span>
                     </div>
                 </div>
             `;
@@ -834,8 +1153,8 @@
 
             kpiSection.innerHTML = kpis.map(kpi => `
                 <div class="kpi-card">
-                    <div class="text-white/60 text-sm mb-1">${kpi.label}</div>
-                    <div class="text-xl font-bold">${kpi.value}</div>
+                    <div class="text-white/60 text-sm mb-1 kpi-label">${kpi.label}</div>
+                    <div class="text-xl font-bold kpi-value">${kpi.value}</div>
                 </div>
             `).join('');
         }
@@ -845,30 +1164,30 @@
             overviewSection.innerHTML = `
                 <div class="section-title">Company Overview</div>
                 <p class="text-white/80 mb-4">${profile.description || 'No description available'}</p>
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div>
-                        <div class="text-white/60 text-sm">Country</div>
-                        <div class="font-semibold">${profile.country || 'N/A'}</div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 overview-grid">
+                    <div class="overview-item">
+                        <div class="text-white/60 text-sm overview-label">Country</div>
+                        <div class="font-semibold overview-value">${profile.country || 'N/A'}</div>
                     </div>
-                    <div>
-                        <div class="text-white/60 text-sm">Currency</div>
-                        <div class="font-semibold">${profile.currency || 'N/A'}</div>
+                    <div class="overview-item">
+                        <div class="text-white/60 text-sm overview-label">Currency</div>
+                        <div class="font-semibold overview-value">${profile.currency || 'N/A'}</div>
                     </div>
-                    <div>
-                        <div class="text-white/60 text-sm">CEO</div>
-                        <div class="font-semibold">${profile.ceo || 'N/A'}</div>
+                    <div class="overview-item">
+                        <div class="text-white/60 text-sm overview-label">CEO</div>
+                        <div class="font-semibold overview-value">${profile.ceo || 'N/A'}</div>
                     </div>
-                    <div>
-                        <div class="text-white/60 text-sm">IPO Date</div>
-                        <div class="font-semibold">${profile.ipoDate || 'N/A'}</div>
+                    <div class="overview-item">
+                        <div class="text-white/60 text-sm overview-label">IPO Date</div>
+                        <div class="font-semibold overview-value">${profile.ipoDate || 'N/A'}</div>
                     </div>
-                    <div>
-                        <div class="text-white/60 text-sm">Employees</div>
-                        <div class="font-semibold">${profile.fullTimeEmployees ? parseInt(profile.fullTimeEmployees).toLocaleString() : 'N/A'}</div>
+                    <div class="overview-item">
+                        <div class="text-white/60 text-sm overview-label">Employees</div>
+                        <div class="font-semibold overview-value">${profile.fullTimeEmployees ? parseInt(profile.fullTimeEmployees).toLocaleString() : 'N/A'}</div>
                     </div>
-                    <div>
-                        <div class="text-white/60 text-sm">Phone</div>
-                        <div class="font-semibold">${profile.phone || 'N/A'}</div>
+                    <div class="overview-item">
+                        <div class="text-white/60 text-sm overview-label">Phone</div>
+                        <div class="font-semibold overview-value">${profile.phone || 'N/A'}</div>
                     </div>
                 </div>
                 <div class="mt-4">
@@ -1387,53 +1706,6 @@
             }
         }
 
-        function displayDataStatus() {
-            const availableData = [];
-            const missingData = [];
-            
-            if (companyData.profile) availableData.push('Profile');
-            else missingData.push('Profile');
-            
-            if (companyData.financials) availableData.push('Financials');
-            else missingData.push('Financials');
-            
-            if (companyData.additional) availableData.push('Additional Data');
-            else missingData.push('Additional Data');
-            
-            if (companyData.news) availableData.push('News');
-            else missingData.push('News');
-
-            // Add status indicator to the page
-            const statusHtml = `
-                <div class="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-6">
-                    <div class="flex items-center gap-2 text-blue-400 mb-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"/>
-                            <path d="M9 12l2 2 4-4"/>
-                        </svg>
-                        <span class="text-sm font-medium">Data Status</span>
-                    </div>
-                    <div class="text-xs text-white/70">
-                        <div class="mb-1">
-                            <span class="text-green-400">✓ Available:</span> ${availableData.join(', ')}
-                        </div>
-                        ${missingData.length > 0 ? `
-                            <div>
-                                <span class="text-yellow-400">⚠ Missing:</span> ${missingData.join(', ')} 
-                                <span class="text-white/50">(API limits or data unavailable)</span>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-            
-            // Insert status at the beginning of company data
-            const companyDataElement = document.getElementById('companyData');
-            const maxWidthElement = companyDataElement.querySelector('.max-w-7xl');
-            if (maxWidthElement) {
-                maxWidthElement.insertAdjacentHTML('afterbegin', statusHtml);
-            }
-        }
 
         function formatNumber(num) {
             if (!num) return 'N/A';
@@ -1458,6 +1730,138 @@
             window.location.href='/auth.html';
         });
     </script>
+    
+    <!-- Mobile Navigation Menu -->
+    <div id="mobileMenu" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden md:hidden">
+      <div class="bg-[#2C2F34] border border-white/10 rounded-[18px] m-4 p-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-white">Navigation</h3>
+          <button id="closeMobileMenu" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <nav class="flex flex-col gap-2 text-white/80">
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/create-report.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span>Create Report</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/view-report.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <line x1="9" y1="17" x2="9" y2="11"/>
+              <line x1="13" y1="17" x2="13" y2="7"/>
+              <line x1="17" y1="17" x2="17" y2="13"/>
+            </svg>
+            <span>Reports</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/market.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3v18h18"/>
+              <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+            </svg>
+            <span>Market Data</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/investment.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            <span>Investments</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/10" href="/search.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span>Search Symbols</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/news.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
+              <line x1="7" y1="8" x2="17" y2="8"/>
+              <line x1="7" y1="12" x2="17" y2="12"/>
+              <line x1="7" y1="16" x2="13" y2="16"/>
+            </svg>
+            <span>Market News</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/extension.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            <span>Extension</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/email.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <span>Email Client</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="https://youtu.be/XUuLeXaEIdI" target="_blank">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+            <span>How to use PitchLense</span>
+          </a>
+          <div class="border-t border-white/10 my-2"></div>
+          <button id="mobileSignoutBtn" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 text-white/80">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            <span>Sign out</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Mobile Menu JavaScript -->
+    <script>
+      // Mobile menu functionality
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      const mobileMenu = document.getElementById('mobileMenu');
+      const closeMobileMenu = document.getElementById('closeMobileMenu');
+      const mobileSignoutBtn = document.getElementById('mobileSignoutBtn');
+
+      if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', () => {
+          mobileMenu.classList.remove('hidden');
+        });
+      }
+
+      if (closeMobileMenu && mobileMenu) {
+        closeMobileMenu.addEventListener('click', () => {
+          mobileMenu.classList.add('hidden');
+        });
+      }
+
+      if (mobileSignoutBtn) {
+        mobileSignoutBtn.addEventListener('click', async () => {
+          try { await fetch('/api/auth/logout',{method:'POST'}); } catch(e) {}
+          window.location.href='/auth.html';
+        });
+      }
+
+      // Close mobile menu when clicking outside
+      if (mobileMenu) {
+        mobileMenu.addEventListener('click', (e) => {
+          if (e.target === mobileMenu) {
+            mobileMenu.classList.add('hidden');
+          }
+        });
+      }
+    </script>
+    
     <script src="/static/navbar.js"></script>
   </body>
 </html>
