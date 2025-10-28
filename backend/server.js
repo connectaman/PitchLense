@@ -647,7 +647,43 @@ app.use(express.json({
 
 app.use(cookieParser());
 
-// Serve static frontend files BEFORE API routes
+// Get all investors from investor_directory table (MUST be before static middleware)
+app.get('/api/investors', requireAuth, async (req, res) => {
+  try {
+    console.log('Fetching investors from database...');
+    
+    // Check if table exists first (MySQL syntax)
+    const tableExists = await dbGet(
+      `SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?`,
+      ['investor_directory']
+    );
+    
+    if (!tableExists) {
+      console.log('investor_directory table does not exist');
+      return res.json([]);
+    }
+    
+    const investors = await dbAll(
+      `SELECT 
+        id, url, image, name, vc_type, industries, about, 
+        ideal_for, no_of_investments, social_links, portfolio_companies,
+        contact_name, contact_role, contact_linkedin, error
+      FROM ${tableName('investor_directory')}
+      ORDER BY 
+        CASE WHEN LOWER(name) LIKE '%lets venture%' THEN 0 ELSE 1 END,
+        no_of_investments DESC, 
+        name ASC`
+    );
+    
+    console.log(`Found ${investors.length} investors`);
+    res.json(investors);
+  } catch (error) {
+    console.error('Error fetching investors:', error);
+    res.status(500).json({ error: 'Failed to fetch investors', details: error.message });
+  }
+});
+
+// Serve static frontend files AFTER API routes
 const staticDir = path.join(__dirname, '..', 'frontend');
 app.use(express.static(staticDir));
 
@@ -5480,6 +5516,10 @@ app.get('/news.html', (req, res) => {
 
 app.get('/networking.html', (req, res) => {
   res.sendFile(path.join(staticDir, 'networking.html'));
+});
+
+app.get('/academy.html', (req, res) => {
+  res.sendFile(path.join(staticDir, 'academy.html'));
 });
 
 app.get('/whisper-network.html', (req, res) => {
