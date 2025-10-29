@@ -78,18 +78,137 @@
         </aside>
 
         <main id="mainContent" class="flex-1 overflow-y-auto p-4 mobile-main">
-          <!-- Walkthrough Content -->
-          <div class="min-h-[60vh] grid place-items-center">
-            <div class="text-center">
-              <div class="mx-auto w-20 h-20 rounded-2xl bg-white/5 border border-white/10 grid place-items-center mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white/70">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polygon points="10,8 16,12 10,16 10,8"/>
-                </svg>
-              </div>
-              <div class="text-lg font-semibold">Quick Walkthrough</div>
-              <div class="text-sm text-white/60 mt-1">Coming Soon</div>
+          <div class="max-w-4xl mx-auto">
+            <!-- Page Header -->
+            <div class="text-center mb-8">
+              <h1 class="text-3xl font-bold text-white mb-2">Quick Walkthrough</h1>
+              <p class="text-white/70">Learn how to use PitchLense effectively</p>
             </div>
+
+            <!-- YouTube Video -->
+            <div class="bg-[#2E3137] border border-white/10 rounded-[22px] p-6 mb-8">
+              <h2 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+                How to use PitchLense
+              </h2>
+              
+              <!-- Responsive YouTube Video Embed -->
+              <div class="relative w-full" style="padding-bottom: 56.25%; height: 0; overflow: hidden;">
+                <iframe 
+                  class="absolute top-0 left-0 w-full h-full rounded-lg"
+                  src="https://www.youtube.com/embed/XUuLeXaEIdI?rel=0&modestbranding=1"
+                  title="How to use PitchLense"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowfullscreen>
+                </iframe>
+              </div>
+              
+              <!-- Video Description -->
+              <div class="mt-4 text-white/80">
+                <p class="text-sm leading-relaxed">
+                  Watch this comprehensive tutorial to learn how to effectively use PitchLense for startup analysis, 
+                  investment tracking, and market research. This video covers all the key features and workflows.
+                </p>
+              </div>
+            </div>
+
+            <!-- FAQ Accordion -->
+            <div class="bg-[#2E3137] border border-white/10 rounded-[22px] p-6 mb-8">
+              <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                Frequently Asked Questions
+              </h2>
+              
+              <div class="space-y-4">
+                <!-- Accordion Item 1 -->
+                <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
+                  <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-1">
+                    <span class="font-medium text-white">Getting Started with PitchLense</span>
+                    <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                  <div id="accordion-1" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
+                    <p class="text-sm leading-relaxed">This section will contain detailed information about getting started with PitchLense. Content will be added later with proper context and helpful GIFs to guide users through the initial setup process.</p>
+                  </div>
+                </div>
+
+                <!-- Accordion Item 2 -->
+                <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
+                  <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-2">
+                    <span class="font-medium text-white">Creating Your First Report</span>
+                    <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                  <div id="accordion-2" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
+                    <p class="text-sm leading-relaxed">Learn how to create comprehensive startup analysis reports using our AI-powered tools. This section will include step-by-step instructions and visual guides to help you generate professional reports quickly and efficiently.</p>
+                  </div>
+                </div>
+
+                <!-- Accordion Item 3 -->
+                <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
+                  <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-3">
+                    <span class="font-medium text-white">Investment Tracking Features</span>
+                    <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                  <div id="accordion-3" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
+                    <p class="text-sm leading-relaxed">Discover how to track and manage your startup investments effectively. This section will cover portfolio management, performance analytics, and AI-powered investment recommendations to optimize your investment strategy.</p>
+                  </div>
+                </div>
+
+                <!-- Accordion Item 4 -->
+                <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
+                  <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-4">
+                    <span class="font-medium text-white">Market Data Integration</span>
+                    <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                  <div id="accordion-4" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
+                    <p class="text-sm leading-relaxed">Understand how to leverage real-time market data and news to make informed decisions. This section will explain data sources, analysis tools, and how to interpret market trends for better investment outcomes.</p>
+                  </div>
+                </div>
+
+                <!-- Accordion Item 5 -->
+                <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
+                  <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-5">
+                    <span class="font-medium text-white">AI Recommendations & Insights</span>
+                    <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                  <div id="accordion-5" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
+                    <p class="text-sm leading-relaxed">Explore our advanced AI features that provide personalized recommendations and insights. This section will cover how to use AI analysis, automated suggestions, and intelligent alerts to enhance your startup evaluation process.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Support Contact Card -->
+            <div class="bg-[#2E3137] border border-white/10 rounded-[22px] p-6 mt-8">
+              <div class="text-center">
+                <div class="mx-auto w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-white mb-2">Need Help?</h3>
+                <p class="text-white/70 mb-4">If you face any issue, difficulty, or bug, we're here to help!</p>
+                <p class="text-lg text-accent font-medium">connectamanulla@gmail.com</p>
+              </div>
+            </div>
+
           </div>
         </main>
       </div>
@@ -206,12 +325,6 @@
             </svg>
             <span>Extension</span>
           </a>
-          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="https://youtu.be/XUuLeXaEIdI" target="_blank">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-            </svg>
-            <span>How to use PitchLense</span>
-          </a>
           <div class="border-t border-white/10 my-2"></div>
           <button id="mobileSignoutBtn" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 text-white/80">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -256,5 +369,44 @@
     </script>
     
     <script src="/static/navbar.js"></script>
+    
+    <!-- Accordion JavaScript -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Accordion functionality
+        const accordionHeaders = document.querySelectorAll('.accordion-header');
+        
+        accordionHeaders.forEach(header => {
+          header.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const content = document.getElementById(targetId);
+            const icon = this.querySelector('.accordion-icon');
+            
+            // Toggle content visibility
+            if (content.classList.contains('hidden')) {
+              // Close all other accordion items
+              accordionHeaders.forEach(otherHeader => {
+                const otherTargetId = otherHeader.getAttribute('data-target');
+                const otherContent = document.getElementById(otherTargetId);
+                const otherIcon = otherHeader.querySelector('.accordion-icon');
+                
+                if (otherTargetId !== targetId) {
+                  otherContent.classList.add('hidden');
+                  otherIcon.style.transform = 'rotate(0deg)';
+                }
+              });
+              
+              // Open current item
+              content.classList.remove('hidden');
+              icon.style.transform = 'rotate(180deg)';
+            } else {
+              // Close current item
+              content.classList.add('hidden');
+              icon.style.transform = 'rotate(0deg)';
+            }
+          });
+        });
+      });
+    </script>
   </body>
 </html>
