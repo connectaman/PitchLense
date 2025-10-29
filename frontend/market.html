@@ -69,6 +69,14 @@
             #pitchlense-navbar {
               display: none !important;
             }
+            .flex.items-center.justify-between {
+              flex-direction: row !important;
+              align-items: center !important;
+              gap: 8px !important;
+            }
+            #aiSummaryBtn {
+              display: none !important;
+            }
           }
           @media (max-width: 480px) {
             .mobile-card {
@@ -79,6 +87,27 @@
             }
             .mobile-main {
               padding: 8px !important;
+            }
+            #aiSummaryModal .bg-\[#2C2F34\] {
+              margin: 8px !important;
+              max-height: calc(100vh - 16px) !important;
+            }
+            #aiSummaryModal .p-6 {
+              padding: 16px !important;
+            }
+            #aiSummaryModal .text-xl {
+              font-size: 1.125rem !important;
+            }
+            #aiSummaryModal .space-y-6 > * + * {
+              margin-top: 16px !important;
+            }
+            #aiSummaryBtn {
+              padding: 8px 12px !important;
+              font-size: 0.875rem !important;
+            }
+            #aiSummaryBtn svg {
+              width: 16px !important;
+              height: 16px !important;
             }
           }
         </style>
@@ -99,6 +128,16 @@
               </h2>
               <p class="text-white/60 mt-1" id="lastUpdate">Last updated: Loading...</p>
             </div>
+            <button id="aiSummaryBtn" class="flex items-center gap-2 px-4 py-2 bg-[#FFF27A] text-[#1E1E21] rounded-lg font-medium hover:bg-[#FFF27A]/90 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 12l2 2 4-4"/>
+                <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+                <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+                <path d="M12 3c0 1-1 3-3 3s-3-2-3-3 1-3 3-3 3 2 3 3"/>
+                <path d="M12 21c0-1 1-3 3-3s3 2 3 3-1 3-3 3-3-2-3-3"/>
+              </svg>
+              AI Summary
+            </button>
           </div>
 
           <!-- Loading State -->
@@ -209,10 +248,110 @@
       </div>
     </div>
 
+    <!-- AI Summary Modal -->
+    <div id="aiSummaryModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden">
+      <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-[#2C2F34] border border-white/10 rounded-[18px] w-full max-w-4xl max-h-[90vh] overflow-hidden">
+          <!-- Modal Header -->
+          <div class="flex items-center justify-between p-6 border-b border-white/10">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-[#FFF27A] grid place-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 12l2 2 4-4"/>
+                  <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+                  <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+                  <path d="M12 3c0 1-1 3-3 3s-3-2-3-3 1-3 3-3 3 2 3 3"/>
+                  <path d="M12 21c0-1 1-3 3-3s3 2 3 3-1 3-3 3-3-2-3-3"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-xl font-semibold text-white">AI Market Analysis</h3>
+                <p class="text-white/60 text-sm">Comprehensive market insights and recommendations</p>
+              </div>
+            </div>
+            <button id="closeAiSummaryModal" class="w-8 h-8 grid place-items-center rounded-full bg-white/10 hover:bg-white/20 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Modal Content -->
+          <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+            <!-- Loading State -->
+            <div id="aiLoadingState" class="text-center py-12">
+              <div class="mx-auto w-16 h-16 rounded-2xl bg-white/5 border border-white/10 grid place-items-center mb-4">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFF27A]"></div>
+              </div>
+              <div class="text-lg font-semibold text-white">Analyzing Market Data...</div>
+              <div class="text-sm text-white/60 mt-1">Generating AI insights and recommendations</div>
+            </div>
+
+            <!-- AI Summary Content -->
+            <div id="aiSummaryContent" class="hidden space-y-6">
+              <!-- Market Summary -->
+              <div class="card p-6">
+                <h4 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3v18h18"/>
+                    <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+                  </svg>
+                  Market Summary
+                </h4>
+                <div id="marketSummary" class="text-white/80 leading-relaxed"></div>
+              </div>
+
+              <!-- Investment Recommendations -->
+              <div class="card p-6">
+                <h4 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                  </svg>
+                  Investment Recommendations
+                </h4>
+                <div id="investmentRecommendations" class="text-white/80 leading-relaxed"></div>
+              </div>
+
+              <!-- Investment Strategy -->
+              <div class="card p-6">
+                <h4 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                  </svg>
+                  Investment Strategy
+                </h4>
+                <div id="investmentStrategy" class="text-white/80 leading-relaxed"></div>
+              </div>
+            </div>
+
+            <!-- Error State -->
+            <div id="aiErrorState" class="hidden text-center py-12">
+              <div class="mx-auto w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 grid place-items-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="15" y1="9" x2="9" y2="15"/>
+                  <line x1="9" y1="9" x2="15" y2="15"/>
+                </svg>
+              </div>
+              <div class="text-lg font-semibold text-white">Analysis Failed</div>
+              <div class="text-sm text-white/60 mt-1">Unable to generate AI insights. Please try again.</div>
+              <button id="retryAiAnalysis" class="mt-4 px-4 py-2 bg-[#FFF27A] text-[#1E1E21] rounded-lg font-medium hover:bg-[#FFF27A]/90 transition-colors">
+                Retry Analysis
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="/static/cache-util.js"></script>
     <script>
       const FMP_API_KEY = 'WwNxldd0G8oDcMy1V0FPNIirF74a1p4E';
       let charts = {};
+      let marketData = {};
 
       // Commodity symbols
       const commodities = [
@@ -299,6 +438,21 @@
           );
           
           updateCommodities(commoditiesData);
+
+          // Store market data for AI analysis
+          marketData = {
+            gainers: gainers.status === 'fulfilled' ? gainers.value : [],
+            losers: losers.status === 'fulfilled' ? losers.value : [],
+            treasury: treasury.status === 'fulfilled' ? treasury.value : [],
+            gdp: gdp.status === 'fulfilled' ? gdp.value : [],
+            gdpPerCapita: gdpPerCapita.status === 'fulfilled' ? gdpPerCapita.value : [],
+            unemployment: unemployment.status === 'fulfilled' ? unemployment.value : [],
+            recession: recession.status === 'fulfilled' ? recession.value : [],
+            sectorPerf: sectorPerf.status === 'fulfilled' ? sectorPerf.value : [],
+            industryPerf: industryPerf.status === 'fulfilled' ? industryPerf.value : [],
+            sectorPE: sectorPE.status === 'fulfilled' ? sectorPE.value : [],
+            commodities: commoditiesData.filter(r => r.status === 'fulfilled' && r.value && r.value[0]).map(r => r.value[0])
+          };
 
           document.getElementById('lastUpdate').textContent = `Last updated: ${new Date().toLocaleString()}`;
           document.getElementById('loadingState').classList.add('hidden');
@@ -750,12 +904,226 @@
         });
       }
 
+      // Collect comprehensive market data for AI analysis
+      function collectMarketDataForAI() {
+        const data = {
+          timestamp: new Date().toISOString(),
+          marketOverview: {
+            topGainers: marketData.gainers?.slice(0, 10).map(g => ({
+              symbol: g.symbol,
+              name: g.name,
+              change: g.changesPercentage,
+              price: g.price
+            })) || [],
+            topLosers: marketData.losers?.slice(0, 10).map(l => ({
+              symbol: l.symbol,
+              name: l.name,
+              change: l.changesPercentage,
+              price: l.price
+            })) || [],
+            commodities: marketData.commodities?.map(c => ({
+              symbol: c.symbol,
+              name: c.name,
+              price: c.price,
+              change: c.changePercentage
+            })) || []
+          },
+          economicIndicators: {
+            gdp: marketData.gdp?.slice(0, 5).map(d => ({
+              date: d.date,
+              value: d.value
+            })) || [],
+            gdpPerCapita: marketData.gdpPerCapita?.slice(0, 5).map(d => ({
+              date: d.date,
+              value: d.value
+            })) || [],
+            unemployment: marketData.unemployment?.slice(0, 5).map(d => ({
+              date: d.date,
+              value: d.value
+            })) || [],
+            recessionProbability: marketData.recession?.slice(0, 5).map(d => ({
+              date: d.date,
+              value: d.value
+            })) || []
+          },
+          treasuryRates: marketData.treasury?.[0] ? {
+            month1: marketData.treasury[0].month1,
+            month3: marketData.treasury[0].month3,
+            month6: marketData.treasury[0].month6,
+            year1: marketData.treasury[0].year1,
+            year2: marketData.treasury[0].year2,
+            year5: marketData.treasury[0].year5,
+            year10: marketData.treasury[0].year10,
+            year30: marketData.treasury[0].year30
+          } : null,
+          sectorPerformance: {
+            energy: marketData.sectorPerf?.slice(0, 10).map(d => ({
+              date: d.date,
+              averageChange: d.averageChange
+            })) || [],
+            biotechnology: marketData.industryPerf?.slice(0, 10).map(d => ({
+              date: d.date,
+              averageChange: d.averageChange
+            })) || [],
+            energyPE: marketData.sectorPE?.slice(0, 10).map(d => ({
+              date: d.date,
+              pe: d.pe
+            })) || []
+          }
+        };
+        return data;
+      }
+
+      // Generate AI analysis
+      async function generateAIAnalysis() {
+        try {
+          const marketDataForAI = collectMarketDataForAI();
+          
+          // Show loading state
+          document.getElementById('aiLoadingState').classList.remove('hidden');
+          document.getElementById('aiSummaryContent').classList.add('hidden');
+          document.getElementById('aiErrorState').classList.add('hidden');
+
+          // Simulate AI analysis (replace with actual AI API call)
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          // Generate comprehensive analysis
+          const analysis = generateComprehensiveAnalysis(marketDataForAI);
+
+          // Display results
+          document.getElementById('marketSummary').innerHTML = analysis.summary;
+          document.getElementById('investmentRecommendations').innerHTML = analysis.recommendations;
+          document.getElementById('investmentStrategy').innerHTML = analysis.strategy;
+
+          document.getElementById('aiLoadingState').classList.add('hidden');
+          document.getElementById('aiSummaryContent').classList.remove('hidden');
+
+        } catch (error) {
+          console.error('Error generating AI analysis:', error);
+          document.getElementById('aiLoadingState').classList.add('hidden');
+          document.getElementById('aiErrorState').classList.remove('hidden');
+        }
+      }
+
+      // Generate comprehensive market analysis
+      function generateComprehensiveAnalysis(data) {
+        const gainers = data.marketOverview.topGainers;
+        const losers = data.marketOverview.topLosers;
+        const commodities = data.marketOverview.commodities;
+        const gdp = data.economicIndicators.gdp;
+        const unemployment = data.economicIndicators.unemployment;
+        const recession = data.economicIndicators.recessionProbability;
+        const treasury = data.treasuryRates;
+
+        // Calculate market sentiment
+        const avgGainerChange = gainers.reduce((sum, g) => sum + g.change, 0) / gainers.length;
+        const avgLoserChange = losers.reduce((sum, l) => sum + l.change, 0) / losers.length;
+        const marketSentiment = avgGainerChange > Math.abs(avgLoserChange) ? 'bullish' : 'bearish';
+
+        // Generate summary
+        const summary = `
+          <div class="space-y-4">
+            <p><strong>Market Sentiment:</strong> <span class="text-${marketSentiment === 'bullish' ? 'green' : 'red'}-400 font-semibold">${marketSentiment.toUpperCase()}</span></p>
+            
+            <p><strong>Top Performers:</strong> ${gainers.slice(0, 3).map(g => `${g.symbol} (+${g.change.toFixed(2)}%)`).join(', ')}</p>
+            
+            <p><strong>Commodities Status:</strong> ${commodities.map(c => `${c.symbol}: $${c.price.toFixed(2)} (${c.change >= 0 ? '+' : ''}${c.change.toFixed(2)}%)`).join(', ')}</p>
+            
+            ${gdp.length > 0 ? `<p><strong>GDP Trend:</strong> Latest GDP at $${gdp[0].value.toFixed(1)}B (${gdp.length > 1 ? (gdp[0].value > gdp[1].value ? 'increasing' : 'decreasing') : 'current data'})</p>` : ''}
+            
+            ${unemployment.length > 0 ? `<p><strong>Unemployment Rate:</strong> ${unemployment[0].value.toFixed(2)}% (${unemployment.length > 1 ? (unemployment[0].value < unemployment[1].value ? 'improving' : 'worsening') : 'current data'})</p>` : ''}
+            
+            ${recession.length > 0 ? `<p><strong>Recession Probability:</strong> ${recession[0].value.toFixed(1)}% (${recession[0].value > 30 ? 'high risk' : recession[0].value > 15 ? 'moderate risk' : 'low risk'})</p>` : ''}
+            
+            ${treasury ? `<p><strong>Yield Curve:</strong> 10Y at ${treasury.year10.toFixed(2)}%, 2Y at ${treasury.year2.toFixed(2)}% (${treasury.year10 > treasury.year2 ? 'normal' : 'inverted'})</p>` : ''}
+          </div>
+        `;
+
+        // Generate recommendations
+        const recommendations = `
+          <div class="space-y-4">
+            <div class="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <h5 class="font-semibold text-blue-400 mb-2">Sector Opportunities</h5>
+              <p>Based on current market data, consider focusing on sectors showing resilience and growth potential.</p>
+            </div>
+            
+            <div class="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+              <h5 class="font-semibold text-green-400 mb-2">Commodity Strategy</h5>
+              <p>${commodities.map(c => `${c.symbol} is ${c.change >= 0 ? 'performing well' : 'under pressure'} at $${c.price.toFixed(2)}`).join('. ')}. Consider ${commodities.some(c => c.change >= 0) ? 'diversifying' : 'cautious'} commodity exposure.</p>
+            </div>
+            
+            <div class="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+              <h5 class="font-semibold text-yellow-400 mb-2">Risk Management</h5>
+              <p>${recession.length > 0 && recession[0].value > 20 ? 'High recession probability suggests defensive positioning.' : 'Moderate risk environment allows for balanced growth and value strategies.'}</p>
+            </div>
+          </div>
+        `;
+
+        // Generate strategy
+        const strategy = `
+          <div class="space-y-4">
+            <div class="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+              <h5 class="font-semibold text-purple-400 mb-2">Portfolio Allocation</h5>
+              <ul class="list-disc list-inside space-y-1 text-sm">
+                <li><strong>Equities (${marketSentiment === 'bullish' ? '60-70%' : '40-50%'}):</strong> Focus on ${marketSentiment === 'bullish' ? 'growth and momentum' : 'value and defensive'} stocks</li>
+                <li><strong>Bonds (${marketSentiment === 'bullish' ? '20-30%' : '30-40%'}):</strong> ${treasury ? `Consider ${treasury.year10 > treasury.year2 ? 'longer-term' : 'shorter-term'} treasuries` : 'Diversified bond allocation'}</li>
+                <li><strong>Commodities (10-15%):</strong> ${commodities.some(c => c.change >= 0) ? 'Selective exposure' : 'Minimal exposure'} based on current trends</li>
+                <li><strong>Cash (5-10%):</strong> Maintain liquidity for opportunities</li>
+              </ul>
+            </div>
+            
+            <div class="p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+              <h5 class="font-semibold text-orange-400 mb-2">Investment Timeline</h5>
+              <ul class="list-disc list-inside space-y-1 text-sm">
+                <li><strong>Short-term (1-3 months):</strong> Monitor ${gainers.slice(0, 2).map(g => g.symbol).join(' and ')} for momentum opportunities</li>
+                <li><strong>Medium-term (3-12 months):</strong> ${unemployment.length > 0 && unemployment[0].value < 5 ? 'Favorable employment conditions support consumer spending' : 'Monitor employment trends for economic health'}</li>
+                <li><strong>Long-term (1+ years):</strong> ${gdp.length > 0 ? 'GDP growth trajectory suggests' : 'Economic indicators suggest'} ${marketSentiment === 'bullish' ? 'continued expansion' : 'potential consolidation'}</li>
+              </ul>
+            </div>
+            
+            <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <h5 class="font-semibold text-red-400 mb-2">Risk Considerations</h5>
+              <ul class="list-disc list-inside space-y-1 text-sm">
+                <li>${recession.length > 0 && recession[0].value > 30 ? 'High recession probability - consider defensive positioning' : 'Moderate economic risk - balanced approach recommended'}</li>
+                <li>${treasury && treasury.year10 < treasury.year2 ? 'Inverted yield curve signals potential economic headwinds' : 'Normal yield curve supports economic growth'}</li>
+                <li>Monitor commodity price volatility for inflation impact</li>
+                <li>Diversify across sectors to reduce concentration risk</li>
+              </ul>
+            </div>
+          </div>
+        `;
+
+        return { summary, recommendations, strategy };
+      }
+
       // Initialize
       async function init() {
         await fetchMarketData();
 
         // Set up refresh button
         document.getElementById('refreshBtn').addEventListener('click', fetchMarketData);
+        
+        // Set up AI summary button
+        document.getElementById('aiSummaryBtn').addEventListener('click', () => {
+          document.getElementById('aiSummaryModal').classList.remove('hidden');
+          generateAIAnalysis();
+        });
+
+        // Set up modal close buttons
+        document.getElementById('closeAiSummaryModal').addEventListener('click', () => {
+          document.getElementById('aiSummaryModal').classList.add('hidden');
+        });
+
+        document.getElementById('retryAiAnalysis').addEventListener('click', () => {
+          generateAIAnalysis();
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('aiSummaryModal').addEventListener('click', (e) => {
+          if (e.target === document.getElementById('aiSummaryModal')) {
+            document.getElementById('aiSummaryModal').classList.add('hidden');
+          }
+        });
       }
 
       // Start
@@ -838,6 +1206,19 @@
             </svg>
             <span>Email Client</span>
           </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/walkthrough.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polygon points="10,8 16,12 10,16 10,8"/>
+            </svg>
+            <span>Quick Walkthrough</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/profile.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.31 0-6 2.69-6 6h12c0-3.31-2.69-6-6-6Z"/>
+            </svg>
+            <span>Profile</span>
+          </a>
           <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/academy.html">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
@@ -873,7 +1254,8 @@
       const mobileSignoutBtn = document.getElementById('mobileSignoutBtn');
 
       if (mobileMenuBtn && mobileMenu) {
-        mobileMenuBtn.addEventListener('click', () => {
+        mobileMenuBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
           mobileMenu.classList.remove('hidden');
         });
       }

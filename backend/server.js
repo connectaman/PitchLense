@@ -1746,6 +1746,143 @@ app.get('/api/auth/me', (req, res) => {
   }
 });
 
+// Profile API endpoint
+app.get('/api/profile', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Get user basic info
+    const user = await dbGet(`SELECT id, email, name, created_at FROM ${tableName('users')} WHERE id=?`, [userId]);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Get user statistics
+    const stats = await getUserStatistics(userId);
+    
+    const responseData = {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        created_at: user.created_at
+      },
+      stats: stats
+    };
+
+    // Set cache headers
+    res.set({
+      'Cache-Control': 'public, max-age=300', // 5 minutes
+      'ETag': `"profile-${userId}-${Date.now()}"`,
+      'Last-Modified': new Date().toUTCString()
+    });
+    
+    res.json(responseData);
+  } catch (error) {
+    console.error('Profile API error:', error);
+    res.status(500).json({ error: 'Failed to fetch profile data' });
+  }
+});
+
+// Helper function to get user statistics
+async function getUserStatistics(userId) {
+  try {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfMonthStr = startOfMonth.toISOString().split('T')[0];
+    
+    // Get total reports
+    const totalReports = await dbGet(`SELECT COUNT(*) as count FROM ${tableName('reports')} WHERE user_id=? AND is_delete=0`, [userId]);
+    
+    // Get reports this month
+    const reportsThisMonth = await dbGet(`SELECT COUNT(*) as count FROM ${tableName('reports')} WHERE user_id=? AND is_delete=0 AND created_at >= ?`, [userId, startOfMonthStr]);
+    
+    // Get last report date
+    const lastReport = await dbGet(`SELECT created_at FROM ${tableName('reports')} WHERE user_id=? AND is_delete=0 ORDER BY created_at DESC LIMIT 1`, [userId]);
+    
+    // Get total chats
+    const totalChats = await dbGet(`SELECT COUNT(*) as count FROM ${tableName('chats')} WHERE user_id=?`, [userId]);
+    
+    // Get chats this month
+    const chatsThisMonth = await dbGet(`SELECT COUNT(*) as count FROM ${tableName('chats')} WHERE user_id=? AND created_at >= ?`, [userId, startOfMonthStr]);
+    
+    // Get last chat date
+    const lastChat = await dbGet(`SELECT created_at FROM ${tableName('chats')} WHERE user_id=? ORDER BY created_at DESC LIMIT 1`, [userId]);
+    
+            // Get total files
+            const fileStats = await dbGet(`SELECT COUNT(*) as count FROM ${tableName('uploads')} WHERE user_id=?`, [userId]);
+    
+    // Get total follow-ups
+    const totalFollowUps = await dbGet(`SELECT COUNT(*) as count FROM ${tableName('follow_queries')} fq JOIN ${tableName('reports')} r ON fq.report_id COLLATE utf8mb4_unicode_ci = r.report_id COLLATE utf8mb4_unicode_ci WHERE r.user_id=?`, [userId]);
+    
+    // Get follow-ups this month
+    const followUpsThisMonth = await dbGet(`SELECT COUNT(*) as count FROM ${tableName('follow_queries')} fq JOIN ${tableName('reports')} r ON fq.report_id COLLATE utf8mb4_unicode_ci = r.report_id COLLATE utf8mb4_unicode_ci WHERE r.user_id=? AND fq.created_at >= ?`, [userId, startOfMonthStr]);
+    
+    // Get total investments
+    const totalInvestments = await dbGet(`SELECT COUNT(*) as count FROM ${tableName('investments')} WHERE user_id=? AND is_deleted=0`, [userId]);
+    
+    // Get active investments
+    const activeInvestments = await dbGet(`SELECT COUNT(*) as count FROM ${tableName('investments')} WHERE user_id=? AND is_deleted=0 AND status IN ('Active', 'Monitoring')`, [userId]);
+    
+    // Get recent activity (last 10 activities)
+    const recentActivity = await dbAll(`
+      SELECT 'report' as type, 'Created new report: ' || report_name as description, r.created_at as timestamp
+      FROM ${tableName('reports')} r
+      WHERE r.user_id=? AND r.is_delete=0
+      UNION ALL
+      SELECT 'chat' as type, 'Had a chat in Co-pilot' as description, c.created_at as timestamp
+      FROM ${tableName('chats')} c
+      WHERE c.user_id=?
+      UNION ALL
+      SELECT 'file' as type, 'Uploaded file: ' || filename as description, u.created_at as timestamp
+      FROM ${tableName('uploads')} u
+      WHERE u.user_id=?
+      UNION ALL
+      SELECT 'investment' as type, 'Added investment: ' || startup_name as description, i.created_at as timestamp
+      FROM ${tableName('investments')} i
+      WHERE i.user_id=? AND i.is_deleted=0
+      UNION ALL
+      SELECT 'followup' as type, 'Asked follow-up question' as description, fq.created_at as timestamp
+      FROM ${tableName('follow_queries')} fq
+      JOIN ${tableName('reports')} r ON fq.report_id COLLATE utf8mb4_unicode_ci = r.report_id COLLATE utf8mb4_unicode_ci
+      WHERE r.user_id=?
+      ORDER BY timestamp DESC
+      LIMIT 10
+    `, [userId, userId, userId, userId, userId]);
+    
+            return {
+              total_reports: totalReports?.count || 0,
+              reports_this_month: reportsThisMonth?.count || 0,
+              last_report_date: lastReport?.created_at || null,
+              total_chats: totalChats?.count || 0,
+              chats_this_month: chatsThisMonth?.count || 0,
+              last_chat_date: lastChat?.created_at || null,
+              total_files: fileStats?.count || 0,
+              total_follow_ups: totalFollowUps?.count || 0,
+              follow_ups_this_month: followUpsThisMonth?.count || 0,
+              total_investments: totalInvestments?.count || 0,
+              active_investments: activeInvestments?.count || 0,
+              recent_activity: recentActivity || []
+            };
+  } catch (error) {
+    console.error('Error getting user statistics:', error);
+    return {
+      total_reports: 0,
+      reports_this_month: 0,
+      last_report_date: null,
+      total_chats: 0,
+      chats_this_month: 0,
+      last_chat_date: null,
+      total_files: 0,
+      total_follow_ups: 0,
+      follow_ups_this_month: 0,
+      total_investments: 0,
+      active_investments: 0,
+      recent_activity: []
+    };
+  }
+}
+
 // QnA API endpoints
 app.post('/api/qna/ask', requireAuth, checkLLMRateLimit, async (req, res) => {
   try {
@@ -3344,6 +3481,143 @@ app.get('/api/investments/:id/metrics', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Get investment metrics error:', error);
     res.status(500).json({ error: 'Failed to calculate metrics', details: error.message });
+  }
+});
+
+// AI Investment Recommendations
+app.post('/api/investments/ai-recommendations', requireAuth, async (req, res) => {
+  try {
+    const { investments } = req.body;
+
+    if (!investments || !Array.isArray(investments) || investments.length === 0) {
+      return res.status(400).json({ error: 'No investments provided' });
+    }
+
+    // Prepare investment data for AI analysis
+    const investmentData = investments.map(inv => ({
+      startup_name: inv.startup_name,
+      investment_amount: inv.investment_amount,
+      equity_percentage: inv.equity_percentage,
+      company_valuation: inv.company_valuation,
+      investment_date: inv.investment_date,
+      status: inv.status,
+      funding_round: inv.funding_round,
+      investment_type: inv.investment_type,
+      notes: inv.notes
+    }));
+
+    // Calculate portfolio metrics
+    const totalInvested = investments.reduce((sum, inv) => sum + parseFloat(inv.investment_amount || 0), 0);
+    const activeInvestments = investments.filter(inv => inv.status === 'Active').length;
+    const exitedInvestments = investments.filter(inv => inv.status === 'Exited').length;
+    const avgInvestmentSize = totalInvested / investments.length;
+
+    // Check if API key is available
+    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your-gemini-api-key-here') {
+      return res.status(500).json({ error: 'AI service not configured. Please set GEMINI_API_KEY in environment variables.' });
+    }
+
+    // Initialize Gemini AI model
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+
+    const prompt = `As an expert investment advisor, analyze the following startup investment portfolio and provide comprehensive recommendations:
+
+PORTFOLIO DATA:
+${JSON.stringify(investmentData, null, 2)}
+
+PORTFOLIO METRICS:
+- Total Investments: ${investments.length}
+- Total Amount Invested: $${totalInvested.toLocaleString()}
+- Active Investments: ${activeInvestments}
+- Exited Investments: ${exitedInvestments}
+- Average Investment Size: $${avgInvestmentSize.toLocaleString()}
+
+Please provide a detailed analysis in the following JSON format:
+
+{
+  "summary": "A comprehensive summary of the investment portfolio, including key insights about diversification, risk profile, and overall performance trends.",
+  "recommendations": [
+    {
+      "company": "Company Name",
+      "action": "keep|exit|reinvest",
+      "confidence": 85,
+      "explanation": "Detailed explanation of why this action is recommended, including risk factors, market conditions, and growth potential."
+    }
+  ],
+  "suggestions": [
+    {
+      "title": "Suggestion Title",
+      "description": "Detailed description of the improvement suggestion",
+      "impact": "Expected impact on portfolio performance"
+    }
+  ]
+}
+
+Focus on:
+1. Portfolio diversification analysis
+2. Risk assessment for each investment
+3. Market timing and exit strategies
+4. Opportunities for additional investments
+5. Portfolio rebalancing recommendations
+6. Risk management strategies
+
+Provide actionable, data-driven recommendations that consider current market conditions and startup investment best practices.
+
+IMPORTANT: Return ONLY the JSON object, no other text or markdown formatting.`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const aiContent = response.text();
+
+    // Parse AI response
+    let aiData;
+    try {
+      // Clean the response by removing markdown code blocks if present
+      let cleanResponse = aiContent.trim();
+      
+      // Remove markdown code blocks
+      if (cleanResponse.includes('```json')) {
+        cleanResponse = cleanResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      } else if (cleanResponse.includes('```')) {
+        cleanResponse = cleanResponse.replace(/```\n?/g, '').trim();
+      }
+      
+      // Extract JSON from the response (in case there's extra text)
+      const jsonMatch = cleanResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        aiData = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('No valid JSON found in AI response');
+      }
+    } catch (parseError) {
+      console.error('Error parsing AI response:', parseError);
+      console.error('Raw AI response:', aiContent);
+      // Fallback response if parsing fails
+      aiData = {
+        summary: "AI analysis completed but response format was unexpected. Please try again.",
+        recommendations: [],
+        suggestions: []
+      };
+    }
+
+    res.json({
+      success: true,
+      ...aiData,
+      portfolio_metrics: {
+        total_investments: investments.length,
+        total_invested: totalInvested,
+        active_investments: activeInvestments,
+        exited_investments: exitedInvestments,
+        avg_investment_size: avgInvestmentSize
+      }
+    });
+
+  } catch (error) {
+    console.error('AI recommendations error:', error);
+    res.status(500).json({ 
+      error: 'Failed to generate AI recommendations', 
+      details: error.message 
+    });
   }
 });
 

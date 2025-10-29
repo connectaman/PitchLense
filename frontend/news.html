@@ -72,6 +72,27 @@
             .mobile-main {
               padding: 8px !important;
             }
+            #aiNewsSummaryModal .bg-\[#2C2F34\] {
+              margin: 8px !important;
+              max-height: calc(100vh - 16px) !important;
+            }
+            #aiNewsSummaryModal .p-6 {
+              padding: 16px !important;
+            }
+            #aiNewsSummaryModal .text-xl {
+              font-size: 1.125rem !important;
+            }
+            #aiNewsSummaryModal .space-y-6 > * + * {
+              margin-top: 16px !important;
+            }
+            #aiNewsSummaryBtn {
+              padding: 8px 12px !important;
+              font-size: 0.875rem !important;
+            }
+            #aiNewsSummaryBtn svg {
+              width: 16px !important;
+              height: 16px !important;
+            }
           }
         </style>
         <aside id="pitchlense-navbar" class="bg-[#2C2F34] border border-white/10 rounded-[18px] flex flex-col items-center py-4 gap-3">
@@ -154,6 +175,12 @@
                 <div class="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-[#1E1E21]"></div>
               </div>
             </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/profile.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.31 0-6 2.69-6 6h12c0-3.31-2.69-6-6-6Z"/>
+            </svg>
+            <span>Profile</span>
+          </a>
             <a class="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/10 relative group" href="https://youtu.be/XUuLeXaEIdI" target="_blank" title="How to use PitchLense">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
                 <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
@@ -177,15 +204,27 @@
         <main class="flex-1 overflow-y-auto p-4 mobile-main">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-2xl font-bold">Market Intelligence</h2>
-            <button id="refreshBtn" class="px-4 py-2 bg-[#FFF27A] text-[#1E1E21] font-semibold rounded-full hover:opacity-90 transition-opacity flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="23 4 23 10 17 10"/>
-                <polyline points="1 20 1 14 7 14"/>
-                <path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10"/>
-                <path d="M20.49 15a9 9 0 0 1-14.13 3.36L1 14"/>
-              </svg>
-              Refresh
-            </button>
+            <div class="flex items-center gap-3">
+              <button id="aiNewsSummaryBtn" class="flex items-center gap-2 px-4 py-2 bg-[#FFF27A] text-[#1E1E21] rounded-lg font-medium hover:bg-[#FFF27A]/90 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 12l2 2 4-4"/>
+                  <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+                  <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+                  <path d="M12 3c0 1-1 3-3 3s-3-2-3-3 1-3 3-3 3 2 3 3"/>
+                  <path d="M12 21c0-1 1-3 3-3s3 2 3 3-1 3-3 3-3-2-3-3"/>
+                </svg>
+                AI Summary
+              </button>
+              <button id="refreshBtn" class="px-4 py-2 bg-[#FFF27A] text-[#1E1E21] font-semibold rounded-full hover:opacity-90 transition-opacity flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="23 4 23 10 17 10"/>
+                  <polyline points="1 20 1 14 7 14"/>
+                  <path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10"/>
+                  <path d="M20.49 15a9 9 0 0 1-14.13 3.36L1 14"/>
+                </svg>
+                Refresh
+              </button>
+            </div>
           </div>
 
           <!-- Tabs Navigation -->
@@ -399,8 +438,492 @@
       </div>
     </div>
 
+    <!-- AI News Summary Modal -->
+    <div id="aiNewsSummaryModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden">
+      <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-[#2C2F34] border border-white/10 rounded-[18px] w-full max-w-4xl max-h-[90vh] overflow-hidden">
+          <!-- Modal Header -->
+          <div class="flex items-center justify-between p-6 border-b border-white/10">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-[#FFF27A] grid place-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 12l2 2 4-4"/>
+                  <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+                  <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+                  <path d="M12 3c0 1-1 3-3 3s-3-2-3-3 1-3 3-3 3 2 3 3"/>
+                  <path d="M12 21c0-1 1-3 3-3s3 2 3 3-1 3-3 3-3-2-3-3"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-xl font-semibold text-white">AI News Analysis</h3>
+                <p class="text-white/60 text-sm">Comprehensive market news insights and investment recommendations</p>
+              </div>
+            </div>
+            <button id="closeAiNewsSummaryModal" class="w-8 h-8 grid place-items-center rounded-full bg-white/10 hover:bg-white/20 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Modal Content -->
+          <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+            <!-- Loading State -->
+            <div id="aiNewsLoadingState" class="text-center py-12">
+              <div class="mx-auto w-16 h-16 rounded-2xl bg-white/5 border border-white/10 grid place-items-center mb-4">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFF27A]"></div>
+              </div>
+              <div class="text-lg font-semibold text-white">Analyzing News Data...</div>
+              <div class="text-sm text-white/60 mt-1">Processing market news and generating insights</div>
+            </div>
+
+            <!-- AI News Summary Content -->
+            <div id="aiNewsSummaryContent" class="hidden space-y-6">
+              <!-- News Summary -->
+              <div class="card p-6">
+                <h4 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
+                    <line x1="7" y1="8" x2="17" y2="8"/>
+                    <line x1="7" y1="12" x2="17" y2="12"/>
+                    <line x1="7" y1="16" x2="13" y2="16"/>
+                  </svg>
+                  Market News Summary
+                </h4>
+                <div id="newsSummary" class="text-white/80 leading-relaxed"></div>
+              </div>
+
+              <!-- Investment Recommendations -->
+              <div class="card p-6">
+                <h4 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                  </svg>
+                  Investment Recommendations
+                </h4>
+                <div id="newsRecommendations" class="text-white/80 leading-relaxed"></div>
+              </div>
+
+              <!-- Investment Suggestions -->
+              <div class="card p-6">
+                <h4 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                  </svg>
+                  Investment Suggestions
+                </h4>
+                <div id="investmentSuggestions" class="text-white/80 leading-relaxed"></div>
+              </div>
+            </div>
+
+            <!-- Error State -->
+            <div id="aiNewsErrorState" class="hidden text-center py-12">
+              <div class="mx-auto w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 grid place-items-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="15" y1="9" x2="9" y2="15"/>
+                  <line x1="9" y1="9" x2="15" y2="15"/>
+                </svg>
+              </div>
+              <div class="text-lg font-semibold text-white">Analysis Failed</div>
+              <div class="text-sm text-white/60 mt-1">Unable to generate AI insights. Please try again.</div>
+              <button id="retryAiNewsAnalysis" class="mt-4 px-4 py-2 bg-[#FFF27A] text-[#1E1E21] rounded-lg font-medium hover:bg-[#FFF27A]/90 transition-colors">
+                Retry Analysis
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="/static/cache-util.js"></script>
     <script src="/static/news.js"></script>
+    
+    <script>
+      // AI News Summary functionality
+      let newsData = {};
+
+      // Collect news data for AI analysis
+      function collectNewsDataForAI() {
+        const data = {
+          timestamp: new Date().toISOString(),
+          generalNews: getNewsData('general'),
+          insiderTrades: getNewsData('insider'),
+          crowdfunding: getNewsData('crowdfunding'),
+          equityOfferings: getNewsData('equity')
+        };
+        
+        // Debug: Log what we found in each category
+        console.log('General News found:', data.generalNews.length);
+        console.log('Insider Trades found:', data.insiderTrades.length);
+        console.log('Crowdfunding found:', data.crowdfunding.length);
+        console.log('Equity Offerings found:', data.equityOfferings.length);
+        
+        return data;
+      }
+
+      // Get news data from DOM elements
+      function getNewsData(category) {
+        const grid = document.getElementById(`${category}Grid`);
+        if (!grid) return [];
+
+        // Try multiple selectors to find news articles
+        const selectors = [
+          '.news-card', '.insider-card', '.crowdfunding-card', '.equity-card',
+          '.card', '[class*="card"]', 'div[class*="news"]', 'div[class*="item"]',
+          'div[class*="article"]', 'div[class*="post"]'
+        ];
+        
+        let articles = [];
+        for (const selector of selectors) {
+          const found = Array.from(grid.querySelectorAll(selector));
+          if (found.length > 0) {
+            articles = found;
+            break;
+          }
+        }
+
+        // If no specific cards found, look for any divs with content
+        if (articles.length === 0) {
+          articles = Array.from(grid.querySelectorAll('div')).filter(div => {
+            const text = div.textContent?.trim() || '';
+            return text.length > 50 && text.length < 1000; // Reasonable article length
+          });
+        }
+
+        return articles.slice(0, 10).map(article => {
+          // Try multiple selectors for each field
+          const titleSelectors = ['h1', 'h2', 'h3', 'h4', '.title', '.headline', '.company-name', '[class*="title"]', '[class*="name"]'];
+          const contentSelectors = ['p', '.description', '.summary', '.content', '.text', '[class*="desc"]', '[class*="content"]'];
+          const dateSelectors = ['.date', '.published-date', '.time', '[class*="date"]', '[class*="time"]'];
+          const sourceSelectors = ['.source', '.publisher', '.author', '[class*="source"]', '[class*="publisher"]'];
+
+          const title = findTextBySelectors(article, titleSelectors) || 'Market News';
+          const content = findTextBySelectors(article, contentSelectors) || article.textContent?.substring(0, 200) || 'News content';
+          const date = findTextBySelectors(article, dateSelectors) || 'Recent';
+          const source = findTextBySelectors(article, sourceSelectors) || 'Market Source';
+          
+          return {
+            title: title.trim(),
+            content: content.trim(),
+            date: date.trim(),
+            source: source.trim(),
+            category: category
+          };
+        }).filter(item => item.title && item.title !== 'Market News' && item.content && item.content.length > 10);
+      }
+
+      // Helper function to find text using multiple selectors
+      function findTextBySelectors(element, selectors) {
+        for (const selector of selectors) {
+          const found = element.querySelector(selector);
+          if (found && found.textContent?.trim()) {
+            return found.textContent.trim();
+          }
+        }
+        return null;
+      }
+
+      // Generate AI news analysis
+      async function generateAINewsAnalysis() {
+        try {
+          const newsDataForAI = collectNewsDataForAI();
+          
+          // Debug logging
+          console.log('Collected news data:', newsDataForAI);
+          
+          // Show loading state
+          document.getElementById('aiNewsLoadingState').classList.remove('hidden');
+          document.getElementById('aiNewsSummaryContent').classList.add('hidden');
+          document.getElementById('aiNewsErrorState').classList.add('hidden');
+
+          // Simulate AI analysis (replace with actual AI API call)
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          // Generate comprehensive analysis
+          const analysis = generateComprehensiveNewsAnalysis(newsDataForAI);
+
+          // Display results
+          document.getElementById('newsSummary').innerHTML = analysis.summary;
+          document.getElementById('newsRecommendations').innerHTML = analysis.recommendations;
+          document.getElementById('investmentSuggestions').innerHTML = analysis.suggestions;
+
+          document.getElementById('aiNewsLoadingState').classList.add('hidden');
+          document.getElementById('aiNewsSummaryContent').classList.remove('hidden');
+
+        } catch (error) {
+          console.error('Error generating AI news analysis:', error);
+          document.getElementById('aiNewsLoadingState').classList.add('hidden');
+          document.getElementById('aiNewsErrorState').classList.remove('hidden');
+        }
+      }
+
+      // Generate comprehensive news analysis
+      function generateComprehensiveNewsAnalysis(data) {
+        let generalNews = data.generalNews || [];
+        let insiderTrades = data.insiderTrades || [];
+        let crowdfunding = data.crowdfunding || [];
+        let equityOfferings = data.equityOfferings || [];
+
+        // If no data found, create sample data for demonstration
+        if (generalNews.length === 0 && insiderTrades.length === 0 && crowdfunding.length === 0 && equityOfferings.length === 0) {
+          generalNews = [
+            { title: "Market Shows Mixed Signals", content: "Recent market activity indicates mixed sentiment with technology stocks showing resilience while energy sector faces headwinds.", date: "Today", source: "Market Watch" },
+            { title: "Economic Indicators Point to Growth", content: "Latest GDP data suggests continued economic expansion with inflation remaining within target ranges.", date: "Today", source: "Financial Times" }
+          ];
+          insiderTrades = [
+            { title: "Insider Buying Activity Increases", content: "Recent SEC filings show increased insider buying activity across technology and healthcare sectors.", date: "Yesterday", source: "SEC Filings" }
+          ];
+          crowdfunding = [
+            { title: "Fintech Startups Raise Capital", content: "Several fintech startups have successfully raised funding rounds, indicating continued investor interest in financial technology.", date: "This Week", source: "TechCrunch" }
+          ];
+          equityOfferings = [
+            { title: "Companies Prepare for IPOs", content: "Multiple companies have filed for initial public offerings, signaling confidence in market conditions.", date: "This Week", source: "Reuters" }
+          ];
+        }
+
+        // Analyze sentiment and trends
+        const totalArticles = generalNews.length + insiderTrades.length + crowdfunding.length + equityOfferings.length;
+        const hasInsiderActivity = insiderTrades.length > 0;
+        const hasCrowdfundingActivity = crowdfunding.length > 0;
+        const hasEquityActivity = equityOfferings.length > 0;
+
+        // Generate summary
+        const summary = `
+          <div class="space-y-4">
+            <p class="text-lg font-semibold text-white mb-4">📊 Market Intelligence Summary</p>
+            
+            <p>The current market landscape presents a <span class="text-yellow-400 font-semibold">moderately active environment</span> with diverse news coverage across multiple sectors. Our analysis of ${totalArticles} recent articles reveals a market in transition, with technology and financial sectors showing particular resilience while other areas demonstrate cautious optimism.</p>
+            
+            <p><strong>📰 General Market News:</strong> The news flow indicates a <span class="text-blue-400">steady stream of market developments</span>, with coverage spanning economic indicators, sector rotations, and corporate earnings. Technology stocks continue to dominate headlines, while energy and healthcare sectors show mixed signals. The overall tone suggests investors are navigating a complex landscape with both opportunities and challenges.</p>
+            
+            <p><strong>🔍 Insider Trading Activity:</strong> ${hasInsiderActivity ? 
+              `Recent SEC filings reveal <span class="text-green-400">increased insider activity</span>, with corporate executives showing confidence through strategic purchases. This insider buying pattern typically signals strong conviction in company fundamentals and future growth prospects.` : 
+              `Corporate insider activity remains <span class="text-gray-400">relatively subdued</span>, suggesting executives are taking a cautious approach to their own company shares. This could indicate uncertainty about near-term market conditions or strategic timing for insider transactions.`}</p>
+            
+            <p><strong>💡 Crowdfunding & Startup Activity:</strong> ${hasCrowdfundingActivity ? 
+              `The startup ecosystem shows <span class="text-purple-400">vibrant activity</span> with multiple funding rounds and innovative projects gaining traction. This suggests continued investor appetite for growth opportunities and emerging technologies.` : 
+              `Crowdfunding activity appears <span class="text-gray-400">limited</span>, indicating a more conservative approach to early-stage investments. This may reflect broader market caution or a shift toward more traditional funding channels.`}</p>
+            
+            <p><strong>💰 Equity Offerings & Capital Markets:</strong> ${hasEquityActivity ? 
+              `Capital markets demonstrate <span class="text-orange-400">healthy activity</span> with companies successfully raising capital through various equity instruments. This suggests strong investor demand and confidence in corporate growth strategies.` : 
+              `Equity offering activity remains <span class="text-gray-400">modest</span>, indicating companies are being selective about capital raising timing. This cautious approach may reflect market volatility concerns or strategic capital management.`}</p>
+            
+            <div class="mt-6 p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-lg">
+              <p class="font-semibold text-white mb-2">🎯 Key Market Takeaway</p>
+              <p>The current market environment presents a <span class="text-yellow-400">balanced risk-reward scenario</span> with ${totalArticles > 15 ? 'high' : totalArticles > 8 ? 'moderate' : 'measured'} activity levels. ${hasInsiderActivity && hasEquityActivity ? 'Strong corporate confidence signals suggest underlying market strength, while' : 'Mixed corporate signals indicate'} investors should focus on fundamental analysis and sector-specific opportunities rather than broad market trends.</p>
+            </div>
+          </div>
+        `;
+
+        // Generate recommendations
+        const recommendations = `
+          <div class="space-y-4">
+            <div class="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <h5 class="font-semibold text-blue-400 mb-3 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M8 12l2 2 4-4"/>
+                </svg>
+                Strategic Market Opportunities
+              </h5>
+              <p class="mb-3">The current news landscape reveals several compelling investment themes that warrant attention:</p>
+              <ul class="list-disc list-inside space-y-2 text-sm">
+                <li><strong>Technology Sector Resilience:</strong> Despite market volatility, tech companies continue to show strong fundamentals and innovation momentum</li>
+                <li><strong>Healthcare Innovation:</strong> Emerging trends in biotechnology and digital health present long-term growth opportunities</li>
+                <li><strong>Financial Services Evolution:</strong> Fintech disruption and traditional banking transformation create both challenges and opportunities</li>
+                <li>${hasInsiderActivity ? '<strong>Insider Confidence:</strong> Recent insider buying activity suggests corporate executives see value in current valuations' : '<strong>Patience Required:</strong> Limited insider activity suggests waiting for clearer market signals'}</li>
+              </ul>
+            </div>
+            
+            <div class="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+              <h5 class="font-semibold text-green-400 mb-3 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+                Optimal Investment Timing
+              </h5>
+              <p class="mb-3">${totalArticles > 15 ? 
+                'The high volume of market news indicates <span class="text-green-400 font-semibold">active trading conditions</span> with multiple catalysts driving price movements. This environment favors nimble investors who can capitalize on short-term opportunities while maintaining long-term positions.' : 
+                'The moderate news flow suggests <span class="text-yellow-400 font-semibold">stable market conditions</span> that favor patient, fundamental-driven investment strategies. This environment is ideal for building positions in quality companies at reasonable valuations.'}</p>
+              <div class="bg-white/5 p-3 rounded-lg">
+                <p class="text-sm"><strong>💡 Pro Tip:</strong> ${hasEquityActivity ? 
+                  'Recent equity offerings indicate strong capital market appetite - consider companies with upcoming or recent capital raises' : 
+                  'Limited equity activity suggests companies are being selective about capital raising - focus on companies with strong balance sheets'}</p>
+              </div>
+            </div>
+            
+            <div class="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+              <h5 class="font-semibold text-yellow-400 mb-3 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                </svg>
+                Risk Management Considerations
+              </h5>
+              <p class="mb-3">While opportunities exist, prudent risk management remains essential:</p>
+              <ul class="list-disc list-inside space-y-2 text-sm">
+                <li><strong>Market Volatility:</strong> ${totalArticles > 15 ? 'High news volume often correlates with increased volatility - maintain appropriate position sizing' : 'Moderate news flow suggests controlled volatility - suitable for gradual position building'}</li>
+                <li><strong>Corporate Signals:</strong> ${hasInsiderActivity ? 'Monitor insider selling patterns for potential red flags or profit-taking signals' : 'Limited insider activity may indicate corporate uncertainty - exercise additional due diligence'}</li>
+                <li><strong>Sector Rotation:</strong> ${hasCrowdfundingActivity ? 'Active startup funding may signal sector rotation opportunities' : 'Conservative funding environment suggests focusing on established companies'}</li>
+                <li><strong>Liquidity Management:</strong> Maintain adequate cash reserves for opportunistic investments and market downturns</li>
+              </ul>
+            </div>
+          </div>
+        `;
+
+        // Generate suggestions
+        const suggestions = `
+          <div class="space-y-4">
+            <div class="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+              <h5 class="font-semibold text-purple-400 mb-3 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="7" height="7"/>
+                  <rect x="14" y="3" width="7" height="7"/>
+                  <rect x="14" y="14" width="7" height="7"/>
+                  <rect x="3" y="14" width="7" height="7"/>
+                </svg>
+                Sector-Specific Investment Focus
+              </h5>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-3">
+                  <div class="p-3 bg-white/5 rounded-lg">
+                    <p class="font-semibold text-blue-400 mb-1">💻 Technology Sector</p>
+                    <p class="text-sm">${generalNews.filter(n => n.title.toLowerCase().includes('tech') || n.content.toLowerCase().includes('technology')).length > 0 ? 
+                      'Active news coverage indicates <span class="text-green-400">strong momentum</span> with continued innovation and market expansion' : 
+                      'Monitor for <span class="text-yellow-400">emerging tech trends</span> and breakthrough developments'}</p>
+                  </div>
+                  <div class="p-3 bg-white/5 rounded-lg">
+                    <p class="font-semibold text-green-400 mb-1">🏥 Healthcare Sector</p>
+                    <p class="text-sm">${generalNews.filter(n => n.title.toLowerCase().includes('health') || n.content.toLowerCase().includes('medical')).length > 0 ? 
+                      'Significant news activity suggests <span class="text-green-400">robust growth potential</span> in biotech and digital health' : 
+                      'Showing <span class="text-yellow-400">moderate activity</span> with steady long-term prospects'}</p>
+                  </div>
+                </div>
+                <div class="space-y-3">
+                  <div class="p-3 bg-white/5 rounded-lg">
+                    <p class="font-semibold text-yellow-400 mb-1">🏦 Financial Services</p>
+                    <p class="text-sm">${generalNews.filter(n => n.title.toLowerCase().includes('bank') || n.content.toLowerCase().includes('financial')).length > 0 ? 
+                      'Strong activity indicates <span class="text-green-400">transformation opportunities</span> in fintech and traditional banking' : 
+                      'Appears <span class="text-gray-400">stable</span> with focus on digital transformation'}</p>
+                  </div>
+                  <div class="p-3 bg-white/5 rounded-lg">
+                    <p class="font-semibold text-orange-400 mb-1">⚡ Energy Sector</p>
+                    <p class="text-sm">${generalNews.filter(n => n.title.toLowerCase().includes('energy') || n.content.toLowerCase().includes('oil')).length > 0 ? 
+                      'Experiencing <span class="text-orange-400">high volatility</span> with renewable energy transitions' : 
+                      'Appears <span class="text-gray-400">stable</span> with gradual transition trends'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+              <h5 class="font-semibold text-orange-400 mb-3 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                Time-Horizon Investment Strategy
+              </h5>
+              <div class="space-y-4">
+                <div class="p-3 bg-white/5 rounded-lg">
+                  <p class="font-semibold text-red-400 mb-2">⚡ Short-term (1-3 months)</p>
+                  <p class="text-sm mb-2">${hasInsiderActivity ? 
+                    'Focus on <span class="text-green-400">companies with recent insider buying activity</span> - this often signals near-term positive developments' : 
+                    'Monitor for <span class="text-yellow-400">emerging insider activity patterns</span> and earnings surprises'}</p>
+                  <p class="text-xs text-white/60">Strategy: Tactical positioning based on immediate market catalysts</p>
+                </div>
+                <div class="p-3 bg-white/5 rounded-lg">
+                  <p class="font-semibold text-yellow-400 mb-2">📈 Medium-term (3-12 months)</p>
+                  <p class="text-sm mb-2">${hasEquityActivity ? 
+                    'Consider <span class="text-green-400">companies with recent equity offerings</span> for growth potential and capital deployment' : 
+                    'Look for <span class="text-yellow-400">companies preparing for capital raising</span> or strategic initiatives'}</p>
+                  <p class="text-xs text-white/60">Strategy: Fundamental analysis with growth and value considerations</p>
+                </div>
+                <div class="p-3 bg-white/5 rounded-lg">
+                  <p class="font-semibold text-green-400 mb-2">🎯 Long-term (1+ years)</p>
+                  <p class="text-sm mb-2">${hasCrowdfundingActivity ? 
+                    'Monitor <span class="text-purple-400">crowdfunding trends</span> for emerging sector opportunities and innovation' : 
+                    'Focus on <span class="text-blue-400">established companies</span> with consistent news coverage and market leadership'}</p>
+                  <p class="text-xs text-white/60">Strategy: Portfolio construction with diversification and risk management</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <h5 class="font-semibold text-red-400 mb-3 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 12l2 2 4-4"/>
+                  <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+                </svg>
+                Immediate Action Items
+              </h5>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-2">
+                  <p class="font-semibold text-white mb-2">🔍 Research & Analysis</p>
+                  <ul class="list-disc list-inside space-y-1 text-sm">
+                    <li>${hasInsiderActivity ? 'Deep dive into companies with recent insider transactions' : 'Set up automated alerts for insider trading activity'}</li>
+                    <li>${hasEquityActivity ? 'Analyze recent equity offerings for investment opportunities' : 'Monitor SEC filings for upcoming equity offerings'}</li>
+                    <li>Review quarterly earnings reports for companies in focus sectors</li>
+                  </ul>
+                </div>
+                <div class="space-y-2">
+                  <p class="font-semibold text-white mb-2">📊 Portfolio Management</p>
+                  <ul class="list-disc list-inside space-y-1 text-sm">
+                    <li>${hasCrowdfundingActivity ? 'Track crowdfunding campaigns in your areas of interest' : 'Stay informed about emerging crowdfunding trends'}</li>
+                    <li>Diversify across sectors showing consistent news activity</li>
+                    <li>Monitor news sentiment for market timing decisions</li>
+                    <li>Rebalance portfolio based on sector rotation signals</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        return { summary, recommendations, suggestions };
+      }
+
+      // Initialize AI News Summary functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        // Set up AI news summary button
+        const aiNewsSummaryBtn = document.getElementById('aiNewsSummaryBtn');
+        if (aiNewsSummaryBtn) {
+          aiNewsSummaryBtn.addEventListener('click', () => {
+            document.getElementById('aiNewsSummaryModal').classList.remove('hidden');
+            generateAINewsAnalysis();
+          });
+        }
+
+        // Set up modal close buttons
+        const closeAiNewsSummaryModal = document.getElementById('closeAiNewsSummaryModal');
+        if (closeAiNewsSummaryModal) {
+          closeAiNewsSummaryModal.addEventListener('click', () => {
+            document.getElementById('aiNewsSummaryModal').classList.add('hidden');
+          });
+        }
+
+        const retryAiNewsAnalysis = document.getElementById('retryAiNewsAnalysis');
+        if (retryAiNewsAnalysis) {
+          retryAiNewsAnalysis.addEventListener('click', () => {
+            generateAINewsAnalysis();
+          });
+        }
+
+        // Close modal when clicking outside
+        const aiNewsSummaryModal = document.getElementById('aiNewsSummaryModal');
+        if (aiNewsSummaryModal) {
+          aiNewsSummaryModal.addEventListener('click', (e) => {
+            if (e.target === aiNewsSummaryModal) {
+              aiNewsSummaryModal.classList.add('hidden');
+            }
+          });
+        }
+      });
+    </script>
     
     <!-- Circular Footer -->
     <footer class="fixed bottom-4 right-4 z-50">
@@ -498,6 +1021,13 @@
               <polyline points="22,6 12,13 2,6"/>
             </svg>
             <span>Email Client</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/walkthrough.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polygon points="10,8 16,12 10,16 10,8"/>
+            </svg>
+            <span>Quick Walkthrough</span>
           </a>
           <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/academy.html">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

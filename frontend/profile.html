@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PitchLense — Profile</title>
+    <meta http-equiv="Cache-Control" content="public, max-age=300">
+    <meta http-equiv="Expires" content="300">
+    <link rel="icon" type="image/svg+xml" href="/static/logo.svg" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = { theme: { extend: { colors: { background:'#1E1E21', surface:'#2E3137', text:'#ffffff', secondary:'#cfd4dd', accent:'#f1d85b' }}}}
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="bg-background text-text font-sans antialiased overflow-x-hidden bg-solid">
+    <div class="h-screen flex flex-col p-3 gap-3">
+      <!-- Header -->
+      <header class="h-16 bg-[#2E3137] border border-white/10 rounded-[22px] flex items-center justify-between px-6 mobile-header">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-transparent grid place-items-center">
+            <img src="/static/logo.svg" class="w-6 h-6"/>
+          </div>
+          <div class="text-base font-semibold">PitchLense</div>
+        </div>
+        <div class="flex items-center gap-3">
+          <!-- Mobile menu button -->
+          <button id="mobileMenuBtn" class="md:hidden w-9 h-9 grid place-items-center rounded-full bg-[#FFF27A] border border-white/10 text-[#1E1E21]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <div id="userProfileIcon" class="w-9 h-9 rounded-full border border-white/10 bg-[#FFF27A] grid place-items-center text-[#1E1E21] relative group">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.31 0-6 2.69-6 6h12c0-3.31-2.69-6-6-6Z"/>
+            </svg>
+            <div id="userEmailTooltip" class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+              <span id="userEmailText">Loading...</span>
+              <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-[#1E1E21]"></div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="grid flex-1 min-h-0 mobile-navbar" style="grid-template-columns: 84px 1fr; gap:12px;">
+        <!-- Mobile responsive styles -->
+        <style>
+          /* Mobile responsive styles */
+          @media (max-width: 768px) {
+            .mobile-navbar {
+              grid-template-columns: 1fr !important;
+              gap: 8px !important;
+            }
+            .mobile-main {
+              padding: 12px !important;
+            }
+            .mobile-header {
+              padding: 12px 16px !important;
+            }
+            #pitchlense-navbar {
+              display: none !important;
+            }
+            
+            /* Profile grid - 1 column on mobile */
+            #profileGrid {
+              grid-template-columns: 1fr !important;
+            }
+            
+            /* Stats grid - 2 columns on mobile */
+            #statsGrid {
+              grid-template-columns: repeat(2, 1fr) !important;
+            }
+            
+            /* Mobile cards */
+            .mobile-card {
+              padding: 16px !important;
+              margin-bottom: 16px !important;
+            }
+            
+            /* Mobile text sizes */
+            .mobile-text-lg {
+              font-size: 1.125rem !important;
+            }
+            .mobile-text-sm {
+              font-size: 0.875rem !important;
+            }
+          }
+          
+          @media (max-width: 480px) {
+            .mobile-card {
+              padding: 16px !important;
+            }
+            .mobile-header {
+              padding: 8px 12px !important;
+            }
+            .mobile-main {
+              padding: 8px !important;
+            }
+            
+            /* Stats grid - 1 column on very small screens */
+            #statsGrid {
+              grid-template-columns: 1fr !important;
+            }
+          }
+        </style>
+
+        <!-- Sidebar Navigation -->
+        <aside id="pitchlense-navbar" class="bg-[#2C2F34] border border-white/10 rounded-[18px] flex flex-col items-center py-4 gap-3 h-full">
+          <!-- Navbar content will be rendered by navbar.js -->
+        </aside>
+
+        <!-- Main Content -->
+        <main class="h-full flex flex-col overflow-hidden mobile-main">
+          <!-- Page Header -->
+          <div class="mb-6">
+            <h1 class="text-3xl font-bold text-white mb-2 mobile-text-lg">Profile Dashboard</h1>
+            <p class="text-secondary mobile-text-sm">Manage your account and view your activity statistics</p>
+          </div>
+
+          <!-- Profile Content -->
+          <div class="flex-1 min-h-0 overflow-y-auto">
+            <!-- Profile Grid -->
+            <div id="profileGrid" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+              <!-- User Info Card -->
+              <div class="lg:col-span-1">
+                <div class="bg-[#2E3137] border border-white/10 rounded-[22px] p-6 mobile-card">
+                  <div class="flex items-center gap-4 mb-6">
+                    <div class="w-16 h-16 rounded-full bg-accent flex items-center justify-center text-2xl font-bold text-[#1E1E21]">
+                      <span id="userInitials">U</span>
+                    </div>
+                    <div>
+                      <h2 class="text-xl font-semibold text-white" id="userName">User Name</h2>
+                      <p class="text-secondary" id="userEmail">user@example.com</p>
+                      <p class="text-sm text-white/60">Member since <span id="memberSince">2024</span></p>
+                    </div>
+                  </div>
+                  
+                  <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                      <span class="text-secondary">Account Status</span>
+                      <span class="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">Active</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-secondary">Last Login</span>
+                      <span class="text-white text-sm" id="lastLogin">Today</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-secondary">Reports Generated</span>
+                      <span class="text-white font-semibold" id="totalReports">0</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick Stats -->
+              <div class="lg:col-span-2">
+                <div class="bg-[#2E3137] border border-white/10 rounded-[22px] p-6 mobile-card">
+                  <h3 class="text-lg font-semibold text-white mb-4">Quick Overview</h3>
+                  <div id="statsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Stats will be populated by JavaScript -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Detailed Statistics -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <!-- Reports Activity -->
+              <div class="bg-[#2E3137] border border-white/10 rounded-[22px] p-6">
+                <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                  </svg>
+                  Reports Activity
+                </h3>
+                <div class="space-y-4">
+                  <div class="flex items-center justify-between">
+                    <span class="text-secondary">Total Reports</span>
+                    <span class="text-white font-semibold" id="totalReportsDetail">0</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-secondary">This Month</span>
+                    <span class="text-white font-semibold" id="reportsThisMonth">0</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-secondary">Last Report</span>
+                    <span class="text-white text-sm" id="lastReportDate">Never</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Co-pilot Usage -->
+              <div class="bg-[#2E3137] border border-white/10 rounded-[22px] p-6">
+                <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  Co-pilot Usage
+                </h3>
+                <div class="space-y-4">
+                  <div class="flex items-center justify-between">
+                    <span class="text-secondary">Total Chats</span>
+                    <span class="text-white font-semibold" id="totalChats">0</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-secondary">This Month</span>
+                    <span class="text-white font-semibold" id="chatsThisMonth">0</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-secondary">Last Chat</span>
+                    <span class="text-white text-sm" id="lastChatDate">Never</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Additional Statistics -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+              <!-- File Uploads -->
+              <div class="bg-[#2E3137] border border-white/10 rounded-[22px] p-6">
+                <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                  </svg>
+                  File Uploads
+                </h3>
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <span class="text-secondary">Total Files</span>
+                    <span class="text-white font-semibold" id="totalFiles">0</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Follow-ups -->
+              <div class="bg-[#2E3137] border border-white/10 rounded-[22px] p-6">
+                <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    <path d="M8 9h8"/>
+                    <path d="M8 13h6"/>
+                  </svg>
+                  Follow-ups
+                </h3>
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <span class="text-secondary">Total Asked</span>
+                    <span class="text-white font-semibold" id="totalFollowUps">0</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-secondary">This Month</span>
+                    <span class="text-white font-semibold" id="followUpsThisMonth">0</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Investments -->
+              <div class="bg-[#2E3137] border border-white/10 rounded-[22px] p-6">
+                <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="1" x2="12" y2="23"/>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                  </svg>
+                  Investments
+                </h3>
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <span class="text-secondary">Total Tracked</span>
+                    <span class="text-white font-semibold" id="totalInvestments">0</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-secondary">Active</span>
+                    <span class="text-white font-semibold" id="activeInvestments">0</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- Page Loader -->
+    <div id="pageLoader" class="fixed inset-0 bg-background flex items-center justify-center z-50">
+      <div class="text-center">
+        <div class="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p class="text-secondary">Loading profile...</p>
+      </div>
+    </div>
+
+    <script>
+      // Global variables
+      let userData = null;
+      let profileStats = null;
+      
+      // Cache configuration
+      const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+      let cacheTimestamp = null;
+
+      // Page loader functions
+      function showPageLoader() {
+        const loader = document.getElementById('pageLoader');
+        if (loader) loader.classList.remove('hidden');
+      }
+
+      function hidePageLoader() {
+        const loader = document.getElementById('pageLoader');
+        if (loader) loader.classList.add('hidden');
+      }
+
+      // Check if cache is valid
+      function isCacheValid() {
+        if (!cacheTimestamp) return false;
+        return (Date.now() - cacheTimestamp) < CACHE_DURATION;
+      }
+
+      // Fetch user profile data with caching
+      async function fetchUserProfile() {
+        // Check if we have valid cached data
+        if (userData && profileStats && isCacheValid()) {
+          console.log('Using cached profile data');
+          populateProfileData();
+          return;
+        }
+
+        try {
+          const response = await fetch('/api/profile', {
+            credentials: 'include',
+            headers: {
+              'Cache-Control': 'max-age=300',
+              'If-None-Match': localStorage.getItem('profile-etag') || ''
+            }
+          });
+
+          if (response.status === 401) {
+            window.location.href = '/auth.html';
+            return;
+          }
+
+          if (response.status === 304) {
+            // Use cached data if server returns 304 Not Modified
+            console.log('Using cached data (304)');
+            populateProfileData();
+            return;
+          }
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch profile data');
+          }
+
+          const data = await response.json();
+          userData = data.user;
+          profileStats = data.stats;
+          
+          // Update cache timestamp
+          cacheTimestamp = Date.now();
+          
+          // Store ETag for future requests
+          const etag = response.headers.get('ETag');
+          if (etag) {
+            localStorage.setItem('profile-etag', etag);
+          }
+          
+          populateProfileData();
+        } catch (error) {
+          console.error('Error fetching profile data:', error);
+          showError('Failed to load profile data');
+        }
+      }
+
+      // Populate profile data
+      function populateProfileData() {
+        console.log('populateProfileData called', { userData, profileStats });
+        if (!userData || !profileStats) {
+          console.log('Missing data:', { userData, profileStats });
+          return;
+        }
+
+        try {
+        // User basic info
+        document.getElementById('userName').textContent = userData.email;
+        document.getElementById('userEmail').textContent = userData.email;
+        document.getElementById('userEmailText').textContent = userData.email;
+      
+      // User initials - use first character of email
+      const initials = userData.email ? userData.email.charAt(0).toUpperCase() : 'U';
+      document.getElementById('userInitials').textContent = initials;
+        
+        // Member since
+        const memberSince = new Date(userData.created_at).getFullYear();
+        document.getElementById('memberSince').textContent = memberSince;
+        
+        // Last login
+        const lastLogin = new Date(userData.last_login || userData.created_at);
+        const now = new Date();
+        const diffTime = Math.abs(now - lastLogin);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) {
+          document.getElementById('lastLogin').textContent = 'Yesterday';
+        } else if (diffDays < 7) {
+          document.getElementById('lastLogin').textContent = `${diffDays} days ago`;
+        } else {
+          document.getElementById('lastLogin').textContent = lastLogin.toLocaleDateString();
+        }
+
+          // Populate statistics
+          populateStatistics();
+          
+          // Hide loader
+          hidePageLoader();
+        } catch (error) {
+          console.error('Error in populateProfileData:', error);
+          showError('Failed to populate profile data');
+        }
+      }
+
+      // Populate statistics
+      function populateStatistics() {
+        console.log('populateStatistics called', profileStats);
+        if (!profileStats) return;
+
+        try {
+
+        // Quick stats grid
+        const statsGrid = document.getElementById('statsGrid');
+        statsGrid.innerHTML = `
+          <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-accent mb-1">${profileStats.total_reports || 0}</div>
+            <div class="text-sm text-secondary">Reports</div>
+          </div>
+          <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-accent mb-1">${profileStats.total_chats || 0}</div>
+            <div class="text-sm text-secondary">Chats</div>
+          </div>
+          <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-accent mb-1">${profileStats.total_files || 0}</div>
+            <div class="text-sm text-secondary">Files</div>
+          </div>
+          <div class="bg-[#1E1E21] border border-white/10 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-accent mb-1">${profileStats.total_investments || 0}</div>
+            <div class="text-sm text-secondary">Investments</div>
+          </div>
+        `;
+
+        // Detailed statistics
+        document.getElementById('totalReports').textContent = profileStats.total_reports || 0;
+        document.getElementById('totalReportsDetail').textContent = profileStats.total_reports || 0;
+        document.getElementById('reportsThisMonth').textContent = profileStats.reports_this_month || 0;
+        document.getElementById('lastReportDate').textContent = profileStats.last_report_date || 'Never';
+
+        document.getElementById('totalChats').textContent = profileStats.total_chats || 0;
+        document.getElementById('chatsThisMonth').textContent = profileStats.chats_this_month || 0;
+        document.getElementById('lastChatDate').textContent = profileStats.last_chat_date || 'Never';
+
+        document.getElementById('totalFiles').textContent = profileStats.total_files || 0;
+
+        document.getElementById('totalFollowUps').textContent = profileStats.total_follow_ups || 0;
+        document.getElementById('followUpsThisMonth').textContent = profileStats.follow_ups_this_month || 0;
+
+        document.getElementById('totalInvestments').textContent = profileStats.total_investments || 0;
+        document.getElementById('activeInvestments').textContent = profileStats.active_investments || 0;
+        } catch (error) {
+          console.error('Error in populateStatistics:', error);
+        }
+      }
+
+
+      // Helper functions
+
+      function formatTimeAgo(timestamp) {
+        const now = new Date();
+        const time = new Date(timestamp);
+        const diffTime = Math.abs(now - time);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) return 'Yesterday';
+        if (diffDays < 7) return `${diffDays} days ago`;
+        if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+        return time.toLocaleDateString();
+      }
+
+      function getActivityIcon(type) {
+        const icons = {
+          'report': '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/>',
+          'chat': '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+          'file': '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/>',
+          'investment': '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+          'followup': '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8"/><path d="M8 13h6"/>'
+        };
+        return icons[type] || '<circle cx="12" cy="12" r="10"/>';
+      }
+
+      function showError(message) {
+        Swal.fire({
+          title: 'Error',
+          text: message,
+          icon: 'error',
+          confirmButtonColor: '#f1d85b',
+          background: '#2E3137',
+          color: '#ffffff'
+        });
+      }
+
+
+      // Sign out functionality
+      document.getElementById('signoutBtn')?.addEventListener('click', async () => {
+        try {
+          await fetch('/api/auth/logout', { method: 'POST' });
+          window.location.href = '/auth.html';
+        } catch (error) {
+          console.error('Logout error:', error);
+          window.location.href = '/auth.html';
+        }
+      });
+
+      // Initialize page
+      document.addEventListener('DOMContentLoaded', () => {
+        // Check authentication and load data
+        fetch('/api/auth/me').then(r => r.json()).then(d => {
+          if (!d.user) {
+            window.location.href = '/auth.html';
+          } else {
+            // Load user email in tooltip
+            const userEmailText = document.getElementById('userEmailText');
+            if (userEmailText) {
+              userEmailText.textContent = d.user.email;
+            }
+            // Load profile data after authentication check
+            fetchUserProfile();
+          }
+        }).catch(() => {
+          hidePageLoader();
+          window.location.href = '/auth.html';
+        });
+      });
+    </script>
+    <!-- Mobile Navigation Menu -->
+    <div id="mobileMenu" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden md:hidden">
+      <div class="bg-[#2C2F34] border border-white/10 rounded-[18px] m-4 p-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-white">Navigation</h3>
+          <button id="closeMobileMenu" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <nav class="flex flex-col gap-2 text-white/80">
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/create-report.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span>Create Report</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/view-report.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <line x1="9" y1="17" x2="9" y2="11"/>
+              <line x1="13" y1="17" x2="13" y2="7"/>
+              <line x1="17" y1="17" x2="17" y2="13"/>
+            </svg>
+            <span>Reports</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/market.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3v18h18"/>
+              <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+            </svg>
+            <span>Market Data</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/investment.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            <span>Investments</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/search.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span>Search Symbols</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/news.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
+              <line x1="7" y1="8" x2="17" y2="8"/>
+              <line x1="7" y1="12" x2="17" y2="12"/>
+              <line x1="7" y1="16" x2="13" y2="16"/>
+            </svg>
+            <span>Market News</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/extension.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            <span>Extension</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/email.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <span>Email Client</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/walkthrough.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polygon points="10,8 16,12 10,16 10,8"/>
+            </svg>
+            <span>Quick Walkthrough</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/10" href="/profile.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.31 0-6 2.69-6 6h12c0-3.31-2.69-6-6-6Z"/>
+            </svg>
+            <span>Profile</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/academy.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+            <span>PitchLense Academy</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="https://youtu.be/XUuLeXaEIdI" target="_blank">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+            <span>How to use PitchLense</span>
+          </a>
+          <div class="border-t border-white/10 my-2"></div>
+          <button id="mobileSignoutBtn" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 text-white/80">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            <span>Sign out</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Mobile Menu JavaScript -->
+    <script>
+      // Mobile menu functionality
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      const mobileMenu = document.getElementById('mobileMenu');
+      const closeMobileMenu = document.getElementById('closeMobileMenu');
+      const mobileSignoutBtn = document.getElementById('mobileSignoutBtn');
+
+      if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          mobileMenu.classList.remove('hidden');
+        });
+      }
+
+      if (closeMobileMenu && mobileMenu) {
+        closeMobileMenu.addEventListener('click', () => {
+          mobileMenu.classList.add('hidden');
+        });
+      }
+
+      if (mobileSignoutBtn) {
+        mobileSignoutBtn.addEventListener('click', async () => {
+          try { await fetch('/api/auth/logout',{method:'POST'}); } catch(e) {}
+          window.location.href='/auth.html';
+        });
+      }
+
+      // Close mobile menu when clicking outside
+      if (mobileMenu) {
+        mobileMenu.addEventListener('click', (e) => {
+          if (e.target === mobileMenu) {
+            mobileMenu.classList.add('hidden');
+          }
+        });
+      }
+    </script>
+
+    <script src="/static/navbar.js"></script>
+  </body>
+</html>

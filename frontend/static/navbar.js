@@ -134,6 +134,25 @@ function renderNavbar(activePage = '') {
       </svg>`
     },
     {
+      id: 'profile',
+      href: '/profile.html',
+      title: 'Profile',
+      tooltip: 'Profile',
+      icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+        <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.31 0-6 2.69-6 6h12c0-3.31-2.69-6-6-6Z"/>
+      </svg>`
+    },
+    {
+      id: 'walkthrough',
+      href: '/walkthrough.html',
+      title: 'Walkthrough',
+      tooltip: 'Quick Walkthrough',
+      icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <polygon points="10,8 16,12 10,16 10,8"/>
+      </svg>`
+    },
+    {
       id: 'youtube',
       href: 'https://youtu.be/XUuLeXaEIdI',
       title: 'YouTube',
@@ -212,6 +231,8 @@ function getCurrentPage() {
   if (path.includes('meeting-assistant')) return 'meeting-assistant';
   if (path.includes('extension')) return 'extension';
   if (path.includes('email')) return 'email';
+  if (path.includes('profile')) return 'profile';
+  if (path.includes('walkthrough')) return 'walkthrough';
   return '';
 }
 

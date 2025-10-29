@@ -1,19 +1,50 @@
-// Mobile Navigation Updater Script
-// This script helps apply mobile navigation to all pages
-
-const mobileNavPattern = {
-  // Mobile menu button HTML
-  mobileMenuButton: `<!-- Mobile menu button -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PitchLense — Quick Walkthrough</title>
+    <link rel="icon" type="image/svg+xml" href="/static/logo.svg" />
+    <script>
+      tailwind.config = { theme: { extend: { colors: { background:'#1E1E21', surface:'#2E3137', text:'#ffffff', secondary:'#cfd4dd', accent:'#f1d85b' }}}}
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="bg-background text-text font-sans antialiased overflow-x-hidden bg-solid">
+    <div class="h-screen flex flex-col p-3 gap-3">
+      <header class="h-16 bg-[#2E3137] border border-white/10 rounded-[22px] flex items-center justify-between px-6 mobile-header">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-accent grid place-items-center"><img src="/static/logo.svg" class="w-5 h-5"/></div>
+          <div class="text-base font-semibold">PitchLense</div>
+        </div>
+        <div class="flex items-center gap-3">
+          <!-- Mobile menu button -->
           <button id="mobileMenuBtn" class="md:hidden w-9 h-9 grid place-items-center rounded-full bg-[#FFF27A] border border-white/10 text-[#1E1E21]">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="3" y1="6" x2="21" y2="6"/>
               <line x1="3" y1="12" x2="21" y2="12"/>
               <line x1="3" y1="18" x2="21" y2="18"/>
             </svg>
-          </button>`,
+          </button>
+          <div id="userProfileIcon" class="w-9 h-9 rounded-full border border-white/10 bg-[#FFF27A] grid place-items-center text-[#1E1E21] relative group">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.31 0-6 2.69-6 6h12c0-3.31-2.69-6-6-6Z"/>
+            </svg>
+            <div id="userEmailTooltip" class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-[#1E1E21] text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+              <span id="userEmailText">Loading...</span>
+              <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-[#1E1E21]"></div>
+            </div>
+          </div>
+        </div>
+      </header>
 
-  // Mobile responsive CSS
-  mobileCSS: `        <!-- Mobile responsive styles -->
+      <div class="grid flex-1 min-h-0 mobile-navbar" style="grid-template-columns: 84px 1fr; gap:12px;">
+        <!-- Mobile responsive styles -->
         <style>
           @media (max-width: 768px) {
             .mobile-navbar {
@@ -41,10 +72,30 @@ const mobileNavPattern = {
               padding: 8px !important;
             }
           }
-        </style>`,
+        </style>
+        <aside id="pitchlense-navbar" class="bg-[#2C2F34] border border-white/10 rounded-[18px] flex flex-col items-center py-4 gap-3">
+          <!-- Navbar content will be rendered by navbar.js -->
+        </aside>
 
-  // Mobile navigation menu
-  mobileMenu: `    <!-- Mobile Navigation Menu -->
+        <main id="mainContent" class="flex-1 overflow-y-auto p-4 mobile-main">
+          <!-- Walkthrough Content -->
+          <div class="min-h-[60vh] grid place-items-center">
+            <div class="text-center">
+              <div class="mx-auto w-20 h-20 rounded-2xl bg-white/5 border border-white/10 grid place-items-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white/70">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polygon points="10,8 16,12 10,16 10,8"/>
+                </svg>
+              </div>
+              <div class="text-lg font-semibold">Quick Walkthrough</div>
+              <div class="text-sm text-white/60 mt-1">Coming Soon</div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Menu -->
     <div id="mobileMenu" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden md:hidden">
       <div class="bg-[#2C2F34] border border-white/10 rounded-[18px] m-4 p-4">
         <div class="flex items-center justify-between mb-4">
@@ -103,14 +154,21 @@ const mobileNavPattern = {
             </svg>
             <span>Market News</span>
           </a>
-          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/extension.html">
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/networking.html">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="7" height="7"/>
-              <rect x="14" y="3" width="7" height="7"/>
-              <rect x="14" y="14" width="7" height="7"/>
-              <rect x="3" y="14" width="7" height="7"/>
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
-            <span>Extension</span>
+            <span>Networking</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/meeting-assistant.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="14" height="14" rx="2" ry="2"></rect>
+              <polygon points="16 7 22 11 22 13 16 17 16 7"></polygon>
+            </svg>
+            <span>Meeting Assistant</span>
           </a>
           <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/email.html">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -119,12 +177,34 @@ const mobileNavPattern = {
             </svg>
             <span>Email Client</span>
           </a>
-          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/walkthrough.html">
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/10" href="/walkthrough.html">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"/>
               <polygon points="10,8 16,12 10,16 10,8"/>
             </svg>
             <span>Quick Walkthrough</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/profile.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.31 0-6 2.69-6 6h12c0-3.31-2.69-6-6-6Z"/>
+            </svg>
+            <span>Profile</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/academy.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+            <span>PitchLense Academy</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/extension.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            <span>Extension</span>
           </a>
           <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="https://youtu.be/XUuLeXaEIdI" target="_blank">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
@@ -143,19 +223,18 @@ const mobileNavPattern = {
           </button>
         </nav>
       </div>
-    </div>`,
+    </div>
 
-  // Mobile menu JavaScript
-  mobileJS: `    <!-- Mobile Menu JavaScript -->
+    <!-- Mobile Menu JavaScript -->
     <script>
       // Mobile menu functionality
       const mobileMenuBtn = document.getElementById('mobileMenuBtn');
       const mobileMenu = document.getElementById('mobileMenu');
       const closeMobileMenu = document.getElementById('closeMobileMenu');
-      const mobileSignoutBtn = document.getElementById('mobileSignoutBtn');
 
       if (mobileMenuBtn && mobileMenu) {
-        mobileMenuBtn.addEventListener('click', () => {
+        mobileMenuBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
           mobileMenu.classList.remove('hidden');
         });
       }
@@ -163,13 +242,6 @@ const mobileNavPattern = {
       if (closeMobileMenu && mobileMenu) {
         closeMobileMenu.addEventListener('click', () => {
           mobileMenu.classList.add('hidden');
-        });
-      }
-
-      if (mobileSignoutBtn) {
-        mobileSignoutBtn.addEventListener('click', async () => {
-          try { await fetch('/api/auth/logout',{method:'POST'}); } catch(e) {}
-          window.location.href='/auth.html';
         });
       }
 
@@ -181,10 +253,8 @@ const mobileNavPattern = {
           }
         });
       }
-    </script>`
-};
-
-// Export for use
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = mobileNavPattern;
-}
+    </script>
+    
+    <script src="/static/navbar.js"></script>
+  </body>
+</html>
