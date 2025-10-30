@@ -111,16 +111,17 @@ function renderNavbar(activePage = '') {
         <polyline points="22,6 12,13 2,6"/>
       </svg>`
     },
-    {
-      id: 'academy',
-      href: '/academy.html',
-      title: 'Academy',
-      tooltip: 'PitchLense Academy',
-      icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-      </svg>`
-    },
+    // Academy temporarily disabled across desktop/mobile nav
+    // {
+    //   id: 'academy',
+    //   href: '/academy.html',
+    //   title: 'Academy',
+    //   tooltip: 'PitchLense Academy',
+    //   icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    //     <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+    //     <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+    //   </svg>`
+    // },
     {
       id: 'extension',
       href: '/extension.html',
@@ -217,7 +218,7 @@ function getCurrentPage() {
   if (path.includes('search')) return 'search';
   if (path.includes('news')) return 'news';
   if (path.includes('networking')) return 'networking';
-  if (path.includes('academy')) return 'academy';
+  // Academy disabled: no active state
   if (path.includes('meeting-assistant')) return 'meeting-assistant';
   if (path.includes('extension')) return 'extension';
   if (path.includes('email')) return 'email';

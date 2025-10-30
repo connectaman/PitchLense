@@ -331,6 +331,91 @@
       </div>
     </div>
 
+    <!-- Mobile Navigation Menu -->
+    <div id="mobileMenu" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden md:hidden">
+      <div class="bg-[#2C2F34] border border-white/10 rounded-[18px] m-4 p-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-white">Navigation</h3>
+          <button id="closeMobileMenu" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <nav class="flex flex-col gap-2 text-white/80">
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/create-report.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span>Create Report</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/10" href="/view-report.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <line x1="9" y1="17" x2="9" y2="11"/>
+              <line x1="13" y1="17" x2="13" y2="7"/>
+              <line x1="17" y1="17" x2="17" y2="13"/>
+            </svg>
+            <span>Reports</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/market.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3v18h18"/>
+              <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+            </svg>
+            <span>Market Data</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/investment.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            <span>Investments</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/search.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span>Search Symbols</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/news.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
+              <line x1="7" y1="8" x2="17" y2="8"/>
+              <line x1="7" y1="12" x2="17" y2="12"/>
+              <line x1="7" y1="16" x2="13" y2="16"/>
+            </svg>
+            <span>Market News</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/extension.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            <span>Extension</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/email.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <span>Email Client</span>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10" href="/walkthrough.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polygon points="10,8 16,12 10,16 10,8"/>
+            </svg>
+            <span>Quick Walkthrough</span>
+          </a>
+        </nav>
+      </div>
+    </div>
     <div id="app" class="h-screen flex flex-col p-3 gap-3 hidden overflow-hidden">
       <header class="h-16 liquid-glass flex items-center justify-between px-6 mobile-header">
         <div class="flex items-center gap-3">
@@ -338,6 +423,14 @@
           <div class="text-base font-semibold">PitchLense</div>
         </div>
         <div class="flex items-center gap-3">
+          <!-- Mobile menu button -->
+          <button id="mobileMenuBtn" class="md:hidden w-9 h-9 grid place-items-center rounded-full bg-[#FFF27A] border border-white/10 text-[#1E1E21]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
           <div id="searchWrap" class="flex items-center gap-2">
             <button id="searchBtn" class="w-9 h-9 grid place-items-center rounded-full bg-[#FFF27A] border border-white/10 text-[#1E1E21]">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -369,6 +462,19 @@
         <!-- Secondary Navigation Bar -->
         <nav class="liquid-glass mx-2 mb-3 flex-shrink-0 mobile-nav">
           <div class="flex items-center px-6 py-3">
+            <!-- Mobile tab selector -->
+            <div class="w-full md:hidden mr-2">
+              <select id="mobileTabSelect" class="w-full bg-[#1E1E21] border border-white/10 text-white/90 text-sm rounded-lg px-3 py-2">
+                <option value="overall" selected>Overall Analysis</option>
+                <option value="detailed">Detailed Analysis</option>
+                <option value="qna">Co-pilot</option>
+                <option value="dependency">Ecosight</option>
+                <option value="files">Uploaded Files</option>
+                <option value="followup">Ask Follow Up</option>
+              </select>
+            </div>
+            <!-- Desktop tab buttons -->
+            <div class="hidden md:flex items-center flex-1">
             <button id="overallAnalysisTab" class="tab-button active px-4 py-2 text-sm font-medium rounded-lg transition-colors" data-tab="overall">
               Overall Analysis
             </button>
@@ -443,17 +549,18 @@
               </svg>
               Documentation
             </button>
+            </div>
           </div>
         </nav>
         
         <!-- Tab Content Container -->
-        <div class="flex-1 min-h-0 overflow-hidden">
+        <div class="flex-1 min-h-0 md:overflow-hidden overflow-auto">
           <!-- Overall Analysis Tab (Default) -->
           <div id="overallAnalysisContent" class="tab-content active overall-analysis h-full overflow-y-auto">
-            <section class="p-2 grid gap-3 items-start grid-cols-[2fr_1fr] h-full overflow-hidden">
+            <section class="p-2 grid gap-3 items-start grid-cols-1 md:grid-cols-[2fr_1fr] h-full md:overflow-hidden overflow-visible">
           <div class="space-y-3">
-            <div class="grid grid-cols-2 gap-3">
-              <div class="card p-4 flex flex-col" style="height: 360px;">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div class="card p-4 flex flex-col md:h-[360px]">
                 <div class="flex items-center justify-between">
                   <div class="text-sm">Growth Potential</div>
                   <div class="relative">
@@ -563,23 +670,25 @@
           </div>
           
           <!-- Detailed Analysis Tab -->
-          <div id="detailedAnalysisContent" class="tab-content hidden h-full overflow-hidden">
+          <div id="detailedAnalysisContent" class="tab-content hidden h-full md:overflow-hidden overflow-auto">
             <section class="p-2 h-full">
-              <div class="flex h-full gap-4">
+              <div class="flex h-full gap-4 flex-col md:flex-row">
                 <!-- Left Sidebar - Analysis Types (20%) -->
-                <div class="w-1/5 h-full">
-                  <div class="card p-4 h-full flex flex-col">
-                    <h3 class="text-sm font-semibold mb-4 text-white flex-shrink-0">Analysis Types</h3>
-                    <div id="analysisTypesList" class="space-y-2 flex-1 overflow-y-auto">
+                <div class="md:w-1/5 w-full md:h-full">
+                  <div class="card p-4 md:h-full flex flex-col">
+                    <h3 class="text-sm font-semibold mb-4 text-white flex-shrink-0 hidden md:block">Analysis Types</h3>
+                    <!-- Mobile dropdown for analysis types -->
+                    <select id="mobileDetailedSelect" class="md:hidden w-full mb-1 bg-[#1E1E21] border border-white/10 text-white/90 text-sm rounded-lg px-3 py-2"></select>
+                    <div id="analysisTypesList" class="space-y-2 flex-1 overflow-y-auto hidden md:block">
                       <!-- Analysis types will be populated here -->
             </div>
                     </div>
                   </div>
                 
                 <!-- Right Content Area (80%) -->
-                <div class="w-4/5 h-full">
-                  <div class="card p-6 h-full flex flex-col">
-                    <div id="detailedAnalysisContentArea" class="flex-1 overflow-y-auto">
+                <div class="md:w-4/5 w-full md:h-full">
+                  <div class="card p-6 md:h-full flex flex-col">
+                    <div id="detailedAnalysisContentArea" class="flex-1 overflow-y-auto md:mt-0 mt-2">
                       <!-- Content will be populated here -->
                     </div>
                   </div>
@@ -796,8 +905,8 @@
                     <!-- D3.js Knowledge Graph will be rendered here -->
                   </div>
                   
-                  <!-- Legend Card -->
-                  <div class="absolute top-3 left-3 bg-[#2E3137] border border-white/10 rounded-lg p-3 shadow-lg z-10">
+                  <!-- Legend Card (hidden on mobile) -->
+                  <div class="absolute top-3 left-3 bg-[#2E3137] border border-white/10 rounded-lg p-3 shadow-lg z-10 hidden md:block">
                     <div class="text-xs text-white/60 mb-2 font-semibold">Legend</div>
                     <div class="space-y-2">
                       <div class="flex items-center gap-2 cursor-pointer group relative" data-tooltip="Your startup or company name positioned at the center of the graph, representing the focal point of all business relationships.">
@@ -1590,6 +1699,7 @@
       function initializeTabs() {
         const tabButtons = document.querySelectorAll('.tab-button:not([data-tab="news"]):not([data-tab="documents"])');
         const tabContents = document.querySelectorAll('.tab-content');
+        const mobileSelect = document.getElementById('mobileTabSelect');
 
         tabButtons.forEach(button => {
           button.addEventListener('click', () => {
@@ -1627,8 +1737,32 @@
             if (targetContent) {
               targetContent.classList.remove('hidden');
             }
+
+            // Sync mobile dropdown selection when using desktop tabs
+            if (mobileSelect && targetTab) {
+              mobileSelect.value = targetTab;
+            }
           });
         });
+
+        // Mobile dropdown behavior: switch tabs on selection
+        if (mobileSelect) {
+          mobileSelect.addEventListener('change', (e) => {
+            const value = e.target.value;
+            const map = {
+              overall: 'overallAnalysisTab',
+              detailed: 'detailedAnalysisTab',
+              qna: 'qnaTab',
+              dependency: 'dependencyTab',
+              files: 'uploadedFilesTab',
+              followup: 'followUpTab',
+              documentation: 'documentationTab'
+            };
+            const targetId = map[value];
+            const btn = targetId ? document.getElementById(targetId) : null;
+            if (btn) btn.click();
+          });
+        }
       }
 
       // Open documentation modal
@@ -3821,12 +3955,22 @@
       // Function to populate detailed analysis types
       function populateDetailedAnalysisTypes(analyses) {
         const analysisTypesList = document.getElementById('analysisTypesList');
+        const mobileDetailedSelect = document.getElementById('mobileDetailedSelect');
         if (!analysisTypesList || !analyses) {
           return;
         }
 
         // Clear existing content
         analysisTypesList.innerHTML = '';
+        if (mobileDetailedSelect) mobileDetailedSelect.innerHTML = '';
+
+        // Determine mobile layout (hide sidebar buttons entirely)
+        const isMobileDetailed = window.matchMedia('(max-width: 900px)').matches;
+        if (isMobileDetailed) {
+          analysisTypesList.style.display = 'none';
+        } else {
+          analysisTypesList.style.display = '';
+        }
 
         // Convert analyses object to array and prioritize LV-Analysis
         const analysisArray = Object.entries(analyses).map(([key, analysis]) => ({
@@ -3842,28 +3986,50 @@
           return 0; // Keep original order for non-LV analyses
         });
 
-        // Create analysis type buttons
+        // Create analysis type buttons and mobile options
         analysisArray.forEach((analysis, index) => {
-          const button = document.createElement('button');
-          button.className = `analysis-type-btn w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 ${index === 0 ? 'active' : ''}`;
-          button.textContent = analysis.category_name;
-          button.setAttribute('data-analysis-key', analysis.name);
-          
-          button.addEventListener('click', () => {
-            // Remove active class from all buttons
-            document.querySelectorAll('.analysis-type-btn').forEach(btn => btn.classList.remove('active'));
-            // Add active class to clicked button
-            button.classList.add('active');
-            // Show detailed content
-            showDetailedAnalysisContent(analysis);
-          });
-          
-          analysisTypesList.appendChild(button);
+          if (!isMobileDetailed) {
+            const button = document.createElement('button');
+            button.className = `analysis-type-btn w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 ${index === 0 ? 'active' : ''}`;
+            button.textContent = analysis.category_name;
+            button.setAttribute('data-analysis-key', analysis.name);
+
+            button.addEventListener('click', () => {
+              document.querySelectorAll('.analysis-type-btn').forEach(btn => btn.classList.remove('active'));
+              button.classList.add('active');
+              showDetailedAnalysisContent(analysis);
+            });
+
+            analysisTypesList.appendChild(button);
+          }
+
+          if (mobileDetailedSelect) {
+            const opt = document.createElement('option');
+            opt.value = analysis.name;
+            opt.textContent = analysis.category_name;
+            if (index === 0) opt.selected = true;
+            mobileDetailedSelect.appendChild(opt);
+          }
         });
 
         // Show first analysis by default
         if (analysisArray.length > 0) {
           showDetailedAnalysisContent(analysisArray[0]);
+        }
+
+        // Hook mobile dropdown change -> switch analysis
+        if (mobileDetailedSelect) {
+          mobileDetailedSelect.onchange = (e) => {
+            const key = e.target.value;
+            const found = analysisArray.find(a => a.name === key);
+            if (found) {
+              // Sync sidebar active state
+              document.querySelectorAll('.analysis-type-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-analysis-key') === key);
+              });
+              showDetailedAnalysisContent(found);
+            }
+          };
         }
       }
 
@@ -5202,8 +5368,8 @@
             console.log('Graph metadata:', apiKnowledgeGraph.metadata);
           }
           
-          // Add a summary display for large graphs
-          if (knowledgeGraph.nodes.length > 10) {
+          // Add a summary display for large graphs (desktop only)
+          if (knowledgeGraph.nodes.length > 10 && window.matchMedia('(min-width: 768px)').matches) {
             const summary = document.createElement('div');
             summary.className = 'absolute top-4 right-4 bg-[#1E1E21] border border-white/10 rounded-lg p-3 text-white text-sm';
             summary.innerHTML = `
@@ -5741,6 +5907,21 @@
         initializeFileViewToggle();
         initializeFollowUpTab();
         initializeChat();
+          // Mobile menu (ensure handler exists on DOM ready)
+          const mmBtn = document.getElementById('mobileMenuBtn');
+          const mm = document.getElementById('mobileMenu');
+          const mmClose = document.getElementById('closeMobileMenu');
+          if (mmBtn && mm) {
+            mmBtn.addEventListener('click', () => mm.classList.remove('hidden'));
+          }
+          if (mmClose && mm) {
+            mmClose.addEventListener('click', () => mm.classList.add('hidden'));
+          }
+          if (mm) {
+            mm.addEventListener('click', (e) => {
+              if (e.target === mm) mm.classList.add('hidden');
+            });
+          }
         
         // Initialize news/documents tab switching
         const industryNewsTab = document.getElementById('industryNewsTab');
@@ -7521,14 +7702,28 @@
     </div>
     
     
-      // Mobile menu functionality
-      document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
-        const navbar = document.getElementById('pitchlense-navbar');
-        if (navbar) {
-          navbar.classList.toggle('hidden');
-          navbar.classList.toggle('flex');
-        }
-      });
+      // Mobile menu functionality (overlay)
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      const mobileMenu = document.getElementById('mobileMenu');
+      const closeMobileMenu = document.getElementById('closeMobileMenu');
+
+      if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', () => {
+          mobileMenu.classList.remove('hidden');
+        });
+      }
+      if (closeMobileMenu && mobileMenu) {
+        closeMobileMenu.addEventListener('click', () => {
+          mobileMenu.classList.add('hidden');
+        });
+      }
+      if (mobileMenu) {
+        mobileMenu.addEventListener('click', (e) => {
+          if (e.target === mobileMenu) {
+            mobileMenu.classList.add('hidden');
+          }
+        });
+      }
     <script src="/static/navbar.js"></script>
   </body>
 </html>
