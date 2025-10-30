@@ -825,6 +825,27 @@
                         </div>
                       </div>
                     </div>
+                    <!-- Controls legend -->
+                    <div class="mt-3 pt-3 border-t border-white/10">
+                      <div class="text-xs text-white/60 mb-2 font-semibold">Controls</div>
+                      <div class="flex items-center gap-2">
+                        <button id="legendZoomIn" class="w-8 h-8 rounded-md bg-[#1E1E21] border border-white/10 grid place-items-center text-white hover:bg-[#3E4147]" title="Zoom In" aria-label="Zoom In">
+                          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                          </svg>
+                        </button>
+                        <button id="legendZoomOut" class="w-8 h-8 rounded-md bg-[#1E1E21] border border-white/10 grid place-items-center text-white hover:bg-[#3E4147]" title="Zoom Out" aria-label="Zoom Out">
+                          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                          </svg>
+                        </button>
+                        <button id="legendReset" class="w-8 h-8 rounded-md bg-[#1E1E21] border border-white/10 grid place-items-center text-white hover:bg-[#3E4147]" title="Reset View" aria-label="Reset View">
+                          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 10-8 12"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -5318,18 +5339,20 @@
             .enter()
             .append('g')
             .attr('class', 'node')
-            .style('cursor', 'pointer')
-            .call(d3.drag()
-              .on('start', dragstarted)
-              .on('drag', dragged)
-              .on('end', dragended));
+            .style('cursor', 'pointer');
 
           // Node circles - adjust size based on node type
           const nodeCircles = node.append('circle')
             .attr('r', d => d.isRoot ? 25 : 18) // Larger root node, smaller others
             .attr('fill', d => getNodeColor(d))
             .attr('stroke', '#ffffff')
-            .attr('stroke-width', d => d.isRoot ? 3 : 2);
+            .attr('stroke-width', d => d.isRoot ? 3 : 2)
+            // Drag only when interacting with the actual circle, not labels/space
+            .call(d3.drag()
+              .on('start', dragstarted)
+              .on('drag', dragged)
+              .on('end', dragended)
+            );
 
           // Node labels - adjust positioning for better readability
           node.append('text')
@@ -5339,6 +5362,7 @@
             .attr('fill', '#ffffff')
             .attr('font-size', d => d.isRoot ? '12px' : '10px')
             .attr('font-weight', 'bold')
+            .style('pointer-events', 'none') // prevent text from triggering hover/drag
             .text(d => d.name.length > 15 ? d.name.substring(0, 15) + '...' : d.name); // Truncate long names
 
           // Position nodes based on coordinate signs - left/right of root
@@ -5349,63 +5373,72 @@
             const pos = node.position || { x: 0, y: 0 };
             
             if (node === rootNode || node.isRoot) {
-              // Keep root node at center
+              // Keep root node at center (fully fixed)
               node.x = centerX;
               node.fx = centerX;
               node.y = centerY;
               node.fy = centerY;
             } else {
-              // Position based on x coordinate sign
-              const offsetX = Math.abs(pos.x) > 0.5 ? 300 : 250; // Increased distance from center
-              const offsetY = pos.y * 100; // Vertical offset based on y coordinate
+              // Position based on x coordinate sign; fix X, free Y to allow natural spreading
+              const offsetX = Math.abs(pos.x) > 0.5 ? 300 : 250;
+              const offsetY = pos.y * 100;
               
               if (pos.x < 0) {
-                // Negative x = left side (dependencies)
                 node.x = centerX - offsetX;
                 node.fx = centerX - offsetX;
               } else if (pos.x > 0) {
-                // Positive x = right side (dependents)
                 node.x = centerX + offsetX;
                 node.fx = centerX + offsetX;
               } else {
-                // x = 0 = center
                 node.x = centerX;
                 node.fx = centerX;
               }
               
               node.y = centerY + offsetY;
-              node.fy = centerY + offsetY;
+              node.fy = null; // Let simulation adjust Y to avoid overlap
             }
           });
 
-          // Create a gentler force simulation that respects fixed positioning
+          // Create a gentler force simulation that respects fixed positioning and reduces initial drift
           simulation = d3.forceSimulation(knowledgeGraph.nodes)
             .force('link', d3.forceLink(knowledgeGraph.edges)
               .id(d => d.id)
-              .distance(250) // Increased edge length for better spacing with more nodes
-              .strength(0.4) // Link strength for connections
+              .distance(180)
+              .strength(0.6)
             )
-            .force('charge', d3.forceManyBody().strength(-150)) // Increased repulsion for more nodes
-            .force('collision', d3.forceCollide().radius(50)) // Increased collision radius
-            .alpha(0.6) // Start with higher energy for better initial positioning
-            .alphaDecay(0.03) // Slightly faster decay for better convergence
+            .force('charge', d3.forceManyBody().strength(-80))
+            .force('collision', d3.forceCollide().radius(40))
+            .alpha(0.3)
+            .alphaDecay(0.06)
 
-          // Add zoom-to-fit functionality for large graphs
-          if (knowledgeGraph.nodes.length > 15) {
-            setTimeout(() => {
-              const bounds = g.node().getBBox();
-              const fullWidth = containerWidth;
-              const fullHeight = containerHeight;
-              const width = bounds.width;
-              const height = bounds.height;
-              const midX = bounds.x + width / 2;
-              const midY = bounds.y + height / 2;
-              if (width === 0 || height === 0) return; // nothing to fit
-              const scale = 0.85 / Math.max(width / fullWidth, height / fullHeight);
-              const translate = [fullWidth / 2 - scale * midX, fullHeight / 2 - scale * midY];
-              zoom.transform(svg, d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale));
-            }, 1000); // Wait for simulation to settle
-          }
+          // Run a few synchronous ticks to get a stable initial layout before first paint
+          try {
+            for (let i = 0; i < 60; i++) simulation.tick();
+          } catch (_) {}
+
+          // Apply one-time position update immediately
+          link
+            .attr('x1', d => d.source.x)
+            .attr('y1', d => d.source.y)
+            .attr('x2', d => d.target.x)
+            .attr('y2', d => d.target.y);
+
+          node.attr('transform', d => `translate(${d.x},${d.y})`);
+
+          // Zoom-to-fit immediately after initial ticks
+          (function zoomToFitInitial(){
+            const bounds = g.node().getBBox();
+            const fullWidth = containerWidth;
+            const fullHeight = containerHeight;
+            const width = bounds.width;
+            const height = bounds.height;
+            if (width === 0 || height === 0) return;
+            const midX = bounds.x + width / 2;
+            const midY = bounds.y + height / 2;
+            const scale = 0.9 / Math.max(width / fullWidth, height / fullHeight);
+            const translate = [fullWidth / 2 - scale * midX, fullHeight / 2 - scale * midY];
+            zoom.transform(svg, d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale));
+          })();
 
           if (simulation) {
             simulation.on('tick', () => {
@@ -5420,7 +5453,7 @@
           }
 
           // Mouse events - only on circles, not edges or empty space
-          nodeCircles.on('mouseover', function(event, d) {
+          nodeCircles.on('mouseenter', function(event, d) {
             if (!d) {
               console.error('Mouseover with undefined node');
               return;
@@ -5509,7 +5542,7 @@
               tooltipVisible = true;
             }, 0);
           })
-          .on('mouseout', function() {
+          .on('mouseleave', function() {
             // Remove highlight from circle
             d3.select(this)
               .attr('stroke-width', 2)
@@ -5563,6 +5596,27 @@
             }
           });
 
+          // Global cleanup: hide tooltip when cursor leaves graph area or on scroll/click outside
+          function isInsideGraph(target) {
+            const graphEl = document.getElementById('knowledgeGraph');
+            if (!graphEl) return false;
+            return graphEl.contains(target) || (tooltip.node() && tooltip.node().contains(target));
+          }
+
+          const outsideHideHandler = (e) => {
+            if (!isInsideGraph(e.target)) {
+              tooltip.style('opacity', 0);
+              tooltipVisible = false;
+              if (tooltipTimeout) { clearTimeout(tooltipTimeout); tooltipTimeout = null; }
+              if (globalTooltipTimeout) { clearTimeout(globalTooltipTimeout); globalTooltipTimeout = null; }
+            }
+          };
+
+          document.addEventListener('mousemove', outsideHideHandler, { passive: true });
+          document.addEventListener('scroll', outsideHideHandler, { passive: true });
+          document.addEventListener('click', outsideHideHandler, { passive: true });
+          window.addEventListener('blur', () => { tooltip.style('opacity', 0); tooltipVisible = false; }, { passive: true });
+
           // Zoom controls
           document.getElementById('zoomIn')?.addEventListener('click', () => {
             svg.transition().duration(300).call(zoom.scaleBy, 1.5);
@@ -5614,6 +5668,17 @@
           // Graph Info button
           document.getElementById('graphInfoBtn')?.addEventListener('click', () => {
             openGraphInfoModal();
+          });
+
+          // Legend control buttons: delegate to main controls
+          document.getElementById('legendZoomIn')?.addEventListener('click', () => {
+            document.getElementById('zoomIn')?.click();
+          });
+          document.getElementById('legendZoomOut')?.addEventListener('click', () => {
+            document.getElementById('zoomOut')?.click();
+          });
+          document.getElementById('legendReset')?.addEventListener('click', () => {
+            document.getElementById('resetView')?.click();
           });
         }
       }
