@@ -566,7 +566,7 @@
                   <div class="relative">
                     <button class="px-3 py-1 pill bg-[#1E1E21] border border-white/10 text-white/70 text-sm" id="growthPotentialInfo">i</button>
                     <!-- Tooltip -->
-                    <div id="growthPotentialTooltip" class="absolute bottom-full right-0 mb-2 w-80 bg-[#2E3137] border border-white/10 rounded-lg p-4 opacity-0 pointer-events-none transition-all duration-200 z-50">
+                    <div id="growthPotentialTooltip" class="absolute top-full right-0 mt-2 w-80 bg-[#2E3137] border border-white/10 rounded-lg p-4 opacity-0 pointer-events-none transition-all duration-200 z-50">
                       <div class="text-xs text-white/80 mb-2 font-semibold">Growth Potential Calculation</div>
                       <div class="space-y-1 text-xs" id="growthPotentialTooltipContent">
                         <!-- Dynamic content will be populated here -->
@@ -1837,7 +1837,8 @@
           doc.setTextColor(color);
           const lines = doc.splitTextToSize(text, maxWidth);
           doc.text(lines, x, y);
-          return y + (lines.length * fontSize * 0.35);
+          // Increased line spacing for better readability (0.5 instead of 0.35)
+          return y + (lines.length * fontSize * 0.5) + 2;
         }
         
         // Helper function to add a new page if needed
@@ -1855,7 +1856,7 @@
         doc.setFontSize(24);
         doc.setTextColor('#1E1E21');
         doc.text('PitchLense Analysis Report', margin, yPosition);
-        yPosition += 15;
+        yPosition += 18;
         
         // Report metadata
         if (window.reportData) {
@@ -1863,34 +1864,34 @@
           doc.setFontSize(12);
           doc.setTextColor('#666666');
           doc.text(`Generated on: ${new Date().toLocaleDateString()}`, margin, yPosition);
-          yPosition += 8;
+          yPosition += 10;
           
           if (reportData.company_name) {
             doc.text(`Company: ${reportData.company_name}`, margin, yPosition);
-            yPosition += 8;
+            yPosition += 10;
           }
           
           if (reportData.industry) {
             doc.text(`Industry: ${reportData.industry}`, margin, yPosition);
-            yPosition += 8;
+            yPosition += 10;
           }
         }
         
-        yPosition += 10;
+        yPosition += 15;
         
         // Overall Analysis Section
         if (window.analyses) {
           doc.setFontSize(18);
           doc.setTextColor('#1E1E21');
           doc.text('Overall Analysis', margin, yPosition);
-          yPosition += 12;
+          yPosition += 15;
           
           // Overall score
           if (window.overallScore !== undefined) {
             doc.setFontSize(14);
             doc.setTextColor('#f1d85b');
             doc.text(`Overall Risk Score: ${window.overallScore}/10`, margin, yPosition);
-            yPosition += 10;
+            yPosition += 12;
           }
           
           // Risk level
@@ -1898,10 +1899,10 @@
             doc.setFontSize(12);
             doc.setTextColor('#666666');
             doc.text(`Risk Level: ${window.overallRiskLevel.toUpperCase()}`, margin, yPosition);
-            yPosition += 8;
+            yPosition += 10;
           }
           
-          yPosition += 10;
+          yPosition += 12;
           
           // Analysis categories with scores
           const analysisArray = Object.entries(window.analyses)
@@ -1915,10 +1916,10 @@
           doc.setFontSize(14);
           doc.setTextColor('#1E1E21');
           doc.text('Analysis Categories', margin, yPosition);
-          yPosition += 10;
+          yPosition += 12;
           
           analysisArray.forEach((analysis, index) => {
-            checkNewPage(15);
+            checkNewPage(18);
             
             // Category name and score
             doc.setFontSize(12);
@@ -1934,13 +1935,13 @@
             if (analysis.overall_risk_level) {
               doc.setFontSize(10);
               doc.setTextColor('#666666');
-              doc.text(`Risk: ${analysis.overall_risk_level.toUpperCase()}`, margin + 10, yPosition + 6);
+              doc.text(`Risk: ${analysis.overall_risk_level.toUpperCase()}`, margin + 10, yPosition + 7);
             }
             
-            yPosition += 12;
+            yPosition += 15;
           });
           
-          yPosition += 15;
+          yPosition += 18;
         }
         
         
@@ -1953,7 +1954,7 @@
           doc.setFontSize(18);
           doc.setTextColor('#1E1E21');
           doc.text('Detailed Analysis', margin, yPosition);
-          yPosition += 12;
+          yPosition += 15;
           
           const analysisArray = Object.entries(window.analyses)
             .map(([key, analysis]) => ({
@@ -1970,13 +1971,13 @@
             });
           
           analysisArray.forEach((analysis, index) => {
-            checkNewPage(30);
+            checkNewPage(35);
             
             // Category header
             doc.setFontSize(14);
             doc.setTextColor('#1E1E21');
             doc.text(`${analysis.category_name || 'Analysis'}`, margin, yPosition);
-            yPosition += 8;
+            yPosition += 10;
             
             // Score and risk level
             if (analysis.category_score !== undefined) {
@@ -1986,7 +1987,7 @@
               if (analysis.overall_risk_level) {
                 doc.text(`Risk Level: ${analysis.overall_risk_level.toUpperCase()}`, margin + 50, yPosition);
               }
-              yPosition += 6;
+              yPosition += 8;
             }
             
             // Summary
@@ -1994,7 +1995,7 @@
               doc.setFontSize(10);
               doc.setTextColor('#333333');
               yPosition = addText(`Summary: ${analysis.summary}`, margin, yPosition, pageWidth - 2 * margin, 10, '#333333');
-              yPosition += 5;
+              yPosition += 8;
             }
             
             // Detailed analysis result (for LV-Analysis and detailed business notes)
@@ -2005,7 +2006,7 @@
               doc.setFontSize(10);
               doc.setTextColor('#1E1E21');
               doc.text('Detailed Analysis:', margin, yPosition);
-              yPosition += 6;
+              yPosition += 8;
               
               // Convert markdown to plain text for PDF
               const plainText = analysis.result.analysis_result
@@ -2018,7 +2019,7 @@
                 .trim();
               
               yPosition = addText(plainText, margin, yPosition, pageWidth - 2 * margin, 9, '#333333');
-              yPosition += 10;
+              yPosition += 12;
             }
             
             // Risk indicators
@@ -2026,36 +2027,36 @@
               doc.setFontSize(10);
               doc.setTextColor('#1E1E21');
               doc.text('Risk Indicators:', margin, yPosition);
-              yPosition += 6;
+              yPosition += 8;
               
               analysis.indicators.forEach((indicator, idx) => {
-                checkNewPage(20);
+                checkNewPage(25);
                 
                 doc.setFontSize(9);
                 doc.setTextColor('#333333');
                 
                 // Indicator name
                 doc.text(`• ${indicator.indicator || 'Unknown Indicator'}`, margin + 5, yPosition);
-                yPosition += 5;
+                yPosition += 7;
                 
                 // Description
                 if (indicator.description) {
                   yPosition = addText(`  ${indicator.description}`, margin + 5, yPosition, pageWidth - 2 * margin - 10, 8, '#666666');
-                  yPosition += 3;
+                  yPosition += 5;
                 }
                 
                 // Recommendation
                 if (indicator.recommendation) {
                   doc.setTextColor('#1E1E21');
                   yPosition = addText(`  Recommendation: ${indicator.recommendation}`, margin + 5, yPosition, pageWidth - 2 * margin - 10, 8, '#1E1E21');
-                  yPosition += 5;
+                  yPosition += 7;
                 }
                 
-                yPosition += 3;
+                yPosition += 5;
               });
             }
             
-            yPosition += 15;
+            yPosition += 18;
           });
         }
         
@@ -2119,45 +2120,16 @@
         titleSlide.background = { color: '1E1E21' };
         
         titleSlide.addText('PitchLense AI-Powered Startup Analysis', {
-          x: 1, y: 1.5, w: 8, h: 1,
-          fontSize: 28,
+          x: 0.5, y: 3, w: 9, h: 1,
+          fontSize: 32,
           bold: true,
           color: 'FFFFFF',
           align: 'center'
         });
         
-        titleSlide.addText(`${companyName} Analysis Report`, {
-          x: 1, y: 2.5, w: 8, h: 0.8,
-          fontSize: 20,
-          color: 'FFF27A',
-          align: 'center'
-        });
-        
-        // Startup details box
-        titleSlide.addShape('rect', {
-          x: 1.5, y: 3.5, w: 7, h: 2,
-          fill: { color: '2E3137' },
-          line: { color: 'FFF27A', width: 2 }
-        });
-        
-        const startupDetails = [
-          `Company: ${companyName}`,
-          `Industry: ${industry}`,
-          `Founded: ${foundedDate}`,
-          `Location: ${location}`,
-          `Analysis Date: ${new Date().toLocaleDateString()}`
-        ];
-        
-        titleSlide.addText(startupDetails.join('\n'), {
-          x: 1.7, y: 3.7, w: 6.6, h: 1.6,
-          fontSize: 12,
-          color: 'FFFFFF',
-          align: 'left'
-        });
-        
         titleSlide.addText('Powered by PitchLense AI', {
-          x: 1, y: 6, w: 8, h: 0.5,
-          fontSize: 14,
+          x: 0.5, y: 6.3, w: 9, h: 0.4,
+          fontSize: 13,
           color: 'CCCCCC',
           align: 'center'
         });
@@ -2167,8 +2139,8 @@
         growthSlide.background = { color: 'F8F9FA' };
         
         growthSlide.addText('🎯 Growth Potential Assessment', {
-          x: 0.5, y: 0.2, w: 9, h: 0.5,
-          fontSize: 20,
+          x: 0.5, y: 0.3, w: 9, h: 0.5,
+          fontSize: 18,
           bold: true,
           color: '1E1E21',
           align: 'center'
@@ -2195,38 +2167,38 @@
         
         const growthScore = Math.round(totalGrowthScore * 10) / 10;
         
-        // Large score display - moved higher
+        // Large score display
         growthSlide.addText(`${growthScore}`, {
-          x: 2, y: 0.8, w: 6, h: 1.2,
-          fontSize: 40,
+          x: 1.5, y: 1, w: 7, h: 1,
+          fontSize: 36,
           bold: true,
-          color: growthScore >= 7.5 ? '10b981' : growthScore >= 5 ? 'f59e0b' : 'ef4444',
+          color: growthScore >= 7 ? '10b981' : growthScore >= 5 ? 'f59e0b' : 'ef4444',
           align: 'center'
         });
         
         growthSlide.addText('/10', {
-          x: 5.5, y: 1.5, w: 2, h: 0.5,
-          fontSize: 20,
+          x: 5.5, y: 1.4, w: 3, h: 0.4,
+          fontSize: 18,
           bold: true,
           color: '666666',
           align: 'center'
         });
         
         // Status text
-        const statusText = growthScore >= 7.5 ? 'High Growth Potential' : 
+        const statusText = growthScore >= 7 ? 'High Growth Potential' : 
                           growthScore >= 5 ? 'Moderate Growth Potential' : 'Needs Improvement';
-        const statusColor = growthScore >= 7.5 ? '10b981' : 
+        const statusColor = growthScore >= 7 ? '10b981' : 
                            growthScore >= 5 ? 'f59e0b' : 'ef4444';
         
         growthSlide.addText(statusText, {
-          x: 1, y: 2, w: 8, h: 0.3,
-          fontSize: 14,
+          x: 0.5, y: 2, w: 9, h: 0.25,
+          fontSize: 12,
           bold: true,
           color: statusColor,
           align: 'center'
         });
         
-        // Score breakdown table - smaller and positioned better
+        // Score breakdown table - adjusted to fit within slide
         const breakdownData = [
           ['Category', 'Weight', 'Risk Score', 'Growth Score', 'Weighted Score'],
           ...analyses.map(analysis => {
@@ -2234,8 +2206,10 @@
             const weightage = weightageMap[categoryName] || 0;
             const growthScore = Math.max(1, 11 - (analysis.category_score || 0));
             const weightedScore = growthScore * weightage;
+            // Keep full category name (no truncation for better readability)
+            const shortName = categoryName;
             return [
-              categoryName,
+              shortName,
               `${(weightage * 100).toFixed(0)}%`,
               `${analysis.category_score}/10`,
               `${growthScore.toFixed(1)}/10`,
@@ -2245,8 +2219,8 @@
         ];
         
         growthSlide.addTable(breakdownData, {
-          x: 0.5, y: 2.5, w: 9, h: 4.5,
-          fontSize: 9,
+          x: 0.5, y: 2.35, w: 9, h: 4.6,
+          fontSize: 7,
           border: { type: 'solid', color: 'CCCCCC', pt: 1 },
           fill: { color: 'FFFFFF' },
           color: '333333',
@@ -2258,8 +2232,8 @@
         summarySlide.background = { color: 'FFFFFF' };
         
         summarySlide.addText('📊 Executive Summary', {
-          x: 0.5, y: 0.3, w: 9, h: 0.6,
-          fontSize: 22,
+          x: 0.5, y: 0.3, w: 9, h: 0.5,
+          fontSize: 20,
           bold: true,
           color: '1E1E21',
           align: 'center'
@@ -2268,15 +2242,15 @@
         // Summary statistics
         const summaryStats = [
           ['Metric', 'Value', 'Status'],
-          ['Growth Potential', `${growthScore}/10`, growthScore >= 7.5 ? 'High' : growthScore >= 5 ? 'Moderate' : 'Low'],
+          ['Growth Potential', `${growthScore}/10`, growthScore >= 7 ? 'High' : growthScore >= 5 ? 'Moderate' : 'Low'],
           ['Risk Categories', `${analyses.length}`, 'Analyzed'],
           ['Overall Risk Level', analyses.length > 0 ? analyses[0].overall_risk_level || 'Unknown' : 'Unknown', 'Assessment'],
           ['Analysis Date', new Date().toLocaleDateString(), 'Current']
         ];
         
         summarySlide.addTable(summaryStats, {
-          x: 1, y: 1.2, w: 8, h: 2.5,
-          fontSize: 12,
+          x: 1, y: 0.9, w: 8, h: 2,
+          fontSize: 10,
           border: { type: 'solid', color: '1E1E21', pt: 1 },
           fill: { color: 'F8F9FA' },
           color: '333333',
@@ -2285,21 +2259,21 @@
         
         // Key insights
         summarySlide.addText('Key Insights:', {
-          x: 0.5, y: 4, w: 9, h: 0.4,
-          fontSize: 16,
+          x: 0.5, y: 3.1, w: 9, h: 0.3,
+          fontSize: 13,
           bold: true,
           color: '1E1E21'
         });
         
         const insights = [
           `• Comprehensive analysis across ${analyses.length} risk categories`,
-          `• Growth potential score of ${growthScore}/10 indicates ${growthScore >= 7.5 ? 'strong' : growthScore >= 5 ? 'moderate' : 'limited'} potential`,
+          `• Growth potential score of ${growthScore}/10 indicates ${growthScore >= 7 ? 'strong' : growthScore >= 5 ? 'moderate' : 'limited'} potential`,
           `• Risk assessment provides actionable insights for investment decisions`
         ];
         
         summarySlide.addText(insights.join('\n'), {
-          x: 0.5, y: 4.5, w: 9, h: 2.5,
-          fontSize: 12,
+          x: 0.5, y: 3.45, w: 9, h: 3.75,
+          fontSize: 10,
           color: '666666',
           valign: 'top'
         });
@@ -2309,8 +2283,8 @@
         riskSlide.background = { color: 'F8F9FA' };
         
         riskSlide.addText('🎯 Risk Assessment Overview', {
-          x: 0.5, y: 0.3, w: 9, h: 0.6,
-          fontSize: 22,
+          x: 0.5, y: 0.3, w: 9, h: 0.5,
+          fontSize: 20,
           bold: true,
           color: '1E1E21',
           align: 'center'
@@ -2319,13 +2293,15 @@
         // Create enhanced risk assessment table
         const riskTableData = [
           ['Category', 'Risk Level', 'Risk Score', 'Growth Score', 'Status'],
-          ...analyses.slice(0, 6).map(analysis => {
+          ...analyses.slice(0, 5).map(analysis => {
             const growthScore = Math.max(1, 11 - (analysis.category_score || 0));
             const riskLevel = analysis.overall_risk_level || 'unknown';
-            const statusColor = riskLevel === 'low' ? '🟢 Low Risk' : 
-                               riskLevel === 'medium' ? '🟡 Medium Risk' : '🔴 High Risk';
+            const statusColor = riskLevel === 'low' ? '🟢 Low' : 
+                               riskLevel === 'medium' ? '🟡 Medium' : '🔴 High';
+            // Keep full category name
+            const shortName = analysis.category_name || analysis.name;
             return [
-              analysis.category_name || analysis.name,
+              shortName,
               riskLevel.toUpperCase(),
               `${analysis.category_score}/10`,
               `${growthScore.toFixed(1)}/10`,
@@ -2335,8 +2311,8 @@
         ];
         
         riskSlide.addTable(riskTableData, {
-          x: 0.5, y: 1.2, w: 9, h: 5.5,
-          fontSize: 10,
+          x: 0.5, y: 0.95, w: 9, h: 6,
+          fontSize: 8,
           border: { type: 'solid', color: '1E1E21', pt: 1 },
           fill: { color: 'FFFFFF' },
           color: '333333',
@@ -2350,97 +2326,74 @@
           
           // Header with gradient background effect
           detailSlide.addShape('rect', {
-            x: 0, y: 0, w: 10, h: 0.8,
+            x: 0, y: 0, w: 10, h: 0.6,
             fill: { color: '1E1E21' }
           });
           
-          detailSlide.addText(`${index + 1}. ${analysis.category_name || analysis.name}`, {
-            x: 0.5, y: 0.1, w: 9, h: 0.6,
-            fontSize: 18,
+          // Keep full category name
+          const categoryName = analysis.category_name || analysis.name;
+          
+          detailSlide.addText(`${index + 1}. ${categoryName}`, {
+            x: 0.5, y: 0.05, w: 9, h: 0.5,
+            fontSize: 15,
             bold: true,
             color: 'FFFFFF',
             align: 'center'
           });
           
-          // Risk and score info in top right corner - smaller
+          // Risk and score info in top right corner
           const riskLevel = analysis.overall_risk_level || 'unknown';
           const riskColor = riskLevel === 'low' ? '10b981' : 
                            riskLevel === 'medium' ? 'f59e0b' : 'ef4444';
           
           detailSlide.addShape('rect', {
-            x: 7, y: 1, w: 2.5, h: 0.4,
+            x: 7, y: 0.75, w: 2.5, h: 0.3,
             fill: { color: riskColor }
           });
           
           detailSlide.addText(`${riskLevel.toUpperCase()}`, {
-            x: 7, y: 1.1, w: 2.5, h: 0.2,
-            fontSize: 10,
+            x: 7, y: 0.8, w: 2.5, h: 0.2,
+            fontSize: 8,
             bold: true,
             color: 'FFFFFF',
             align: 'center'
           });
           
           detailSlide.addShape('rect', {
-            x: 7, y: 1.5, w: 2.5, h: 0.4,
+            x: 7, y: 1.1, w: 2.5, h: 0.3,
             fill: { color: 'F8F9FA' },
             line: { color: '1E1E21', width: 1 }
           });
           
           detailSlide.addText(`${analysis.category_score}/10`, {
-            x: 7, y: 1.6, w: 2.5, h: 0.2,
-            fontSize: 10,
+            x: 7, y: 1.15, w: 2.5, h: 0.2,
+            fontSize: 8,
             bold: true,
             color: '1E1E21',
             align: 'center'
           });
           
-          // Analysis summary - much smaller and more compact
+          // Analysis summary - adjusted to fit, moved up
           if (analysis.summary) {
             detailSlide.addText('📋 Analysis Summary', {
-              x: 0.5, y: 2.2, w: 6, h: 0.3,
-              fontSize: 12,
+              x: 0.5, y: 1.55, w: 6, h: 0.25,
+              fontSize: 10,
               bold: true,
               color: '1E1E21'
             });
             
             detailSlide.addShape('rect', {
-              x: 0.5, y: 2.5, w: 6, h: 1.2,
+              x: 0.5, y: 1.8, w: 6, h: 1.2,
               fill: { color: 'F8F9FA' },
               line: { color: 'CCCCCC', width: 1 }
             });
             
-            detailSlide.addText(analysis.summary.substring(0, 200) + (analysis.summary.length > 200 ? '...' : ''), {
-              x: 0.7, y: 2.7, w: 5.6, h: 0.8,
-              fontSize: 8,
+            // Show full summary text (no truncation)
+            detailSlide.addText(analysis.summary, {
+              x: 0.7, y: 1.95, w: 5.6, h: 4.5,
+              fontSize: 7,
               color: '333333',
               valign: 'top'
-            });
-          }
-          
-          // Key indicators with table format - much smaller
-          if (analysis.indicators && analysis.indicators.length > 0) {
-            detailSlide.addText('🔍 Key Indicators', {
-              x: 0.5, y: 3.8, w: 9, h: 0.3,
-              fontSize: 12,
-              bold: true,
-              color: '1E1E21'
-            });
-            
-            const indicatorsData = [
-              ['Indicator', 'Assessment'],
-              ...analysis.indicators.slice(0, 3).map(indicator => [
-                indicator.indicator_name || 'N/A',
-                (indicator.detailed_assessment || indicator.description || 'N/A').substring(0, 30) + '...'
-              ])
-            ];
-            
-            detailSlide.addTable(indicatorsData, {
-              x: 0.5, y: 4.1, w: 9, h: 2,
-              fontSize: 7,
-              border: { type: 'solid', color: 'CCCCCC', pt: 1 },
-              fill: { color: 'FFFFFF' },
-              color: '333333',
-              align: 'left'
             });
           }
         });
@@ -2451,8 +2404,8 @@
         conclusionSlide.background = { color: '1E1E21' };
         
         conclusionSlide.addText('📊 Final Assessment', {
-          x: 0.5, y: 0.3, w: 9, h: 0.6,
-          fontSize: 22,
+          x: 0.5, y: 0.3, w: 9, h: 0.5,
+          fontSize: 20,
           bold: true,
           color: 'FFFFFF',
           align: 'center'
@@ -2460,22 +2413,22 @@
         
         // Growth potential highlight
         conclusionSlide.addShape('rect', {
-          x: 1, y: 1.2, w: 8, h: 1.2,
+          x: 1, y: 1.1, w: 8, h: 1.1,
           fill: { color: 'FFF27A' },
           line: { color: '1E1E21', width: 2 }
         });
         
         conclusionSlide.addText(`Overall Growth Potential`, {
-          x: 1, y: 1.4, w: 8, h: 0.4,
-          fontSize: 16,
+          x: 1, y: 1.25, w: 8, h: 0.35,
+          fontSize: 15,
           bold: true,
           color: '1E1E21',
           align: 'center'
         });
         
         conclusionSlide.addText(`${growthScore}/10`, {
-          x: 1, y: 1.8, w: 8, h: 0.6,
-          fontSize: 36,
+          x: 1, y: 1.6, w: 8, h: 0.5,
+          fontSize: 32,
           bold: true,
           color: '1E1E21',
           align: 'center'
@@ -2483,29 +2436,29 @@
         
         // Key takeaways
         conclusionSlide.addText('Key Takeaways:', {
-          x: 0.5, y: 2.8, w: 9, h: 0.4,
-          fontSize: 18,
+          x: 0.5, y: 2.5, w: 9, h: 0.35,
+          fontSize: 16,
           bold: true,
           color: 'FFFFFF'
         });
         
         const takeaways = [
           `• ${analyses.length} risk categories comprehensively analyzed`,
-          `• Growth potential score: ${growthScore}/10 (${growthScore >= 7.5 ? 'High' : growthScore >= 5 ? 'Moderate' : 'Low'} potential)`,
+          `• Growth potential score: ${growthScore}/10 (${growthScore >= 7 ? 'High' : growthScore >= 5 ? 'Moderate' : 'Low'} potential)`,
           `• Risk assessment provides actionable investment insights`,
           `• Analysis powered by advanced AI algorithms`
         ];
         
         conclusionSlide.addText(takeaways.join('\n'), {
-          x: 0.5, y: 3.3, w: 9, h: 2.5,
-          fontSize: 12,
+          x: 0.5, y: 2.9, w: 9, h: 3.8,
+          fontSize: 11,
           color: 'CCCCCC',
           valign: 'top'
         });
         
         conclusionSlide.addText('Powered by PitchLense AI', {
-          x: 0.5, y: 6, w: 9, h: 0.4,
-          fontSize: 14,
+          x: 0.5, y: 6.7, w: 9, h: 0.3,
+          fontSize: 13,
           color: 'FFF27A',
           align: 'center',
           bold: true
@@ -2517,23 +2470,23 @@
         
         // Thank you message
         thankYouSlide.addText('Thank You!', {
-          x: 1, y: 2.5, w: 8, h: 1,
-          fontSize: 36,
+          x: 0.5, y: 2.8, w: 9, h: 0.9,
+          fontSize: 32,
           bold: true,
           color: 'FFFFFF',
           align: 'center'
         });
         
         thankYouSlide.addText('For your attention and consideration', {
-          x: 1, y: 3.7, w: 8, h: 0.6,
-          fontSize: 20,
+          x: 0.5, y: 3.9, w: 9, h: 0.5,
+          fontSize: 18,
           color: 'FFF27A',
           align: 'center'
         });
         
         thankYouSlide.addText('PitchLense AI - Smart Investment Decisions', {
-          x: 1, y: 5, w: 8, h: 0.4,
-          fontSize: 16,
+          x: 0.5, y: 5.2, w: 9, h: 0.35,
+          fontSize: 15,
           color: 'CCCCCC',
           align: 'center',
           bold: true
@@ -3394,11 +3347,12 @@
         }
         
         // Determine color based on score ranges (1-10 scale)
-        let chartColor = '#FFF27A'; // Default yellow (3.5-6.5)
-        if (score >= 6.5) {
-          chartColor = '#10B981'; // Green for 6.5 and above
-        } else if (score < 3.5) {
-          chartColor = '#FB5D5D'; // Red for 1-3.5
+        // 1-5: red, 5-7: yellow, 7-10: green
+        let chartColor = '#FFF27A'; // Default yellow (5-7)
+        if (score >= 7) {
+          chartColor = '#10B981'; // Green for 7-10
+        } else if (score < 5) {
+          chartColor = '#EF4444'; // Red for 1-5
         }
         
         window.growthPotentialChartInstance = new Chart(ctx, {
@@ -4946,7 +4900,11 @@
 
         async function sendMessage() {
           const message = chatInput.value.trim();
-          if (!message) return;
+          if (!message || message.length < 5) {
+            addMessage('Please enter valid input', false);
+            chatInput.focus();
+            return;
+          }
           // Add user message
           addMessage(message, true);
           chatInput.value = '';
