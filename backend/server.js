@@ -310,6 +310,58 @@ try {
 // Support multiple names for bucket/Cloud Run URL
 const GCS_BUCKET = process.env.BUCKET || process.env.GCS_BUCKET || process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
 const CLOUD_RUN_URL = process.env.CLOUD_RUN_URL || process.env.CLOUDRUN_URL || process.env.CLOUD_RUN_ENDPOINT;
+const ADK_RUN_URL = process.env.ADK_RUN_URL || process.env.ADKRUN_URL || process.env.ADK_SERVICE_URL;
+
+async function invokeAdkAssistant({ userName, sessionId, query }) {
+  if (!ADK_RUN_URL || !ADK_RUN_URL.trim()) {
+    return { success: false, error: 'adk_not_configured' };
+  }
+
+  if (!query || !query.trim()) {
+    return { success: false, error: 'empty_query' };
+  }
+
+  try {
+    const payload = {
+      user_name: userName,
+      session_id: sessionId,
+      query
+    };
+
+    const response = await axios.post(ADK_RUN_URL, payload, {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      timeout: 15000
+    });
+
+    const data = response?.data ?? {};
+    const markdown = typeof data === 'string'
+      ? data
+      : (data.response || data.message || '');
+
+    return {
+      success: true,
+      markdown,
+      raw: data
+    };
+  } catch (error) {
+    const status = error?.response?.status;
+    const errorPayload = error?.response?.data;
+    const message = (typeof errorPayload === 'string' && errorPayload) || errorPayload?.error || errorPayload?.message || error?.message || 'ADK request failed';
+
+    console.error('ADK assistant error:', {
+      status,
+      message
+    });
+
+    return {
+      success: false,
+      error: message,
+      status
+    };
+  }
+}
 
 // MySQL database connection configuration
 const dbConfig = {
@@ -1886,7 +1938,7 @@ async function getUserStatistics(userId) {
 // QnA API endpoints
 app.post('/api/qna/ask', requireAuth, checkLLMRateLimit, async (req, res) => {
   try {
-    const { report_id, question } = req.body || {};
+    const { report_id, question, adk_session_id } = req.body || {};
     if (!report_id || !question) return res.status(400).json({ error: 'report_id and question required' });
 
     // Get report data
@@ -2016,12 +2068,41 @@ app.post('/api/qna/ask', requireAuth, checkLLMRateLimit, async (req, res) => {
       warnings: warnings.length > 0 ? warnings : undefined
     }, 600); // Cache for 10 minutes
 
+    let adkResult;
+    const resolvedAdkSessionId = (adk_session_id && String(adk_session_id).trim()) ? String(adk_session_id).trim() : crypto.randomUUID();
+    const adkUserName = (req.user?.id !== undefined && req.user?.id !== null)
+      ? String(req.user.id)
+      : (req.user?.email || 'anonymous-user');
+    try {
+      adkResult = await invokeAdkAssistant({
+        userName: adkUserName,
+        sessionId: resolvedAdkSessionId,
+        query: question
+      });
+
+      adkResult.session_id = resolvedAdkSessionId;
+    } catch (adkError) {
+      console.error('ADK assistant invocation failed:', adkError);
+      adkResult = {
+        success: false,
+        error: adkError?.message || 'ADK invocation failed',
+        session_id: resolvedAdkSessionId
+      };
+    }
+
     res.json({
       success: true,
       response: aiResponse,
       chat_id: chatId,
       confidence: confidenceScore,
-      warnings: warnings.length > 0 ? warnings : undefined
+      warnings: warnings.length > 0 ? warnings : undefined,
+      adk: adkResult ? {
+        success: adkResult.success,
+        markdown: adkResult.success ? adkResult.markdown : undefined,
+        error: adkResult.success ? undefined : adkResult.error,
+        status: adkResult.status,
+        session_id: adkResult.session_id
+      } : undefined
     });
 
   } catch (error) {

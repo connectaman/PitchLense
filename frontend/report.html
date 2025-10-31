@@ -610,9 +610,9 @@
                 <div class="mt-2 text-xs">Exp 09/24</div>
               </div>
             </div> -->
-            <div class="card p-4" style="height: 320px;">
-              <div class="text-sm mb-2">Market Share</div>
-              <div id="marketShareContainer" class="h-full overflow-y-auto">
+            <div class="card p-4 flex flex-col" style="height: 360px;">
+              <div class="text-sm mb-2 flex-shrink-0">Market Share</div>
+              <div id="marketShareContainer" class="flex-1 overflow-y-auto">
                 <!-- Market share data will be populated here -->
                     </div>
                   </div>
@@ -4926,59 +4926,6 @@
           }
         }
 
-        function getAdkRunUrl() {
-          const candidates = [
-            window.ADK_RUN_URL,
-            window.AdkRunUrl,
-            window.adkRunUrl,
-            window?.env?.ADK_RUN_URL,
-            window?.env?.adkRunUrl,
-            window?.ENV?.ADK_RUN_URL,
-            window?.__ENV__?.ADK_RUN_URL,
-            window?.__PITCHLENSE_ENV__?.ADK_RUN_URL,
-            window?.CONFIG?.ADK_RUN_URL,
-            window?.config?.ADK_RUN_URL,
-            document.querySelector('meta[name="adk-run-url"]')?.getAttribute('content'),
-            document.body?.dataset?.adkRunUrl,
-            localStorage.getItem('ADK_RUN_URL')
-          ];
-
-          for (const candidate of candidates) {
-            if (typeof candidate === 'string' && candidate.trim()) {
-              return candidate.trim();
-            }
-          }
-
-          return null;
-        }
-
-        function getAdkUserIdentifier() {
-          const user = window.currentUser;
-          if (user) {
-            if (user.id !== undefined && user.id !== null) {
-              return String(user.id);
-            }
-            if (user.user_id !== undefined && user.user_id !== null) {
-              return String(user.user_id);
-            }
-            if (user.email) {
-              return user.email;
-            }
-          }
-
-          const storedId = localStorage.getItem('pitchlenseUserId');
-          if (storedId && storedId.trim()) {
-            return storedId.trim();
-          }
-
-          const storedEmail = localStorage.getItem('userEmail');
-          if (storedEmail && storedEmail.trim()) {
-            return storedEmail.trim();
-          }
-
-          return 'anonymous-user';
-        }
-
         async function sendMessage() {
           const message = chatInput.value.trim();
           if (!message || message.length < 5) {
@@ -5026,109 +4973,86 @@
             return;
           }
 
-          const primaryAssistantTask = (async () => {
-            try {
-              const response = await fetch('/api/qna/ask', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify({
-                  report_id: reportId,
-                  question: message
-                })
-              });
+          const sessionId = getOrCreateAdkSessionId();
 
-              const raw = await response.text();
-              let data = null;
-              if (raw) {
-                try {
-                  data = JSON.parse(raw);
-                } catch (parseError) {
-                  data = null;
-                }
-              }
+          try {
+            const response = await fetch('/api/qna/ask', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                report_id: reportId,
+                question: message,
+                adk_session_id: sessionId
+              })
+            });
 
-              if (!response.ok) {
-                const errorMessage = data?.error || raw || 'Failed to get response';
-                throw new Error(errorMessage);
-              }
-
-              const aiMessage = data?.response || data?.answer || raw;
-              if (aiMessage && aiMessage.trim()) {
-                addMessage(aiMessage);
-              } else {
-                addMessage('No response received from PitchLense assistant.');
-              }
-            } catch (error) {
-              addMessage(`Sorry, I encountered an error: ${error.message}`);
+            if (loadingDiv && loadingDiv.parentNode) {
+              chatMessages.removeChild(loadingDiv);
             }
-          })();
 
-          const adkAssistantTask = (async () => {
-            try {
-              const adkRunUrl = getAdkRunUrl();
-              if (!adkRunUrl) {
-                console.warn('ADK_RUN_URL is not configured');
-                if (SHOW_ADK_ASSISTANT_IN_CHAT) {
-                  addMessage('**ADK Assistant**\n\nService is not configured.', false);
-                }
-                return;
-              }
-
-              const payload = {
-                user_name: getAdkUserIdentifier(),
-                session_id: getOrCreateAdkSessionId(),
-                query: message
-              };
-
-              const adkResponse = await fetch(adkRunUrl, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-              });
-
-              const raw = await adkResponse.text();
-              let adkData = null;
-              if (raw) {
-                try {
-                  adkData = JSON.parse(raw);
-                } catch (parseError) {
-                  adkData = null;
-                }
-              }
-
-              if (!adkResponse.ok) {
-                const errorMessage = adkData?.error || adkData?.message || raw || 'Failed to fetch ADK assistant response';
-                throw new Error(errorMessage);
-              }
-
-              const adkMessage = adkData?.response || adkData?.message || raw;
-              if (SHOW_ADK_ASSISTANT_IN_CHAT) {
-                if (adkMessage && adkMessage.trim()) {
-                  addMessage(`**ADK Assistant**\n\n${adkMessage}`, false);
-                } else {
-                  addMessage('**ADK Assistant**\n\nNo response received.', false);
-                }
-              }
-            } catch (error) {
-              if (SHOW_ADK_ASSISTANT_IN_CHAT) {
-                addMessage(`**ADK Assistant**\n\nSorry, I encountered an error: ${error.message}`, false);
-              } else {
-                console.warn('ADK Assistant error:', error);
+            const raw = await response.text();
+            let data = null;
+            if (raw) {
+              try {
+                data = JSON.parse(raw);
+              } catch (parseError) {
+                data = null;
               }
             }
-          })();
 
-          await Promise.allSettled([primaryAssistantTask, adkAssistantTask]);
+            if (!response.ok) {
+              const errorMessage = data?.error || raw || 'Failed to get response';
+              throw new Error(errorMessage);
+            }
 
-          if (loadingDiv && loadingDiv.parentNode) {
-            chatMessages.removeChild(loadingDiv);
+            const aiMessage = data?.response || data?.answer || raw;
+            let combinedMessage = '';
+            const trimmedAiMessage = typeof aiMessage === 'string' ? aiMessage.trim() : '';
+            if (trimmedAiMessage) {
+              combinedMessage += trimmedAiMessage;
+            }
+
+            if (SHOW_ADK_ASSISTANT_IN_CHAT && data?.adk) {
+              if (data.adk.session_id && data.adk.session_id !== sessionId) {
+                try {
+                  localStorage.setItem(ADK_SESSION_STORAGE_KEY, data.adk.session_id);
+                } catch (storageError) {
+                  console.warn('Unable to persist ADK session id:', storageError);
+                }
+              }
+
+              if (data.adk.success && data.adk.markdown && data.adk.markdown.trim()) {
+                if (combinedMessage) {
+                  combinedMessage += '\n\n---\n\n';
+                }
+                combinedMessage += `**Pitchlense Assistance**\n\n${data.adk.markdown.trim()}`;
+              } else if (!data.adk.success && data.adk.error) {
+                const errorMessage = data.adk.error === 'adk_not_configured'
+                  ? 'Pitchlense Assistance service is not configured.'
+                  : data.adk.error;
+                if (combinedMessage) {
+                  combinedMessage += '\n\n---\n\n';
+                }
+                combinedMessage += `**Pitchlense Assistance**\n\n${errorMessage}`;
+              }
+            }
+
+            if (combinedMessage) {
+              addMessage(combinedMessage);
+            } else {
+              addMessage('No response received from PitchLense assistant.');
+            }
+
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+          } catch (error) {
+            if (loadingDiv && loadingDiv.parentNode) {
+              chatMessages.removeChild(loadingDiv);
+            }
+            addMessage(`Sorry, I encountered an error: ${error.message}`);
           }
-          chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
         // Load chat history
@@ -5228,7 +5152,7 @@
             .style('border-radius', '8px')
             .style('border', '1px solid #f1d85b')
             .style('font-size', '12px')
-            .style('pointer-events', 'auto') // Allow interaction with tooltip
+            .style('pointer-events', 'none') // Disable pointer events until visible
             .style('opacity', 0)
             .style('z-index', 1000)
             .style('max-width', '600px') // Limit width (2x increase)
@@ -5247,7 +5171,9 @@
         d3.select('#knowledgeGraph').on('mouseleave', function() {
           // Hide tooltip when mouse leaves the knowledge graph container
           if (tooltipVisible) {
-            tooltip.style('opacity', 0);
+            tooltip
+              .style('opacity', 0)
+              .style('pointer-events', 'none');
             tooltipVisible = false;
           }
           // Clear any pending timeouts
@@ -5815,6 +5741,7 @@
               tooltip
                 .style('left', left + 'px')
                 .style('top', top + 'px')
+                .style('pointer-events', 'auto')
                 .style('opacity', 1);
                 
               tooltipVisible = true;
@@ -5839,7 +5766,9 @@
             // Set timeout to hide tooltip with delay
             tooltipTimeout = setTimeout(() => {
               if (tooltipVisible) {
-                tooltip.style('opacity', 0);
+                tooltip
+                  .style('opacity', 0)
+                  .style('pointer-events', 'none');
                 tooltipVisible = false;
               }
             }, 200); // 200ms delay before hiding
@@ -5856,13 +5785,17 @@
               clearTimeout(globalTooltipTimeout);
               globalTooltipTimeout = null;
             }
-            tooltip.style('opacity', 1);
+            tooltip
+              .style('opacity', 1)
+              .style('pointer-events', 'auto');
             tooltipVisible = true;
           });
 
           tooltip.on('mouseleave', function() {
             // Hide tooltip when mouse leaves tooltip
-            tooltip.style('opacity', 0);
+            tooltip
+              .style('opacity', 0)
+              .style('pointer-events', 'none');
             tooltipVisible = false;
             if (tooltipTimeout) {
               clearTimeout(tooltipTimeout);
@@ -5883,7 +5816,9 @@
 
           const outsideHideHandler = (e) => {
             if (!isInsideGraph(e.target)) {
-              tooltip.style('opacity', 0);
+              tooltip
+                .style('opacity', 0)
+                .style('pointer-events', 'none');
               tooltipVisible = false;
               if (tooltipTimeout) { clearTimeout(tooltipTimeout); tooltipTimeout = null; }
               if (globalTooltipTimeout) { clearTimeout(globalTooltipTimeout); globalTooltipTimeout = null; }
@@ -5893,7 +5828,12 @@
           document.addEventListener('mousemove', outsideHideHandler, { passive: true });
           document.addEventListener('scroll', outsideHideHandler, { passive: true });
           document.addEventListener('click', outsideHideHandler, { passive: true });
-          window.addEventListener('blur', () => { tooltip.style('opacity', 0); tooltipVisible = false; }, { passive: true });
+          window.addEventListener('blur', () => {
+            tooltip
+              .style('opacity', 0)
+              .style('pointer-events', 'none');
+            tooltipVisible = false;
+          }, { passive: true });
 
           // Zoom controls
           document.getElementById('zoomIn')?.addEventListener('click', () => {
