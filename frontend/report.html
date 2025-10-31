@@ -4862,6 +4862,12 @@
         const chatInput = document.getElementById('chatInput');
         const sendButton = document.getElementById('sendButton');
         const chatMessages = document.getElementById('chatMessages');
+        const ADK_SESSION_STORAGE_KEY = 'pitchlense_adk_session_id';
+        const SHOW_ADK_ASSISTANT_IN_CHAT = false;
+
+        if (!chatInput || !sendButton || !chatMessages) {
+          return;
+        }
 
         function addMessage(message, isUser = false) {
           const messageDiv = document.createElement('div');
@@ -4898,6 +4904,81 @@
           chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
+        function generateSessionId() {
+          if (window.crypto?.randomUUID) {
+            return window.crypto.randomUUID();
+          }
+          return `adk-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        }
+
+        function getOrCreateAdkSessionId() {
+          try {
+            const existing = localStorage.getItem(ADK_SESSION_STORAGE_KEY);
+            if (existing && existing.trim()) {
+              return existing;
+            }
+            const newId = generateSessionId();
+            localStorage.setItem(ADK_SESSION_STORAGE_KEY, newId);
+            return newId;
+          } catch (error) {
+            console.warn('Unable to access localStorage for ADK session id:', error);
+            return generateSessionId();
+          }
+        }
+
+        function getAdkRunUrl() {
+          const candidates = [
+            window.ADK_RUN_URL,
+            window.AdkRunUrl,
+            window.adkRunUrl,
+            window?.env?.ADK_RUN_URL,
+            window?.env?.adkRunUrl,
+            window?.ENV?.ADK_RUN_URL,
+            window?.__ENV__?.ADK_RUN_URL,
+            window?.__PITCHLENSE_ENV__?.ADK_RUN_URL,
+            window?.CONFIG?.ADK_RUN_URL,
+            window?.config?.ADK_RUN_URL,
+            document.querySelector('meta[name="adk-run-url"]')?.getAttribute('content'),
+            document.body?.dataset?.adkRunUrl,
+            localStorage.getItem('ADK_RUN_URL')
+          ];
+
+          for (const candidate of candidates) {
+            if (typeof candidate === 'string' && candidate.trim()) {
+              return candidate.trim();
+            }
+          }
+
+          return null;
+        }
+
+        function getAdkUserIdentifier() {
+          const user = window.currentUser;
+          if (user) {
+            if (user.id !== undefined && user.id !== null) {
+              return String(user.id);
+            }
+            if (user.user_id !== undefined && user.user_id !== null) {
+              return String(user.user_id);
+            }
+            if (user.email) {
+              return user.email;
+            }
+          }
+
+          const storedId = localStorage.getItem('pitchlenseUserId');
+          if (storedId && storedId.trim()) {
+            return storedId.trim();
+          }
+
+          const storedEmail = localStorage.getItem('userEmail');
+          if (storedEmail && storedEmail.trim()) {
+            return storedEmail.trim();
+          }
+
+          return 'anonymous-user';
+        }
+
         async function sendMessage() {
           const message = chatInput.value.trim();
           if (!message || message.length < 5) {
@@ -4905,6 +4986,7 @@
             chatInput.focus();
             return;
           }
+
           // Add user message
           addMessage(message, true);
           chatInput.value = '';
@@ -4933,48 +5015,120 @@
           chatMessages.appendChild(loadingDiv);
           chatMessages.scrollTop = chatMessages.scrollHeight;
 
-          try {
-            // Get report ID from URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const reportId = urlParams.get('report_id');
-            
-            if (!reportId) {
-              throw new Error('Report ID not found');
-            }
+          const urlParams = new URLSearchParams(window.location.search);
+          const reportId = urlParams.get('report_id');
 
-            // Call the Co-pilot API
-            const response = await fetch('/api/qna/ask', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              credentials: 'include',
-              body: JSON.stringify({
-                report_id: reportId,
-                question: message
-              })
-            });
-
-            // Remove loading indicator if it still exists
+          if (!reportId) {
             if (loadingDiv && loadingDiv.parentNode) {
               chatMessages.removeChild(loadingDiv);
             }
-
-            if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.error || 'Failed to get response');
-            }
-
-            const data = await response.json();
-            addMessage(data.response);
-
-          } catch (error) {
-            // Remove loading indicator if it still exists
-            if (loadingDiv && loadingDiv.parentNode) {
-              chatMessages.removeChild(loadingDiv);
-            }
-            addMessage(`Sorry, I encountered an error: ${error.message}`);
+            addMessage('Sorry, I encountered an error: Report ID not found');
+            return;
           }
+
+          const primaryAssistantTask = (async () => {
+            try {
+              const response = await fetch('/api/qna/ask', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                  report_id: reportId,
+                  question: message
+                })
+              });
+
+              const raw = await response.text();
+              let data = null;
+              if (raw) {
+                try {
+                  data = JSON.parse(raw);
+                } catch (parseError) {
+                  data = null;
+                }
+              }
+
+              if (!response.ok) {
+                const errorMessage = data?.error || raw || 'Failed to get response';
+                throw new Error(errorMessage);
+              }
+
+              const aiMessage = data?.response || data?.answer || raw;
+              if (aiMessage && aiMessage.trim()) {
+                addMessage(aiMessage);
+              } else {
+                addMessage('No response received from PitchLense assistant.');
+              }
+            } catch (error) {
+              addMessage(`Sorry, I encountered an error: ${error.message}`);
+            }
+          })();
+
+          const adkAssistantTask = (async () => {
+            try {
+              const adkRunUrl = getAdkRunUrl();
+              if (!adkRunUrl) {
+                console.warn('ADK_RUN_URL is not configured');
+                if (SHOW_ADK_ASSISTANT_IN_CHAT) {
+                  addMessage('**ADK Assistant**\n\nService is not configured.', false);
+                }
+                return;
+              }
+
+              const payload = {
+                user_name: getAdkUserIdentifier(),
+                session_id: getOrCreateAdkSessionId(),
+                query: message
+              };
+
+              const adkResponse = await fetch(adkRunUrl, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+              });
+
+              const raw = await adkResponse.text();
+              let adkData = null;
+              if (raw) {
+                try {
+                  adkData = JSON.parse(raw);
+                } catch (parseError) {
+                  adkData = null;
+                }
+              }
+
+              if (!adkResponse.ok) {
+                const errorMessage = adkData?.error || adkData?.message || raw || 'Failed to fetch ADK assistant response';
+                throw new Error(errorMessage);
+              }
+
+              const adkMessage = adkData?.response || adkData?.message || raw;
+              if (SHOW_ADK_ASSISTANT_IN_CHAT) {
+                if (adkMessage && adkMessage.trim()) {
+                  addMessage(`**ADK Assistant**\n\n${adkMessage}`, false);
+                } else {
+                  addMessage('**ADK Assistant**\n\nNo response received.', false);
+                }
+              }
+            } catch (error) {
+              if (SHOW_ADK_ASSISTANT_IN_CHAT) {
+                addMessage(`**ADK Assistant**\n\nSorry, I encountered an error: ${error.message}`, false);
+              } else {
+                console.warn('ADK Assistant error:', error);
+              }
+            }
+          })();
+
+          await Promise.allSettled([primaryAssistantTask, adkAssistantTask]);
+
+          if (loadingDiv && loadingDiv.parentNode) {
+            chatMessages.removeChild(loadingDiv);
+          }
+          chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
         // Load chat history
@@ -5911,6 +6065,18 @@
             if (userEmailText) {
               userEmailText.textContent = d.user.email;
             }
+            window.currentUser = d.user;
+            try {
+              if (d.user?.id !== undefined && d.user?.id !== null) {
+                localStorage.setItem('pitchlenseUserId', String(d.user.id));
+              }
+              if (d.user?.email) {
+                localStorage.setItem('userEmail', d.user.email);
+              }
+            } catch (storageError) {
+              console.warn('Unable to persist user identity to localStorage:', storageError);
+            }
+
             // Load report data after authentication check
             fetchReportData();
           }
