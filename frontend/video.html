@@ -398,24 +398,22 @@
       const questions = window.questions || [];
       const questionsText = questions.join(', ');
       
-      const prompt = `Create a brief, friendly introduction (under 50 words) for a video interview session. 
-      
-      Context: The user will be answering questions about: ${questionsText}
-      
-      Instructions:
-      - Welcome them warmly
-      - Explain this is a video interview
-      - Briefly mention what topics will be covered
-      - Give simple instructions (speak clearly, take your time)
+      const prompt = `Create a brief, friendly introduction (under 10-12 words) for a video interview session.
+
+      Output requirements:
+      - Start with a warm welcome
+      - Explain this is a video interview session
+      - Provide clear instructions (speak clearly, take your time, mention the record button)
       - Keep it conversational and encouraging
       - End with "When you're ready, click the record button to begin"
-      
+
       Make it sound natural and professional.`;
 
       try {
         // Try to use Gemini Live API if available
         if (window.GoogleGenAI && window.Modality) {
           return await generateWithGemini(prompt);
+          // return generateFallbackIntroduction(questions);
         } else {
           // Fallback to a generic introduction
           return generateFallbackIntroduction(questions);
@@ -446,7 +444,7 @@
     // Generate fallback introduction
     function generateFallbackIntroduction(questions) {
       const topics = questions.slice(0, 3).join(', ');
-      return `Welcome to your video interview! I'm excited to learn about your experience and insights. Today we'll be discussing ${topics} and other related topics. Please speak clearly and take your time with your responses. This is your opportunity to share your thoughts and experiences in detail. When you're ready, click the record button to begin.`;
+      return `Welcome to your video interview! I'm excited to learn about your experience and insights. Today we'll be discussing about your product and other related topics. Please speak clearly and take your time with your responses. This is your opportunity to share your thoughts and experiences in detail. When you're ready, click the record button to begin.`;
     }
 
     // Play introduction audio

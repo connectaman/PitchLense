@@ -7469,23 +7469,11 @@
             
             <!-- Video Recording Options -->
             <div class="space-y-3 mb-4">
-              <!-- Traditional Video Link -->
               <div class="bg-[#1E1E21] border border-white/10 rounded-md p-3">
                 <p class="text-sm text-white/60 mb-2">📹 Traditional Video Recording:</p>
                 <div class="flex items-center gap-2">
                   <input type="text" id="videoLink" value="${window.location.origin}/video.html?id=${queryId}" readonly class="flex-1 bg-[#2E3137] border border-white/20 rounded px-2 py-1 text-xs text-white">
                   <button onclick="copyVideoLink()" class="px-2 py-1 bg-accent text-[#1E1E21] rounded text-xs hover:bg-accent/80 transition-colors">
-                    Copy
-                  </button>
-                </div>
-              </div>
-
-              <!-- AI Chat Link -->
-              <div class="bg-[#1E1E21] border border-white/10 rounded-md p-3">
-                <!-- <p class="text-sm text-white/60 mb-2">🤖 AI Chat Interview:</p> -->
-                <div class="flex items-center gap-2">
-                  <input type="text" id="aiChatLink" value="${window.location.origin}/ai-chat.html?id=${queryId}" readonly class="flex-1 bg-[#2E3137] border border-white/20 rounded px-2 py-1 text-xs text-white">
-                  <button onclick="copyAiChatLink()" class="px-2 py-1 bg-accent text-[#1E1E21] rounded text-xs hover:bg-accent/80 transition-colors">
                     Copy
                   </button>
                 </div>
@@ -7503,7 +7491,7 @@
               </div>
             </div>
             
-            <p class="text-white/60 text-sm mb-6">Choose between traditional video recording or AI-powered chat interview. Share the preferred link with the founder.</p>
+            <p class="text-white/60 text-sm mb-6">Share this video interview link with the founder to capture responses.</p>
             <button onclick="closeSuccessPopup()" class="px-6 py-2 bg-accent text-[#1E1E21] rounded-lg hover:bg-accent/80 transition-colors font-medium">
               Got it!
             </button>
@@ -7542,20 +7530,11 @@
         }
       }
 
-      function copyAiChatLink() {
-        const aiChatLinkInput = document.getElementById('aiChatLink');
-        if (aiChatLinkInput) {
-          aiChatLinkInput.select();
-          document.execCommand('copy');
-          showToast('AI Chat link copied to clipboard!', 'green');
-        }
-      }
-
       // Send email invite
       async function sendEmailInvite() {
         const emailInput = document.getElementById('emailInput');
         const videoLinkInput = document.getElementById('videoLink');
-        
+
         if (!emailInput || !videoLinkInput) return;
         
         const email = emailInput.value.trim();
@@ -7580,7 +7559,7 @@
             credentials: 'include',
             body: JSON.stringify({
               email: email,
-              videoLink: videoLink,
+            videoLink: videoLink,
               queryId: window.currentQueryId // Use the stored queryId
             })
           });

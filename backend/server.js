@@ -893,10 +893,23 @@ Return only the questions as a JSON array of strings, no other text.`;
 
     console.log('LLM response for follow-up questions:', llmResponse);
 
+    // Normalize response to handle markdown code fences or extra wrappers
+    let normalizedResponse = (llmResponse || '').trim();
+
+    const fencedMatch = normalizedResponse.match(/^```(?:json)?\s*([\s\S]*?)```$/i);
+    if (fencedMatch) {
+      normalizedResponse = fencedMatch[1].trim();
+    } else {
+      normalizedResponse = normalizedResponse
+        .replace(/^```(?:json)?\s*/i, '')
+        .replace(/```$/i, '')
+        .trim();
+    }
+
     let questions;
     try {
       // Try to parse as JSON array
-      questions = JSON.parse(llmResponse);
+      questions = JSON.parse(normalizedResponse);
       
       // Ensure it's an array
       if (!Array.isArray(questions)) {
@@ -910,10 +923,16 @@ Return only the questions as a JSON array of strings, no other text.`;
       console.error('Error parsing LLM response as JSON:', parseError);
       
       // Fallback: try to extract questions from text response
-      const lines = llmResponse.split('\n').filter(line => line.trim().length > 0);
+      const lines = normalizedResponse.split('\n').filter(line => line.trim().length > 0);
       questions = lines
         .filter(line => line.includes('?') && line.trim().length > 20)
-        .map(line => line.replace(/^\d+\.\s*/, '').replace(/^-\s*/, '').replace(/^\*\s*/, '').trim())
+        .map(line => line
+          .replace(/^\d+\.\s*/, '')
+          .replace(/^-\s*/, '')
+          .replace(/^\*\s*/, '')
+          .replace(/^"/, '')
+          .replace(/",?$/, '')
+          .trim())
         .filter(q => q.length > 0);
     }
 
