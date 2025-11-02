@@ -87,6 +87,10 @@ async function loadInvestments() {
     if (allInvestments.length === 0) {
       emptyState.classList.remove('hidden');
       summaryKPIs.innerHTML = '';
+      // Hide AI recommendation button when no investments
+      if (typeof toggleAiRecommendationButton === 'function') {
+        toggleAiRecommendationButton(false);
+      }
       return;
     }
 
@@ -127,10 +131,19 @@ async function loadInvestments() {
       grid.appendChild(card);
     });
 
+    // Show AI recommendation button when investments exist
+    if (typeof toggleAiRecommendationButton === 'function') {
+      toggleAiRecommendationButton(true);
+    }
+
   } catch (error) {
     console.error('Error loading investments:', error);
     loadingState.classList.add('hidden');
     emptyState.classList.remove('hidden');
+    // Hide AI recommendation button on error
+    if (typeof toggleAiRecommendationButton === 'function') {
+      toggleAiRecommendationButton(false);
+    }
     Swal.fire({
       title: 'Error',
       text: 'Failed to load investments',

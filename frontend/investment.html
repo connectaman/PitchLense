@@ -515,7 +515,7 @@
           <span>by</span>
           <a href="https://amanulla.in/" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Aman Ulla</a>
           <span>,</span>
-          <a href="#" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Srinivas Alva</a>
+          <a href="https://www.linkedin.com/in/srinivasalva/" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Srinivas Alva</a>
           <span class="text-white/40">|</span>
           <a href="https://vision.hack2skill.com/event/genaiexchangehackathon/?utm_source=hack2skill&utm_medium=homepage#overview" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors">Hack2Skill‑Google Hackathon</a>
         </div>
@@ -553,6 +553,38 @@
         </button>
       </div>
     </div>
+
+    <!-- Footer Hover with Delay Script -->
+    <script>
+      // Footer hover functionality with delay
+      (function() {
+        const footer = document.querySelector('footer');
+        const footerCircle = document.querySelector('.footer-circle');
+        const footerExpanded = document.querySelector('.footer-expanded');
+        let hideTimeout = null;
+
+        function showFooter() {
+          if (hideTimeout) {
+            clearTimeout(hideTimeout);
+            hideTimeout = null;
+          }
+          if (footerExpanded) footerExpanded.classList.add('show');
+          if (footerCircle) footerCircle.classList.add('hover');
+        }
+
+        function hideFooter() {
+          hideTimeout = setTimeout(() => {
+            if (footerExpanded) footerExpanded.classList.remove('show');
+            if (footerCircle) footerCircle.classList.remove('hover');
+          }, 600); // 600ms delay before hiding
+        }
+
+        if (footer) {
+          footer.addEventListener('mouseenter', showFooter);
+          footer.addEventListener('mouseleave', hideFooter);
+        }
+      })();
+    </script>
 
     <!-- Mobile Menu JavaScript -->
     <script>
@@ -640,6 +672,18 @@
             aiRecommendationModal.classList.add('hidden');
           }
         });
+      }
+
+      // Function to toggle AI recommendation button visibility
+      function toggleAiRecommendationButton(hasInvestments) {
+        const aiBtn = document.getElementById('aiRecommendationBtn');
+        if (aiBtn) {
+          if (hasInvestments) {
+            aiBtn.classList.remove('hidden');
+          } else {
+            aiBtn.classList.add('hidden');
+          }
+        }
       }
 
       // Generate AI recommendations
@@ -791,6 +835,26 @@
           default:
             return 'bg-gray-500/20 text-gray-400 border border-gray-500/30';
         }
+      }
+
+      // Initialize AI button visibility on page load
+      window.addEventListener('DOMContentLoaded', async () => {
+        const investments = await getAllInvestments();
+        toggleAiRecommendationButton(investments.length > 0);
+      });
+
+      // Observer to watch for investment changes
+      const investmentsGrid = document.getElementById('investmentsGrid');
+      const emptyState = document.getElementById('emptyState');
+      
+      if (investmentsGrid && emptyState) {
+        const observer = new MutationObserver(async () => {
+          const investments = await getAllInvestments();
+          toggleAiRecommendationButton(investments.length > 0);
+        });
+        
+        observer.observe(investmentsGrid, { childList: true, subtree: true });
+        observer.observe(emptyState, { attributes: true, attributeFilter: ['class'] });
       }
     </script>
   </body>

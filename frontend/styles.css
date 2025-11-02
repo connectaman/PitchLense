@@ -857,18 +857,18 @@ body::before {
   background-color: transparent;
 }
 
-/* Footer hover effect */
-footer:hover .footer-expanded {
+/* Footer hover effect - controlled by JavaScript */
+footer .footer-expanded.show {
   opacity: 1 !important;
   transform: translateY(0) !important;
   pointer-events: auto !important;
 }
 
-footer:hover .footer-circle {
+footer .footer-circle.hover {
   transform: scale(1.1);
 }
 
-footer:hover .footer-circle svg {
+footer .footer-circle.hover svg {
   transform: scale(1.2);
 }
 

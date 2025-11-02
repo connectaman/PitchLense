@@ -738,7 +738,7 @@ const CTA = () => (
       <p className="mt-2 text-secondary">Hack2Skill‑Google Hackathon</p>
       <div className="mt-6 flex items-center justify-center gap-4">
         <a href="https://amanulla.in/" target="_blank" rel="noopener noreferrer" className="text-accent hover:text-white transition-colors font-medium">Aman Ulla</a>
-        <a href="#" target="_blank" rel="noopener noreferrer" className="text-accent hover:text-white transition-colors font-medium">Srinivas Alva</a>
+        <a href="https://www.linkedin.com/in/srinivasalva/" target="_blank" rel="noopener noreferrer" className="text-accent hover:text-white transition-colors font-medium">Srinivas Alva</a>
         <a href="https://vision.hack2skill.com/event/genaiexchangehackathon/?utm_source=hack2skill&utm_medium=homepage#overview" target="_blank" rel="noopener noreferrer" className="text-accent hover:text-white transition-colors">Hackathon</a>
         <a href="https://github.com/connectaman/PitchLense" target="_blank" rel="noopener noreferrer" className="text-accent hover:text-white transition-colors">GitHub</a>
         <a href="https://pypi.org/project/pitchlense-mcp/" target="_blank" rel="noopener noreferrer" className="text-accent hover:text-white transition-colors">PyPI</a>

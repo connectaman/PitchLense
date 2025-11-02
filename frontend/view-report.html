@@ -308,7 +308,7 @@
               <span>by</span>
               <a href="https://amanulla.in/" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Aman Ulla</a>
               <span>,</span>
-              <a href="#" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Srinivas Alva</a>
+              <a href="https://www.linkedin.com/in/srinivasalva/" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Srinivas Alva</a>
               <span class="text-white/40">|</span>
               <a href="https://vision.hack2skill.com/event/genaiexchangehackathon/?utm_source=hack2skill&utm_medium=homepage#overview" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors">Hack2Skill‑Google Hackathon</a>
               <span class="text-white/40">|</span>
@@ -644,7 +644,7 @@
                 <span class=\"text-white/60 text-sm flex-shrink-0\">Status:</span>
                 <div class=\"flex items-center gap-2 flex-wrap\">
                   <span class=\"status-chip text-xs px-2 py-1 rounded-full border whitespace-nowrap inline-block\" style=\"${statusStyle}\">${r.status}</span>
-                  ${status === 'pending' ? '<span class=\"text-xs text-white/80 eta-timer\" data-created=\"' + r.created_at + '\">ETA: <span class=\"countdown\">18m 0s</span></span>' : ''}
+                  ${status === 'pending' ? '<span class=\"text-xs text-white/80 eta-timer\" data-created=\"' + r.created_at + '\">ETA: <span class=\"countdown\">22m 0s</span></span>' : ''}
                 </div>
               </div>
             </div>
@@ -737,7 +737,7 @@
             const createdTime = new Date(r.created_at).getTime();
             const now = new Date().getTime();
             const timeElapsed = now - createdTime;
-            const totalTime = 18 * 60 * 1000; // 18 minutes in milliseconds
+            const totalTime = 22 * 60 * 1000; // 22 minutes in milliseconds
             let timeLeft = Math.max(0, totalTime - timeElapsed);
             
             let timerId;
@@ -1138,7 +1138,7 @@
           <span>by</span>
           <a href="https://amanulla.in/" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Aman Ulla</a>
           <span>,</span>
-          <a href="#" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Srinivas Alva</a>
+          <a href="https://www.linkedin.com/in/srinivasalva/" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Srinivas Alva</a>
           <span class="text-white/40">|</span>
           <a href="https://vision.hack2skill.com/event/genaiexchangehackathon/?utm_source=hack2skill&utm_medium=homepage#overview" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors">Hack2Skill‑Google Hackathon</a>
           <span class="text-white/40">|</span>
@@ -1163,6 +1163,39 @@
         </svg>
       </div>
     </footer>
+    
+    <!-- Footer Hover with Delay Script -->
+    <script>
+      // Footer hover functionality with delay
+      (function() {
+        const footer = document.querySelector('footer');
+        const footerCircle = document.querySelector('.footer-circle');
+        const footerExpanded = document.querySelector('.footer-expanded');
+        let hideTimeout = null;
+
+        function showFooter() {
+          if (hideTimeout) {
+            clearTimeout(hideTimeout);
+            hideTimeout = null;
+          }
+          if (footerExpanded) footerExpanded.classList.add('show');
+          if (footerCircle) footerCircle.classList.add('hover');
+        }
+
+        function hideFooter() {
+          hideTimeout = setTimeout(() => {
+            if (footerExpanded) footerExpanded.classList.remove('show');
+            if (footerCircle) footerCircle.classList.remove('hover');
+          }, 600); // 600ms delay before hiding
+        }
+
+        if (footer) {
+          footer.addEventListener('mouseenter', showFooter);
+          footer.addEventListener('mouseleave', hideFooter);
+        }
+      })();
+    </script>
+    
     <script src="/static/navbar.js"></script>
   </body>
 </html>

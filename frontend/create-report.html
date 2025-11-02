@@ -127,7 +127,7 @@
           <span>by</span>
           <a href="https://amanulla.in/" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Aman Ulla</a>
           <span>,</span>
-          <a href="#" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Srinivas Alva</a>
+          <a href="https://www.linkedin.com/in/srinivasalva/" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Srinivas Alva</a>
           <span class="text-white/40">|</span>
           <a href="https://vision.hack2skill.com/event/genaiexchangehackathon/?utm_source=hack2skill&utm_medium=homepage#overview" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors">Hack2Skill‑Google Hackathon</a>
           <span class="text-white/40">|</span>
@@ -275,7 +275,7 @@
           <span>by</span>
           <a href="https://amanulla.in/" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Aman Ulla</a>
           <span>,</span>
-          <a href="#" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Srinivas Alva</a>
+          <a href="https://www.linkedin.com/in/srinivasalva/" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Srinivas Alva</a>
           <span class="text-white/40">|</span>
           <a href="https://vision.hack2skill.com/event/genaiexchangehackathon/?utm_source=hack2skill&utm_medium=homepage#overview" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors">Hack2Skill‑Google Hackathon</a>
           <span class="text-white/40">|</span>
@@ -330,6 +330,38 @@
     <!-- Load Navbar Component -->
     <script src="/static/navbar.js"></script>
     
+    <!-- Footer Hover with Delay Script -->
+    <script>
+      // Footer hover functionality with delay
+      (function() {
+        const footer = document.querySelector('footer');
+        const footerCircle = document.querySelector('.footer-circle');
+        const footerExpanded = document.querySelector('.footer-expanded');
+        let hideTimeout = null;
+
+        function showFooter() {
+          if (hideTimeout) {
+            clearTimeout(hideTimeout);
+            hideTimeout = null;
+          }
+          if (footerExpanded) footerExpanded.classList.add('show');
+          if (footerCircle) footerCircle.classList.add('hover');
+        }
+
+        function hideFooter() {
+          hideTimeout = setTimeout(() => {
+            if (footerExpanded) footerExpanded.classList.remove('show');
+            if (footerCircle) footerCircle.classList.remove('hover');
+          }, 600); // 600ms delay before hiding
+        }
+
+        if (footer) {
+          footer.addEventListener('mouseenter', showFooter);
+          footer.addEventListener('mouseleave', hideFooter);
+        }
+      })();
+    </script>
+
     <!-- Mobile Menu JavaScript -->
     <script>
       // Mobile menu functionality
