@@ -928,7 +928,6 @@
         for (const course of courses) {
           try {
             course.videos = await fetchPlaylistVideos(course.playlistId);
-            console.log(`Loaded ${course.videos.length} videos for ${course.title}`);
           } catch (error) {
             console.error(`Failed to load videos for ${course.title}:`, error);
             // Fallback to basic video if API fails

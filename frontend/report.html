@@ -5256,7 +5256,6 @@
 
           // Check if it's the new format with root/dependencies/dependents
           if (apiKnowledgeGraph.root && (apiKnowledgeGraph.dependencies || apiKnowledgeGraph.dependents)) {
-            console.log('Processing new format knowledge graph');
             
             // Add root node
             nodes.push({
@@ -5340,7 +5339,6 @@
 
           } else if (apiKnowledgeGraph.nodes && apiKnowledgeGraph.edges) {
             // Handle old format with nodes and edges
-            console.log('Processing old format knowledge graph');
             
             nodes = [
               // Add root node if it exists
@@ -6298,7 +6296,6 @@
             }
 
             // Check for existing feedback
-            console.log('Making feedback API call...');
             const response = await fetch(`/api/feedback/${reportId}`, {
               method: 'GET',
               headers: {
@@ -6306,9 +6303,6 @@
               },
               credentials: 'include'
             });
-
-            console.log('Feedback check response status:', response.status);
-            console.log('Feedback check response headers:', response.headers);
 
             if (response.ok) {
               // Check if response is JSON

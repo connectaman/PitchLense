@@ -328,7 +328,6 @@
       async function fetchUserProfile() {
         // Check if we have valid cached data
         if (userData && profileStats && isCacheValid()) {
-          console.log('Using cached profile data');
           populateProfileData();
           return;
         }
@@ -349,7 +348,6 @@
 
           if (response.status === 304) {
             // Use cached data if server returns 304 Not Modified
-            console.log('Using cached data (304)');
             populateProfileData();
             return;
           }
@@ -380,9 +378,7 @@
 
       // Populate profile data
       function populateProfileData() {
-        console.log('populateProfileData called', { userData, profileStats });
         if (!userData || !profileStats) {
-          console.log('Missing data:', { userData, profileStats });
           return;
         }
 
@@ -427,7 +423,6 @@
 
       // Populate statistics
       function populateStatistics() {
-        console.log('populateStatistics called', profileStats);
         if (!profileStats) return;
 
         try {

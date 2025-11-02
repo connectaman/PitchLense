@@ -6,7 +6,7 @@ PitchLense is a comprehensive AI-powered startup analysis platform that provides
 
 <div align="center">
 
-[![YouTube Tutorial](https://img.shields.io/badge/📺_YouTube_Tutorial-red?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/XUuLeXaEIdI)
+[![YouTube Tutorial](https://img.shields.io/badge/📺_YouTube_Tutorial-red?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/J8Bp4um6UfA?si=95QvK70f61o1J5BQ)
 [![Website](https://img.shields.io/badge/🌐_Website-black?style=for-the-badge&logo=googlechrome&logoColor=white)](https://www.pitchlense.com/)
 [![GitHub Repository](https://img.shields.io/badge/💻_GitHub-black?style=for-the-badge&logo=github&logoColor=white)](https://github.com/connectaman/PitchLense)
 [![MCP Repository](https://img.shields.io/badge/🔧_MCP_Repository-black?style=for-the-badge&logo=github&logoColor=white)](https://github.com/connectaman/Pitchlense-mcp)
@@ -18,9 +18,57 @@ PitchLense is a comprehensive AI-powered startup analysis platform that provides
 ### 📖 How to Use PitchLense
 Watch our comprehensive tutorial video to learn how to use PitchLense effectively:
 
-[![How to use PitchLense](https://img.youtube.com/vi/XUuLeXaEIdI/0.jpg)](https://youtu.be/XUuLeXaEIdI)
+[![How to use PitchLense](https://img.youtube.com/vi/J8Bp4um6UfA/0.jpg)](https://youtu.be/J8Bp4um6UfA?si=95QvK70f61o1J5BQ)
 
 **Click the image above to watch the tutorial on YouTube**
+
+---
+
+## 🏗️ Architecture & System Design
+
+### Architecture Diagram
+Our cloud-native architecture leverages Google Cloud Platform services for scalability, reliability, and AI capabilities:
+
+<div align="center">
+  <img src="screenshot/arch.PNG" alt="PitchLense Architecture Diagram" width="100%">
+</div>
+
+**Key Components:**
+- **Frontend**: React.js with Tailwind CSS hosted on Cloud Run
+- **Backend**: Node.js Express API with Cloud Run Functions
+- **Database**: Cloud SQL (MySQL) with Cloud Storage for file management
+- **AI Layer**: Vertex AI, Gemini, Vision API, Natural Language API
+- **MCP Agents**: Cloud Run Functions for modular AI agents
+- **CI/CD**: GitHub Actions with Artifact Registry deployment
+
+### Process Flow
+Our intelligent workflow combines multiple AI services and guardrails for secure, accurate analysis:
+
+<div align="center">
+  <img src="screenshot/process.PNG" alt="PitchLense Process Flow" width="100%">
+</div>
+
+**Workflow Highlights:**
+- **Content Moderation**: XSS, toxicity, profanity checks and prompt injection prevention
+- **Multi-Source Data**: Google News, Perplexity, SerpAPI, LinkedIn integration
+- **Dynamic Prompts**: Context-aware prompt generation with Gemini 2.5 Flash
+- **Agentic Conversation**: Intelligent multi-agent coordination
+- **Feedback Loop**: Continuous improvement through feedback agents
+
+### Tech Stack
+Comprehensive technology ecosystem built for AI-powered startup analysis:
+
+<div align="center">
+  <img src="screenshot/techstack.PNG" alt="PitchLense Tech Stack" width="100%">
+</div>
+
+**Technology Breakdown:**
+- **Application Layer**: React JS, Node.js, Express JS, Tailwind CSS, MySQL
+- **MCP Host**: Python, FastMCP, DsPy, PyTest
+- **Infrastructure**: Docker, Nginx, Cloud DNS, Cloud Run, Cloud SQL, Artifact Registry
+- **AI Services**: Vertex AI, Gemini LLM, Agent Builder (ADK), Vision API, Model Registry
+
+---
 
 ## Features
 
@@ -599,7 +647,7 @@ PitchLense/
   - **Srinivas Alva**: Backend Developer & Data Scientist
 - **Tech Stack**: React, Node.js, Python, Gemini, GCP Cloud, Docker, GitHub, Perplexity, SerpAPI, Vertex AI
 - **Project Links**:
-  - [YouTube Tutorial](https://youtu.be/XUuLeXaEIdI)
+  - [YouTube Tutorial](https://youtu.be/J8Bp4um6UfA?si=95QvK70f61o1J5BQ)
   - [Website](https://www.pitchlense.com/)
   - [GitHub Repository](https://github.com/connectaman/PitchLense)
   - [MCP Repository](https://github.com/connectaman/Pitchlense-mcp)

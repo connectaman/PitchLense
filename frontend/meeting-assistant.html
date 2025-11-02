@@ -182,7 +182,7 @@
                     <!-- Upload Section -->
                     <div id="upload-section" class="bg-[#2C2F34] border border-white/10 rounded-xl p-6">
                         <h2 class="text-xl font-bold mb-2">Upload meeting recording</h2>
-                        <p class="text-white/70 mb-4">Supported formats: mp4, webm, mov (up to 100MB for demo)</p>
+                        <p class="text-white/70 mb-4">Supported formats: mp4, webm, mov (video up to 7 mins for demo)</p>
                         <div class="flex flex-col sm:flex-row gap-3 items-center">
                             <input id="videoInput" type="file" accept="video/*" class="bg-[#1E1E21] border border-white/10 rounded-lg px-4 py-3 w-full">
                             <button id="analyzeBtn" class="bg-[#FFF27A] text-[#1E1E21] font-semibold px-6 py-3 rounded-lg hover:bg-[#f0e068] disabled:bg-gray-600 disabled:text-white/40" disabled>Analyze</button>
@@ -355,11 +355,55 @@
         const downloadBtn = document.getElementById('downloadBtn');
         const emailBtn = document.getElementById('emailBtn');
 
-        input.addEventListener('change', (e) => {
+        input.addEventListener('change', async (e) => {
             const f = e.target.files[0];
-            if (!f) { btn.disabled = true; selected.textContent=''; return; }
-            selected.textContent = `Selected: ${f.name} (${(f.size/1024/1024).toFixed(2)} MB)`;
-            btn.disabled = false;
+            if (!f) { 
+                btn.disabled = true; 
+                selected.textContent=''; 
+                return; 
+            }
+            
+            // Check video duration
+            const video = document.createElement('video');
+            video.preload = 'metadata';
+            
+            video.onloadedmetadata = function() {
+                window.URL.revokeObjectURL(video.src);
+                const duration = video.duration; // in seconds
+                const durationMinutes = duration / 60;
+                
+                if (durationMinutes > 7) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Video Too Long',
+                        text: 'For demo purposes, videos up to 7 minutes are allowed. Please upload a shorter video.',
+                        confirmButtonColor: '#FFF27A',
+                        confirmButtonText: 'OK'
+                    });
+                    input.value = ''; // Clear the input
+                    selected.textContent = '';
+                    btn.disabled = true;
+                } else {
+                    const minutes = Math.floor(duration / 60);
+                    const seconds = Math.floor(duration % 60);
+                    selected.textContent = `Selected: ${f.name} (${(f.size/1024/1024).toFixed(2)} MB, ${minutes}:${seconds.toString().padStart(2, '0')})`;
+                    btn.disabled = false;
+                }
+            };
+            
+            video.onerror = function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Video',
+                    text: 'Unable to read video file. Please try another file.',
+                    confirmButtonColor: '#FFF27A'
+                });
+                input.value = '';
+                selected.textContent = '';
+                btn.disabled = true;
+            };
+            
+            video.src = URL.createObjectURL(f);
         });
 
         btn.addEventListener('click', async () => {

@@ -416,7 +416,7 @@ Connect with investors and founders:
 ## Need Help?
 
 - 📚 Check the in-app documentation modal
-- 🎥 Watch the [YouTube tutorial](https://youtu.be/XUuLeXaEIdI)
+- 🎥 Watch the [YouTube tutorial](https://youtu.be/J8Bp4um6UfA?si=95QvK70f61o1J5BQ)
 - 🌐 Visit [pitchlense.com](https://www.pitchlense.com/)
 - 📖 Read [DEPLOYMENT.md](DEPLOYMENT.md) for setup help
 - 🤝 See [CONTRIBUTING.md](CONTRIBUTING.md) to contribute

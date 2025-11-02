@@ -98,7 +98,7 @@
               <div class="relative w-full" style="padding-bottom: 56.25%; height: 0; overflow: hidden;">
                 <iframe 
                   class="absolute top-0 left-0 w-full h-full rounded-lg"
-                  src="https://www.youtube.com/embed/XUuLeXaEIdI?rel=0&modestbranding=1"
+                  src="https://www.youtube.com/embed/J8Bp4um6UfA?si=95QvK70f61o1J5BQ"
                   title="How to use PitchLense"
                   frameborder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -125,70 +125,278 @@
                 </svg>
                 Frequently Asked Questions
               </h2>
+
+              <!-- Search Bar -->
+              <div class="mb-6">
+                <div class="relative">
+                  <input 
+                    type="text" 
+                    id="faqSearch" 
+                    placeholder="Search FAQs..." 
+                    class="w-full px-4 py-3 pl-12 bg-[#1E1E21] border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent transition-colors"
+                  >
+                  <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
+                  </svg>
+                </div>
+                <p id="searchResultsText" class="mt-2 text-sm text-white/60 hidden"></p>
+              </div>
               
-              <div class="space-y-4">
+              <div id="faqContainer" class="space-y-4">
                 <!-- Accordion Item 1 -->
                 <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
                   <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-1">
-                    <span class="font-medium text-white">Getting Started with PitchLense</span>
+                    <span class="font-medium text-white">How do I access PitchLense and sign in?</span>
                     <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                   </button>
                   <div id="accordion-1" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
-                    <p class="text-sm leading-relaxed">This section will contain detailed information about getting started with PitchLense. Content will be added later with proper context and helpful GIFs to guide users through the initial setup process.</p>
+                    <p class="text-sm leading-relaxed mb-3">Start by navigating to <span class="text-accent">pitchlense.com</span>. When you arrive, click the login button in the header. You can create a new account or sign in with an existing account. Make sure you use a professional email and fill in the profile details so the platform can tailor recommendations and usage insights to your preferences.</p>
+                    <p class="text-sm leading-relaxed text-accent/90">💡 Tip: If you plan to analyze multiple startups or manage investments, use a persistent account to keep histories, uploaded documents, and follow-up questions all in one place.</p>
                   </div>
                 </div>
 
                 <!-- Accordion Item 2 -->
                 <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
                   <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-2">
-                    <span class="font-medium text-white">Creating Your First Report</span>
+                    <span class="font-medium text-white">How do I create and generate an analysis report?</span>
                     <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                   </button>
                   <div id="accordion-2" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
-                    <p class="text-sm leading-relaxed">Learn how to create comprehensive startup analysis reports using our AI-powered tools. This section will include step-by-step instructions and visual guides to help you generate professional reports quickly and efficiently.</p>
+                    <p class="text-sm leading-relaxed mb-3">From the left side menu, click the <span class="text-accent">Create Report</span> button. This launches a short wizard where you provide basic details for the analysis. Fill all required fields and upload the relevant documents such as pitch decks, financial models, cap tables, term sheets, product one-pagers, or any regulatory filings.</p>
+                    <p class="text-sm leading-relaxed mb-3">Select the correct document category for each upload. Categorization matters because the PitchLense agent adjusts analysis rules and benchmarks by document type. Include as many supporting files as you can—more context improves the AI-driven insights.</p>
+                    <p class="text-sm leading-relaxed">Once your inputs are ready, click the <span class="text-accent">Generate Report</span> button. The system will queue the analysis. You can monitor progress by clicking the refresh icon. When the report status shows "Success", click <span class="text-accent">View Report</span> to open the result.</p>
                   </div>
                 </div>
 
                 <!-- Accordion Item 3 -->
                 <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
                   <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-3">
-                    <span class="font-medium text-white">Investment Tracking Features</span>
+                    <span class="font-medium text-white">What's included in the Overall and Detailed Analysis tabs?</span>
                     <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                   </button>
                   <div id="accordion-3" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
-                    <p class="text-sm leading-relaxed">Discover how to track and manage your startup investments effectively. This section will cover portfolio management, performance analytics, and AI-powered investment recommendations to optimize your investment strategy.</p>
+                    <p class="text-sm leading-relaxed mb-3"><span class="text-accent font-semibold">Overall Analysis Tab:</span> This gives a concise yet powerful snapshot including growth potential indicator, radar chart visualizing quantitative risks, market share metrics, numeric risk factors, market value trends, and auto-fetched news. These components let you make quick, data-backed decisions at a glance.</p>
+                    <p class="text-sm leading-relaxed"><span class="text-accent font-semibold">Detailed Analysis Tab:</span> This is where the platform delivers its full value, organizing insights across Customer & Traction, Product, Market Sizing, Competitive Risk, Exit Potential, Social Coverage, Team & Founders, Legal & Regulatory, Operational Metrics, Peer Benchmarking, and Financial Performance. Each section includes a high-level summary, quantitative score, and AI-driven recommendations that translate risk into action items.</p>
                   </div>
                 </div>
 
                 <!-- Accordion Item 4 -->
                 <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
                   <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-4">
-                    <span class="font-medium text-white">Market Data Integration</span>
+                    <span class="font-medium text-white">How do I use Copilot, EcoSite, and verify sources?</span>
                     <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                   </button>
                   <div id="accordion-4" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
-                    <p class="text-sm leading-relaxed">Understand how to leverage real-time market data and news to make informed decisions. This section will explain data sources, analysis tools, and how to interpret market trends for better investment outcomes.</p>
+                    <p class="text-sm leading-relaxed mb-3"><span class="text-accent font-semibold">Verify Sources:</span> Click the web icon to display the list of sources the PitchLense agent used. You get direct access to articles, filings, or social posts. Click the edit icon to modify analysis summaries, adjust risk indicators, or change supporting details.</p>
+                    <p class="text-sm leading-relaxed mb-3"><span class="text-accent font-semibold">Copilot:</span> Open the Copilot tab and start a conversation. Ask natural language questions about the analysis or uploaded documents. The agent answers with accurate responses and includes proper citations. Examples: "Summarize key customer churn drivers" or "Show me the top three legal risks."</p>
+                    <p class="text-sm leading-relaxed"><span class="text-accent font-semibold">EcoSite:</span> This is a visual network graph with the company at the center. On the left are dependencies (suppliers, platforms, markets). On the right are customers and purchasers. Every node contains key information to help you assess direct and indirect exposure.</p>
                   </div>
                 </div>
 
                 <!-- Accordion Item 5 -->
                 <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
                   <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-5">
-                    <span class="font-medium text-white">AI Recommendations & Insights</span>
+                    <span class="font-medium text-white">How do I verify sources and edit analysis?</span>
                     <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                   </button>
                   <div id="accordion-5" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
-                    <p class="text-sm leading-relaxed">Explore our advanced AI features that provide personalized recommendations and insights. This section will cover how to use AI analysis, automated suggestions, and intelligent alerts to enhance your startup evaluation process.</p>
+                    <p class="text-sm leading-relaxed mb-3">To validate the data supporting the report, click the <span class="text-accent">web icon</span>. This displays the list of sources the PitchLense agent used to produce an authentic fact-driven analysis. You get direct access to articles, filings, or social posts the agent relied on.</p>
+                    <p class="text-sm leading-relaxed">If you spot inaccuracies or want to refine tone and emphasis, click the <span class="text-accent">edit icon</span>. You can modify any analysis summary, adjust risk indicators, or change supporting details. The system is designed to be collaborative so your expert judgment can reshape the report quickly.</p>
+                  </div>
+                </div>
+
+                <!-- Accordion Item 6 -->
+                <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
+                  <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-6">
+                    <span class="font-medium text-white">How do I use Copilot to ask clarifying questions?</span>
+                    <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                  <div id="accordion-6" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
+                    <p class="text-sm leading-relaxed mb-3">Open the <span class="text-accent">Copilot tab</span> and start a conversation. You can ask natural language questions about the analysis or the uploaded documents. The PitchLense agent answers with accurate responses and includes proper citations so you know where the insight came from.</p>
+                    <p class="text-sm leading-relaxed mb-2">Examples of effective Copilot prompts:</p>
+                    <ul class="text-sm leading-relaxed list-disc list-inside space-y-1 ml-2">
+                      <li>"Summarize key customer churn drivers in plain language."</li>
+                      <li>"Show me the top three legal risks and their supporting evidence."</li>
+                      <li>"Provide a one paragraph investor pitch highlighting exit potential."</li>
+                    </ul>
+                    <p class="text-sm leading-relaxed mt-3">Copilot is useful for drafting follow-up emails, building internal memos, or preparing due diligence checklists.</p>
+                  </div>
+                </div>
+
+                <!-- Accordion Item 7 -->
+                <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
+                  <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-7">
+                    <span class="font-medium text-white">What is the EcoSite network graph?</span>
+                    <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                  <div id="accordion-7" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
+                    <p class="text-sm leading-relaxed mb-3">The <span class="text-accent">EcoSite tab</span> is a visual map of the company, its dependencies, and its customers. At the center sits the company. On the left are dependencies such as suppliers, platforms, or markets it relies on. On the right are customers and purchasers of its offerings.</p>
+                    <p class="text-sm leading-relaxed">Every node contains key information including relationship context, recent news, and market data. This view helps you assess both direct and indirect exposure so you can identify supply chain risk, concentration risk, or partnership opportunities.</p>
+                  </div>
+                </div>
+
+                <!-- Accordion Item 8 -->
+                <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
+                  <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-8">
+                    <span class="font-medium text-white">How do I manage uploaded files?</span>
+                    <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                  <div id="accordion-8" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
+                    <p class="text-sm leading-relaxed mb-3">Use the <span class="text-accent">Uploaded Files tab</span> to review all documents you supplied. This is your single source of truth for any attachments used in the analysis.</p>
+                    <p class="text-sm leading-relaxed">You can add missing files, replace outdated versions, or annotate documents to direct the agent toward specific sections. Keeping the upload library organized ensures faster, more accurate repeated analyses.</p>
+                  </div>
+                </div>
+
+                <!-- Accordion Item 9 -->
+                <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
+                  <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-9">
+                    <span class="font-medium text-white">How do I generate and manage follow-up questions?</span>
+                    <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                  <div id="accordion-9" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
+                    <p class="text-sm leading-relaxed mb-3">Open the <span class="text-accent">Follow Up tab</span> and click <span class="text-accent">Generate New Questions</span>. The PitchLense agent will analyze the full report and create relevant follow-up questions based on detected risks and gaps.</p>
+                    <p class="text-sm leading-relaxed mb-3">You can also add custom questions by clicking the <span class="text-accent">Ask New Question</span> button. Edit or delete generated questions to curate a concise list. When ready, share the questions with the founder by clicking <span class="text-accent">Ask Founder For Follow Up</span>. You can send the follow-up via a URL or directly via email.</p>
+                    <p class="text-sm leading-relaxed text-accent/90">⚡ Important capability: The PitchLense AI agent can also converse with the founder on your behalf to gather answers. This automates routine clarifications and accelerates due diligence.</p>
+                  </div>
+                </div>
+
+                <!-- Accordion Item 10 -->
+                <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
+                  <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-10">
+                    <span class="font-medium text-white">How do video interviews work?</span>
+                    <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                  <div id="accordion-10" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
+                    <p class="text-sm leading-relaxed mb-3">Use the integrated <span class="text-accent">video interview tool</span> to initiate a recorded session. Click the record button to start and stop when complete. You can replay, reshoot, or submit the final recording.</p>
+                    <p class="text-sm leading-relaxed">Afterwards, the platform extracts quick answers from the video and generates a transcript. Cards display founder responses to follow-up questions so you can quickly scan highlights or watch the full response if you need more nuance.</p>
+                  </div>
+                </div>
+
+                <!-- Accordion Item 11 -->
+                <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
+                  <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-11">
+                    <span class="font-medium text-white">How do I export, share, and collect feedback?</span>
+                    <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                  <div id="accordion-11" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
+                    <p class="text-sm leading-relaxed mb-3">Once the analysis is complete, generate a PitchLense analysis report and <span class="text-accent">export it as a PDF or PowerPoint</span>, or share it directly via email. Reports are designed to be investor-friendly and provide quick decision-making capability.</p>
+                    <p class="text-sm leading-relaxed mb-3">Use the <span class="text-accent">feedback button</span> to share your thoughts on the agent performance. Continuous feedback helps the model improve quality over time.</p>
+                    <p class="text-sm leading-relaxed">If you want to understand how metrics were calculated, click the <span class="text-accent">Documentation link</span> to inspect underlying calculations and assumptions.</p>
+                  </div>
+                </div>
+
+                <!-- Accordion Item 12 -->
+                <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
+                  <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-12">
+                    <span class="font-medium text-white">How do I track investments and leverage AI recommendations?</span>
+                    <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                  <div id="accordion-12" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
+                    <p class="text-sm leading-relaxed mb-3">The <span class="text-accent">Investments tab</span> lets you track all investments, including total invested amount, current value, and average ROI across startups. Click <span class="text-accent">Add Investment</span> to record a new startup investment and fill required details before saving.</p>
+                    <p class="text-sm leading-relaxed">You can update valuations, record reinvestments, and manage equity changes. The PitchLense AI recommendation engine can generate summaries, insights, and tailored suggestions to help you manage portfolio exposures.</p>
+                  </div>
+                </div>
+
+                <!-- Accordion Item 13 -->
+                <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
+                  <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-13">
+                    <span class="font-medium text-white">How do I search companies and review market performance?</span>
+                    <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                  <div id="accordion-13" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
+                    <p class="text-sm leading-relaxed mb-3">Use the <span class="text-accent">Search feature</span> to pull up in-depth company information. You will see an overview, revenue and earnings, balance sheet, income statement, and key executives. This is handy for quick reference checks before engaging further with a startup.</p>
+                    <p class="text-sm leading-relaxed">The <span class="text-accent">Market Performance dashboard</span> offers a concise view of global market movements, top gainers, economic indicators, and key metrics. You can use the platform's AI summary to translate market signals into investment recommendations.</p>
+                  </div>
+                </div>
+
+                <!-- Accordion Item 14 -->
+                <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
+                  <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-14">
+                    <span class="font-medium text-white">How do I monitor market news and expand my network?</span>
+                    <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                  <div id="accordion-14" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
+                    <p class="text-sm leading-relaxed mb-3">The <span class="text-accent">Market News feed</span> aggregates updates across sectors, including stocks, crypto, forex, insider trades, crowdfunding, equity offerings, and acquisitions. Use the AI summary feature to compress noisy news into actionable digestible intelligence.</p>
+                    <p class="text-sm leading-relaxed">The <span class="text-accent">Networking tab</span> helps you explore opportunities to connect and collaborate with other investors and venture capitalists. Use it to source co-investors, syndicate deals, or find subject matter experts for diligence calls.</p>
+                  </div>
+                </div>
+
+                <!-- Accordion Item 15 -->
+                <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
+                  <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-15">
+                    <span class="font-medium text-white">How do I use the Meeting Assistant and email analysis?</span>
+                    <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                  <div id="accordion-15" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
+                    <p class="text-sm leading-relaxed mb-3">The <span class="text-accent">Meeting Assistant</span> lets you host or upload meetings and returns a full transcript, a concise summary, highlighted key points, decisions, and action items. You can download or email the meeting summary to stakeholders for clear next steps.</p>
+                    <p class="text-sm leading-relaxed">Connect your email client to PitchLense and analyze incoming pitch emails with the <span class="text-accent">Analyze button</span>. Guard rails are in place to ignore non-pitch or irrelevant emails so your workflow stays focused.</p>
+                  </div>
+                </div>
+
+                <!-- Accordion Item 16 -->
+                <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
+                  <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-16">
+                    <span class="font-medium text-white">How do I install extensions and manage my profile?</span>
+                    <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                  <div id="accordion-16" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
+                    <p class="text-sm leading-relaxed mb-3">Install the <span class="text-accent">PitchLense Chrome extension</span> to analyze any web page or email directly from your browser. This is useful for on-the-fly analysis when you discover articles, company sites, or investor updates.</p>
+                    <p class="text-sm leading-relaxed">In <span class="text-accent">Profile</span> you can view detailed usage insights and access quick walkthroughs for each feature. When finished with a session, click <span class="text-accent">Sign Out</span> to secure your account.</p>
+                  </div>
+                </div>
+
+                <!-- Accordion Item 17 -->
+                <div class="accordion-item border border-white/10 rounded-lg overflow-hidden">
+                  <button class="accordion-header w-full px-4 py-4 text-left bg-[#1E1E21] hover:bg-[#2A2D32] transition-colors flex items-center justify-between" data-target="accordion-17">
+                    <span class="font-medium text-white">What are the best practices for using PitchLense?</span>
+                    <svg class="accordion-icon w-5 h-5 text-white/70 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                  <div id="accordion-17" class="accordion-content hidden px-4 py-4 bg-[#2E3137] text-white/80">
+                    <p class="text-sm leading-relaxed mb-3">When using PitchLense you will get the most value when you combine the platform intelligence with your own domain experience. Here are practical guidelines to follow:</p>
+                    <ul class="text-sm leading-relaxed space-y-2 ml-2">
+                      <li class="flex items-start gap-2"><span class="text-accent mt-1">•</span><span>Upload comprehensive and accurate documents so the AI has sufficient context to generate high-fidelity analysis.</span></li>
+                      <li class="flex items-start gap-2"><span class="text-accent mt-1">•</span><span>Use the EcoSite and radar chart to identify non-obvious dependencies and concentration risks early.</span></li>
+                      <li class="flex items-start gap-2"><span class="text-accent mt-1">•</span><span>Leverage the Copilot to craft precise follow-up questions and investor-facing summaries.</span></li>
+                      <li class="flex items-start gap-2"><span class="text-accent mt-1">•</span><span>Keep an iterative workflow. After founder answers arrive, regenerate or update the report and re-score key risk areas.</span></li>
+                      <li class="flex items-start gap-2"><span class="text-accent mt-1">•</span><span>Record concise video interviews and rely on the transcript to capture nuance you may miss in short written responses.</span></li>
+                      <li class="flex items-start gap-2"><span class="text-accent mt-1">•</span><span>Use exports for board decks, investment memos, or term sheet negotiations so everyone is aligned on the same facts.</span></li>
+                    </ul>
+                    <p class="text-sm leading-relaxed mt-3 text-accent/90">💡 PitchLense streamlines due diligence by combining document analysis, web sourcing, AI reasoning, and communications into a single platform. Get started, iterate often, and let the AI surface the most relevant risks so you can focus on the strategic judgment that matters most.</p>
                   </div>
                 </div>
               </div>
@@ -205,7 +413,7 @@
                 </div>
                 <h3 class="text-xl font-semibold text-white mb-2">Need Help?</h3>
                 <p class="text-white/70 mb-4">If you face any issue, difficulty, or bug, we're here to help!</p>
-                <p class="text-lg text-accent font-medium">connectamanulla@gmail.com</p>
+                <p class="text-lg text-accent font-medium">connectamanulla@gmail.com / srinivas.alva@yahoo.com</p>
               </div>
             </div>
 
@@ -308,6 +516,65 @@
             }
           });
         });
+
+        // FAQ Search functionality
+        const searchInput = document.getElementById('faqSearch');
+        const faqContainer = document.getElementById('faqContainer');
+        const searchResultsText = document.getElementById('searchResultsText');
+        const allFaqItems = document.querySelectorAll('.accordion-item');
+
+        if (searchInput) {
+          searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            
+            if (searchTerm === '') {
+              // Show all items when search is empty
+              allFaqItems.forEach(item => {
+                item.style.display = '';
+              });
+              searchResultsText.classList.add('hidden');
+              return;
+            }
+
+            let visibleCount = 0;
+
+            allFaqItems.forEach(item => {
+              const header = item.querySelector('.accordion-header');
+              const content = item.querySelector('.accordion-content');
+              const questionText = header.textContent.toLowerCase();
+              const answerText = content.textContent.toLowerCase();
+              
+              // Check if search term matches question or answer
+              if (questionText.includes(searchTerm) || answerText.includes(searchTerm)) {
+                item.style.display = '';
+                visibleCount++;
+              } else {
+                item.style.display = 'none';
+              }
+            });
+
+            // Update results text
+            if (visibleCount === 0) {
+              searchResultsText.textContent = `No FAQs found matching "${searchTerm}"`;
+              searchResultsText.classList.remove('hidden');
+            } else if (visibleCount === 1) {
+              searchResultsText.textContent = `Found 1 FAQ matching "${searchTerm}"`;
+              searchResultsText.classList.remove('hidden');
+            } else {
+              searchResultsText.textContent = `Found ${visibleCount} FAQs matching "${searchTerm}"`;
+              searchResultsText.classList.remove('hidden');
+            }
+          });
+
+          // Clear button on Escape key
+          searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+              this.value = '';
+              this.dispatchEvent(new Event('input'));
+              this.blur();
+            }
+          });
+        }
       });
     </script>
   </body>

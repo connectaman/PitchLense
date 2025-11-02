@@ -488,10 +488,7 @@ app.use((req, res, next) => {
 
 // Feedback API endpoint (use requireAuth middleware)
 app.post('/api/feedback', requireAuth, async (req, res) => {
-  try {
-    console.log('Feedback API - Request body:', req.body);
-    console.log('Feedback API - User:', req.user);
-    
+  try {    
     const {
       report_id,
       overall_feedback,
@@ -507,7 +504,6 @@ app.post('/api/feedback', requireAuth, async (req, res) => {
     // Validate required fields
     if (!report_id || !overall_feedback || !risk_indicator_feedback || !got_what_looking_for || 
         !content_quality || !scores_satisfaction || !copilot_feedback || !ecosystem_feedback) {
-      console.log('Feedback API - Missing required fields, but returning success for demo');
       return res.json({
         success: true,
         message: 'Feedback submitted successfully (demo mode)',
@@ -520,7 +516,6 @@ app.post('/api/feedback', requireAuth, async (req, res) => {
                     content_quality, scores_satisfaction, copilot_feedback, ecosystem_feedback];
     for (const rating of ratings) {
       if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-        console.log('Feedback API - Invalid ratings, but returning success for demo');
         return res.json({
           success: true,
           message: 'Feedback submitted successfully (demo mode)',
@@ -531,20 +526,14 @@ app.post('/api/feedback', requireAuth, async (req, res) => {
 
     try {
       // Check if report exists
-      console.log('Feedback API - Checking report access:', {
-        report_id,
-        tableName: tableName('reports')
-      });
       
       const report = await dbGet(
         `SELECT report_id FROM ${tableName('reports')} WHERE report_id=? AND is_delete=0`,
         [report_id]
       );
 
-      console.log('Feedback API - Report query result:', report);
 
       if (!report) {
-        console.log('Feedback API - Report not found, but returning success for demo');
         return res.json({
           success: true,
           message: 'Feedback submitted successfully (demo mode)',
@@ -578,13 +567,8 @@ app.post('/api/feedback', requireAuth, async (req, res) => {
         feedback_note || null
       ];
 
-      console.log('Feedback API - Insert query:', insertQuery);
-      console.log('Feedback API - Insert params:', insertParams);
-      
       await dbRun(insertQuery, insertParams);
       
-      console.log('Feedback API - Successfully inserted feedback:', feedback_id);
-
       res.json({
         success: true,
         message: 'Feedback submitted successfully',
@@ -615,9 +599,6 @@ app.post('/api/feedback', requireAuth, async (req, res) => {
 // Get feedback for a report (use requireAuth middleware)
 app.get('/api/feedback/:report_id', requireAuth, async (req, res) => {
   try {
-    console.log('GET /api/feedback/:report_id - Request received');
-    console.log('Report ID:', req.params.report_id);
-    console.log('User:', req.user);
     
     const { report_id } = req.params;
 
@@ -629,7 +610,6 @@ app.get('/api/feedback/:report_id', requireAuth, async (req, res) => {
       );
 
       if (!report) {
-        console.log('GET Feedback API - Report not found, but returning no feedback for demo');
         return res.json({
           success: true,
           exists: false,
@@ -643,7 +623,6 @@ app.get('/api/feedback/:report_id', requireAuth, async (req, res) => {
         [report_id, req.user.id]
       );
       
-      console.log('Feedback API - Existing feedback:', existingFeedback);
 
       if (existingFeedback) {
         res.json({
@@ -702,7 +681,6 @@ app.use(cookieParser());
 // Get all investors from investor_directory table (MUST be before static middleware)
 app.get('/api/investors', requireAuth, async (req, res) => {
   try {
-    console.log('Fetching investors from database...');
     
     // Check if table exists first (MySQL syntax)
     const tableExists = await dbGet(
@@ -711,7 +689,7 @@ app.get('/api/investors', requireAuth, async (req, res) => {
     );
     
     if (!tableExists) {
-      console.log('investor_directory table does not exist');
+      console.error('investor_directory table does not exist');
       return res.json([]);
     }
     
@@ -727,7 +705,6 @@ app.get('/api/investors', requireAuth, async (req, res) => {
         name ASC`
     );
     
-    console.log(`Found ${investors.length} investors`);
     res.json(investors);
   } catch (error) {
     console.error('Error fetching investors:', error);
@@ -742,9 +719,7 @@ app.use(express.static(staticDir));
 // Content moderation endpoint for co-pilot chat
 app.post('/api/content-moderate', async (req, res) => {
   try {
-    console.log('Content moderation endpoint called');
-    console.log('Request body:', req.body);
-    
+
     const { content } = req.body;
     
     if (!content || content.trim().length === 0) {
@@ -754,12 +729,10 @@ app.post('/api/content-moderate', async (req, res) => {
       });
     }
     
-    console.log('Content to moderate:', content);
     
     // Use the existing content moderation function
     const moderationResult = await moderateContent(content);
     
-    console.log('Moderation result:', moderationResult);
     
     res.json({
       safe: moderationResult.safe,
@@ -781,8 +754,6 @@ app.post('/api/content-moderate', async (req, res) => {
 // Follow-up questions generation endpoint
 app.post('/api/reports/follow-up-questions', requireAuth, async (req, res) => {
   try {
-    console.log('Follow-up questions endpoint called');
-    console.log('Request body:', req.body);
     
     const { report_id } = req.body;
     
@@ -883,7 +854,6 @@ SECURITY INSTRUCTIONS:
 
 Return only the questions as a JSON array of strings, no other text.`;
 
-    console.log('Generating follow-up questions with prompt length:', prompt.length);
 
     // Use the same LLM calling pattern as other endpoints
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
@@ -891,7 +861,6 @@ Return only the questions as a JSON array of strings, no other text.`;
     const response = await result.response;
     const llmResponse = response.text();
 
-    console.log('LLM response for follow-up questions:', llmResponse);
 
     // Normalize response to handle markdown code fences or extra wrappers
     let normalizedResponse = (llmResponse || '').trim();
@@ -943,7 +912,6 @@ Return only the questions as a JSON array of strings, no other text.`;
     // Limit to 15 questions maximum
     questions = questions.slice(0, 15);
 
-    console.log('Generated follow-up questions:', questions);
 
     res.json({
       success: true,
@@ -963,9 +931,7 @@ Return only the questions as a JSON array of strings, no other text.`;
 // Follow-up queries save endpoint
 app.post('/api/reports/follow-up-queries', requireAuth, async (req, res) => {
   try {
-    console.log('Follow-up queries endpoint called');
-    console.log('Request body:', req.body);
-    
+
     const { report_id, questions } = req.body;
     
     if (!report_id) {
@@ -1025,7 +991,6 @@ app.post('/api/reports/follow-up-queries', requireAuth, async (req, res) => {
         }
       });
 
-      console.log('Follow-up questions saved to GCS:', followupPath);
     } catch (gcsError) {
       console.error('Failed to save to GCS:', gcsError);
       return res.status(500).json({ 
@@ -1040,7 +1005,6 @@ app.post('/api/reports/follow-up-queries', requireAuth, async (req, res) => {
       [queryId, report_id, `gs://${bucketName}/${followupPath}`, `gs://${bucketName}/${videoPath}`, `gs://${bucketName}/${transcriptPath}`]
     );
 
-    console.log('Follow-up query saved:', queryId);
 
     res.json({
       success: true,
@@ -1270,7 +1234,6 @@ app.get('/api/follow-up-queries/:id/video', async (req, res) => {
 // Send email invite for video recording
 app.post('/api/follow-up-queries/send-email-invite', async (req, res) => {
   try {
-    console.log('Email invite endpoint called');
     
     const { email, videoLink, queryId } = req.body;
 
@@ -1494,7 +1457,6 @@ app.post('/api/follow-up-queries/send-email-invite', async (req, res) => {
       };
       
       const info = await transporter.sendMail(mailOptions);
-      console.log('Email invitation sent successfully:', info.messageId);
       
       res.json({
         success: true,
@@ -5546,12 +5508,11 @@ app.get('*', (_req, res) => {
 });
 
 // ==================== MEETING ASSISTANT ====================
-const uploadMeeting = multer({ limits: { fileSize: 100 * 1024 * 1024 } });
+const uploadMeeting = multer({ limits: { fileSize: 250 * 1024 * 1024 } });
 
 // Submit video for follow-up query
 app.post('/api/follow-up-queries/submit-video', uploadMeeting.single('video'), async (req, res) => {
   try {
-    console.log('Video submission endpoint called');
     
     const { followupId } = req.body;
     const videoFile = req.file;

@@ -3,6 +3,11 @@
  * Include this script in your HTML and call renderNavbar(currentPage)
  */
 
+if (window.__PITCHLENSE_NAVBAR_LOADED__) {
+  console.warn('navbar.js already loaded, skipping re-initialization.');
+} else {
+  window.__PITCHLENSE_NAVBAR_LOADED__ = true;
+
 const NAV_ITEMS = [
   {
     id: 'create',
@@ -258,5 +263,4 @@ if (document.readyState === 'loading') {
 } else {
   initializeNavbars();
 }
-
-
+}

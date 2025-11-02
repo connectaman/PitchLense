@@ -134,7 +134,7 @@ const YouTubeVideo = () => {
             <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
               <iframe
                 className="absolute top-0 left-0 w-full h-full rounded-xl shadow-card border border-white/10"
-                src="https://www.youtube.com/embed/XUuLeXaEIdI?si=c_BmRh3jfv2Hc2Ie&vq=hd720"
+                src="https://www.youtube.com/embed/J8Bp4um6UfA?si=1gEulOqmYPKkyIWT"
                 title="PitchLense Demo Video"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -284,7 +284,7 @@ const HackathonInfo = () => {
               <h3 className="text-xl font-semibold text-center mb-4">Project Links & Resources</h3>
               <div className="flex flex-wrap items-center justify-center gap-3">
                 <a 
-                  href="https://youtu.be/XUuLeXaEIdI" 
+                  href="https://youtu.be/J8Bp4um6UfA?si=95QvK70f61o1J5BQ" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-300"
