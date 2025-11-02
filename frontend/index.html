@@ -47,6 +47,20 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- GSAP for animations -->
     <script src="https://unpkg.com/gsap@3/dist/gsap.min.js"></script>
+
+    <!-- Google Analytics - PitchLense & YouTube Tracking -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-01HVZWQJYZ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      // PitchLense Analytics
+      gtag('config', 'G-01HVZWQJYZ');
+      
+      // YouTube Analytics
+      gtag('config', 'G-MEJ9RH4LNM');
+    </script>
   </head>
 
   <body class="bg-background text-text font-sans antialiased selection:bg-accent selection:text-white">

@@ -5559,7 +5559,6 @@ app.post('/api/follow-up-queries/submit-video', uploadMeeting.single('video'), a
         }
       });
 
-      console.log('Video uploaded to GCS:', videoPath);
 
       // Process video with Gemini for transcript and answers
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
@@ -5671,7 +5670,6 @@ Return only the JSON object.`;
         }
       });
 
-      console.log('Transcript saved to GCS:', transcriptPath);
 
       // Update follow-up query with actual paths
       await dbRun(
@@ -5771,7 +5769,6 @@ app.post('/api/gemini-tts', async (req, res) => {
 
     // For now, return a simple text response instead of audio
     // This is a fallback until we can properly implement TTS
-    console.log('TTS Request:', text);
     
     // Create a simple audio file or use Web Speech API on frontend
     // For now, we'll return a success response and handle TTS on frontend

@@ -625,10 +625,7 @@
       async function generateAINewsAnalysis() {
         try {
           const newsDataForAI = collectNewsDataForAI();
-          
-          // Debug logging
-          console.log('Collected news data:', newsDataForAI);
-          
+                  
           // Show loading state
           document.getElementById('aiNewsLoadingState').classList.remove('hidden');
           document.getElementById('aiNewsSummaryContent').classList.add('hidden');

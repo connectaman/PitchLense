@@ -5395,14 +5395,6 @@
             edges: edges
           };
 
-          console.log('Processed knowledge graph:', knowledgeGraph);
-          console.log('Total nodes:', knowledgeGraph.nodes.length);
-          console.log('Total edges:', knowledgeGraph.edges.length);
-          
-          // Log metadata if available
-          if (apiKnowledgeGraph.metadata) {
-            console.log('Graph metadata:', apiKnowledgeGraph.metadata);
-          }
           
           // Add a summary display for large graphs (desktop only)
           if (knowledgeGraph.nodes.length > 10 && window.matchMedia('(min-width: 768px)').matches) {
@@ -6110,7 +6102,6 @@
             feedbackNote.value = feedback.feedback_note;
           }
           
-          console.log('Populated existing feedback:', feedback);
         }
 
         // Reset feedback form to start fresh
@@ -6124,7 +6115,6 @@
             feedbackNote.value = '';
           }
           
-          console.log('Reset feedback form for fresh start');
         }
 
         // Initialize star ratings
@@ -6196,7 +6186,6 @@
               tabId: activeTabButton.id,
               tabData: activeTabButton.getAttribute('data-tab')
             };
-            console.log('Saved tab state:', savedTabState);
           } else {
             // Fallback: look for any active tab content to determine current tab
             const activeContent = document.querySelector('.tab-content.active:not(.news-tab-content)');
@@ -6227,7 +6216,6 @@
               
               if (tabData && tabId) {
                 savedTabState = { tabId, tabData };
-                console.log('Saved tab state (fallback):', savedTabState);
               }
             }
           }
@@ -6235,7 +6223,6 @@
         
         function restoreTabState() {
           if (savedTabState) {
-            console.log('Restoring tab state:', savedTabState);
             
             // Find the tab button to restore
             const tabButton = document.getElementById(savedTabState.tabId);
