@@ -1,142 +1,86 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PitchLense — AI Analyst for Startup Evaluation</title>
-    <link rel="icon" type="image/svg+xml" href="/static/logo.svg" />
-    <meta name="description" content="PitchLense: AI-powered analyst that synthesizes founder material and public data to generate investor-ready insights." />
-
-    <!-- Tailwind Play CDN with custom theme -->
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              background: '#1E1E21',
-              surface: '#2E3137',
-              muted: '#2E3137',
-              text: '#ffffff',
-              secondary: '#cfd4dd',
-              accent: '#f1d85b',
-              accent2: '#78e6d0'
-            },
-            fontFamily: {
-              sans: ['Inter', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif']
-            },
-            boxShadow: {
-              card: '0 10px 30px rgba(0,0,0,0.35)'
-            }
-          }
-        }
-      };
-    </script>
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-    <!-- Base styles -->
-    <link rel="stylesheet" href="./styles.css" />
-
-    <!-- React 18 UMD + Babel for JSX in browser (ok for demo) -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- GSAP for animations -->
-    <script src="https://unpkg.com/gsap@3/dist/gsap.min.js"></script>
-
-    <!-- Google Analytics - PitchLense & YouTube Tracking -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-01HVZWQJYZ"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      
-      // PitchLense Analytics
-      gtag('config', 'G-01HVZWQJYZ');
-      
-      // YouTube Analytics
-      gtag('config', 'G-MEJ9RH4LNM');
-    </script>
-  </head>
-
-  <body class="bg-background text-text font-sans antialiased selection:bg-accent selection:text-white">
-    <div id="root"></div>
-
-    
-    <script type="text/babel" data-type="module" src="./main.jsx"></script>
-    
-    <!-- Circular Footer with Heart Icon -->
-    <footer class="fixed bottom-4 right-4 z-50">
-      <!-- Expanded Footer Content (Hidden by default) -->
-      <div class="footer-expanded liquid-glass px-4 py-3 mb-2 opacity-0 transform translate-y-2 pointer-events-none transition-all duration-300 ease-out">
-        <div class="flex items-center justify-center gap-2 text-sm text-white/80 overflow-x-auto">
-          <span>Created with</span>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="#ef4444"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          <span>by</span>
-          <a href="https://amanulla.in/" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Aman Ulla</a>
-          <span>,</span>
-          <a href="https://www.linkedin.com/in/srinivasalva/" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors font-medium">Srinivas Alva</a>
-          <span class="text-white/40">|</span>
-          <a href="https://vision.hack2skill.com/event/genaiexchangehackathon/?utm_source=hack2skill&utm_medium=homepage#overview" target="_blank" rel="noopener noreferrer" class="text-[#60a5fa] hover:text-white transition-colors">Hack2Skill‑Google Hackathon</a>
-          <span class="text-white/40">|</span>
-          <div class="flex items-center gap-2">
-            <a href="https://github.com/connectaman/PitchLense" target="_blank" rel="noopener noreferrer" title="GitHub" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.52 2.87 8.35 6.84 9.71.5.09.68-.22.68-.49 0-.24-.01-.87-.01-1.7-2.78.62-3.37-1.37-3.37-1.37-.46-1.2-1.13-1.52-1.13-1.52-.92-.65.07-.64.07-.64 1.02.07 1.56 1.06 1.56 1.06.9 1.58 2.36 1.12 2.94.86.09-.67.35-1.12.63-1.38-2.22-.26-4.56-1.14-4.56-5.08 0-1.12.39-2.04 1.04-2.76-.1-.26-.45-1.32.1-2.75 0 0 .84-.27 2.76 1.05.8-.23 1.66-.35 2.52-.35s1.72.12 2.52.35c1.92-1.32 2.76-1.05 2.76-1.05.55 1.43.2 2.49.1 2.75.65.72 1.04 1.64 1.04 2.76 0 3.95-2.34 4.82-4.57 5.07.36.31.68.93.68 1.88 0 1.35-.01 2.45-.01 2.78 0 .27.18.58.69.48A10.03 10.03 0 0 0 22 12.26C22 6.58 17.52 2 12 2Z"/></svg>
-            </a>
-            <a href="https://pypi.org/project/pitchlense-mcp/" target="_blank" rel="noopener noreferrer" title="PyPI" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3a4 4 0 0 1 4 4v3a2 2 0 0 1-2 2H8a4 4 0 0 1-4-4V5a2 2 0 0 1 2-2h6Zm-2 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm2 14a4 4 0 0 1-4-4v-3a2 2 0 0 1 2-2h6a4 4 0 0 1 4 4v3a2 2 0 0 1-2 2h-6Zm2-4a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>
-            </a>
-            <a href="https://pitchlense-mcp.readthedocs.io/en/latest/" target="_blank" rel="noopener noreferrer" title="Read the Docs" class="w-8 h-8 grid place-items-center rounded-full bg-[#FFF27A] text-[#1E1E21] hover:opacity-80">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5 3h12a2 2 0 0 1 2 2v14l-3-2-3 2-3-2-3 2-3-2V5a2 2 0 0 1 2-2Zm2 4v2h8V7H7Zm0 4v2h8v-2H7Z"/></svg>
-            </a>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Circular Heart Icon Button -->
-      <div class="footer-circle w-12 h-12 dock-glass flex items-center justify-center cursor-pointer transition-all duration-300 ease-out">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#ef4444" class="transition-transform duration-300 ease-out">
-          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
-        </svg>
-      </div>
-    </footer>
-    
-    <!-- Footer Hover with Delay Script -->
-    <script>
-      // Footer hover functionality with delay
-      (function() {
-        const footer = document.querySelector('footer');
-        const footerCircle = document.querySelector('.footer-circle');
-        const footerExpanded = document.querySelector('.footer-expanded');
-        let hideTimeout = null;
-
-        function showFooter() {
-          if (hideTimeout) {
-            clearTimeout(hideTimeout);
-            hideTimeout = null;
-          }
-          if (footerExpanded) footerExpanded.classList.add('show');
-          if (footerCircle) footerCircle.classList.add('hover');
-        }
-
-        function hideFooter() {
-          hideTimeout = setTimeout(() => {
-            if (footerExpanded) footerExpanded.classList.remove('show');
-            if (footerCircle) footerCircle.classList.remove('hover');
-          }, 600); // 600ms delay before hiding
-        }
-
-        if (footer) {
-          footer.addEventListener('mouseenter', showFooter);
-          footer.addEventListener('mouseleave', hideFooter);
-        }
-      })();
-    </script>
+  
+    <body>
+      <div class="background">
+  <div class="overlay"></div>
+  <div class="content">
+    <h1>🚧 Coming Soon</h1>
+    <p>
+      We're building something amazing for you. Stay tuned!
+    </p>
+    <p class="tagline">...</p>
+  </div>
+</div>
   </body>
+  <style>
+    * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body,
+html {
+  height: 100%;
+  font-family: Arial, sans-serif;
+}
+
+.background {
+  background-image: url("https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"); /* Replace with your own construction image */
+  background-size: cover;
+  background-position: center;
+  height: 100%;
+  position: relative;
+}
+
+.overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  text-align: center;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0 20px;
+}
+
+h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: #ffc107;
+}
+
+p {
+  font-size: 1.2rem;
+  max-width: 700px;
+  margin: 0 auto 1.5rem;
+}
+
+.tagline {
+  font-style: italic;
+  font-size: 1rem;
+  color: #f0ad4e;
+}
+
+@media (max-width: 600px) {
+  h1 {
+    font-size: 2rem;
+  }
+  p {
+    font-size: 1rem;
+  }
+}
+
+  </style>
   
 </html>
 
