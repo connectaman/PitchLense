@@ -1,5 +1,8 @@
 # PitchLense - AI-Powered Startup Analysis Platform
 
+## 🏆 **WINNER** !!! of **Google Cloud Gen AI Exchange Hackathon** under the problem statement “AI Analyst for Startup Evaluation.” 🏆
+Competing among 278,000+ participants and 180,000+ teams nationwide
+
 PitchLense is a comprehensive AI-powered startup analysis platform that provides detailed risk assessment and growth potential evaluation for early-stage ventures. The platform analyzes multiple dimensions of startup risk and provides actionable insights for investors, founders, and stakeholders.
 
 ## 🔗 Quick Links
